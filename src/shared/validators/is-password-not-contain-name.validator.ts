@@ -1,5 +1,4 @@
 import {
-  isBase64,
   registerDecorator,
   ValidationArguments,
   ValidationOptions,
@@ -12,7 +11,10 @@ export class IsPasswordNotContainNameValidator
   implements ValidatorConstraintInterface
 {
   public validate(password: string, args: ValidationArguments): boolean {
-    const { firstName, lastName } = args.object as any;
+    const { firstName, lastName } = args.object as {
+      firstName: string;
+      lastName: string;
+    };
     const namePattern = new RegExp(`(${firstName}|${lastName})`, 'i');
     return !namePattern.test(password);
   }
