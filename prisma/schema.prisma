@@ -14,34 +14,54 @@ datasource db {
 }
 
 model User {
-  id              Int      @id @default(uuid())
-  email           String   @unique
-  name            String
-  avatarUrl       String?
-  isVerified      Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String
+  avatarUrl        String?
+  password         String
+  createdAt        DateTime          @default(now()) @map("created_at")
+  isVerified       Boolean           @default(false) @map("is_verified")
+  role             Role              @default(USER)
+  LogEvents        LogEvent[]
+  VerificationCode VerificationCode?
+
+  @@map("users")
 }
 
 model VerificationCode {
-  id         String   @id @default(uuid())
-  userId     String   @unique
-  code       String
-  expiresAt  DateTime
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  code      String
+  expiresAt DateTime @map("expires_at")
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_codes")
 }
 
-model RefreshToken {
-  id         String   @id @default(uuid())
-  userId     String   @unique
-  token      String
-  expiresAt  DateTime
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model LogEvent {
+  id        String @id @default(uuid())
+  eventType String @map("event_type")
+  userId    String @map("user_id")
+  details   String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("log_events")
 }
 
 model Project {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
+
+  @@map("projects")
 }
 
 model Team {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
+
+  @@map("teams")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MANAGER
 }

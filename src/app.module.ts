@@ -1,12 +1,21 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { TeamsModule } from './teams/teams.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [UsersModule, TeamsModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+    }),
+    MailModule,
+  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
