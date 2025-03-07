@@ -89,9 +89,7 @@ export class AuthService {
   public async confirmEmail(
     confirmEmailDto: ConfirmEmailDto,
   ): Promise<MessageResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: confirmEmailDto.email },
-    });
+    const user = await this.usersService.getUserByEmail(confirmEmailDto.email);
 
     if (!user) {
       throw new NotFoundException('User not found');
