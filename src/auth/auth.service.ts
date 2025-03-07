@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -11,6 +12,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { MessageResponseDto } from './dto/message.response-dto';
 import { VerificationCode } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -81,6 +83,44 @@ export class AuthService {
     return {
       success: true,
       message,
+    };
+  }
+
+  public async confirmEmail(
+    confirmEmailDto: ConfirmEmailDto,
+  ): Promise<MessageResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: confirmEmailDto.email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const verificationCode = await this.prisma.verificationCode.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!verificationCode || verificationCode.code !== confirmEmailDto.code) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    if (verificationCode.expiresAt < new Date()) {
+      await this.prisma.verificationCode.delete({ where: { userId: user.id } });
+      throw new BadRequestException('Verification code has expired');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.verificationCode.delete({ where: { userId: user.id } }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { isVerified: true },
+      }),
+    ]);
+
+    return {
+      success: true,
+      message: 'Email confirmed successfully.',
     };
   }
 }

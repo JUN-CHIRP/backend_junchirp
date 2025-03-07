@@ -12,6 +12,7 @@ import { MessageResponseDto } from './dto/message.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { EmailDto } from './dto/email.dto';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -39,5 +40,15 @@ export class AuthController {
       body.email,
       'Confirmation email sent. Please check your inbox.',
     );
+  }
+
+  @ApiOperation({ summary: 'Confirm email' })
+  @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
+  @HttpCode(200)
+  @Post('confirm-email')
+  public async confirmEmail(
+    @Body() confirmEmailDto: ConfirmEmailDto,
+  ): Promise<MessageResponseDto> {
+    return this.authService.confirmEmail(confirmEmailDto);
   }
 }
