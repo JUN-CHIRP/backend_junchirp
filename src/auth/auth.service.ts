@@ -10,9 +10,10 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { MessageResponseDto } from './dto/message.response-dto';
-import { VerificationCode } from '@prisma/client';
+import { EventType, VerificationCode } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
+import { LogEventsService } from '../log-events/log-events.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private prisma: PrismaService,
     private usersService: UsersService,
     private mailService: MailService,
+    private logEventsService: LogEventsService,
   ) {}
 
   public async registration(
@@ -36,7 +38,7 @@ export class AuthService {
     const hashPassword = await bcrypt.hash(createUserDto.password, 10);
     const message =
       'Registration successful. Please check your email for confirmation.';
-    await this.usersService.createUser({
+    const user = await this.usersService.createUser({
       ...createUserDto,
       password: hashPassword,
     });
@@ -44,6 +46,12 @@ export class AuthService {
     this.sendVerificationCode(createUserDto.email, message).catch((err) => {
       console.error('Error sending verification code:', err);
     });
+
+    await this.logEventsService.addLogEvent(
+      EventType.REGISTRATION,
+      user.id,
+      `User registered with email ${user.email}`,
+    );
 
     return {
       success: true,
@@ -79,6 +87,11 @@ export class AuthService {
   ): Promise<MessageResponseDto> {
     const record = await this.createVerificationCode(email);
     await this.mailService.sendMail(email, record.code);
+    await this.logEventsService.addLogEvent(
+      EventType.SEND_CONFIRMATION_EMAIL,
+      record.userId,
+      `Verification code sent to email ${email}`,
+    );
 
     return {
       success: true,
@@ -115,6 +128,12 @@ export class AuthService {
         data: { isVerified: true },
       }),
     ]);
+
+    await this.logEventsService.addLogEvent(
+      EventType.CONFIRM_EMAIL,
+      user.id,
+      `Email ${user.email} was confirmed`,
+    );
 
     return {
       success: true,

@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
+import { LogEventsModule } from './log-events/log-events.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MailModule } from './mail/mail.module';
       envFilePath: '.env',
     }),
     MailModule,
+    LogEventsModule,
   ],
   controllers: [],
   providers: [],
