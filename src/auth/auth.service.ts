@@ -1,58 +1,86 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
-import * as jwt from 'jsonwebtoken';
-import { LoggerService } from 'src/shared/services/logger';
+import * as bcrypt from 'bcrypt';
+import { UsersService } from '../users/users.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { MessageResponseDto } from './dto/message.response-dto';
+import { VerificationCode } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(
+  public constructor(
     private prisma: PrismaService,
-    private readonly logger: LoggerService,
+    private usersService: UsersService,
+    private mailService: MailService,
   ) {}
 
-  async sendVerificationCode(email: string) {
-    const code = crypto.randomInt(100000, 999999).toString();
-
-    await this.prisma.verificationCode.upsert({
-      where: { email },
-      update: { code, expiresAt: new Date(Date.now() + 30 * 60 * 1000) },
-      create: { email, code, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
-    });
-
-    this.logger.debug(`Verification code for ${email}: ${code}`);
-
-    return { message: 'Verification code sent' };
-  }
-
-  async verifyCode(email: string, code: string) {
-    const record = await this.prisma.verificationCode.findUnique({
-      where: { email },
-    });
-
-    if (!record || record.code !== code || record.expiresAt < new Date()) {
-      throw new Error('Invalid or expired code');
-    }
-
-    await this.prisma.verificationCode.delete({ where: { email } });
-
-    let user = await this.prisma.user.findUnique({ where: { email } });
-
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: { email, isVerified: true },
-      });
-    }
-
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || '',
-      {
-        expiresIn: '7d',
-      },
+  public async registration(
+    createUserDto: CreateUserDto,
+  ): Promise<MessageResponseDto> {
+    const candidate = await this.usersService.getUserByEmail(
+      createUserDto.email,
     );
 
-    return { token, user };
+    if (candidate) {
+      throw new ConflictException('A user with this email already exists');
+    }
+
+    const hashPassword = await bcrypt.hash(createUserDto.password, 10);
+    const message =
+      'Registration successful. Please check your email for confirmation.';
+    await this.usersService.createUser({
+      ...createUserDto,
+      password: hashPassword,
+    });
+
+    this.sendVerificationCode(createUserDto.email, message).catch((err) => {
+      console.error('Error sending verification code:', err);
+    });
+
+    return {
+      success: true,
+      message,
+    };
+  }
+
+  public async createVerificationCode(
+    email: string,
+  ): Promise<VerificationCode> {
+    const user = await this.usersService.getUserByEmail(email);
+
+    const code = crypto.randomInt(100000, 999999).toString();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.verificationCode.upsert({
+      where: { userId: user.id },
+      update: { code, expiresAt: new Date(Date.now() + 30 * 60 * 1000) },
+      create: {
+        userId: user.id,
+        code,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+  }
+
+  public async sendVerificationCode(
+    email: string,
+    message: string,
+  ): Promise<MessageResponseDto> {
+    const record = await this.createVerificationCode(email);
+    await this.mailService.sendMail(email, record.code);
+
+    return {
+      success: true,
+      message,
+    };
   }
 }
