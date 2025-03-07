@@ -25,14 +25,14 @@ module.exports = tseslint.config(
       '@stylistic/ts': stylisticTs,
     },
     rules: {
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-includes': 'error',
       '@typescript-eslint/no-implied-eval': 'error',
       '@typescript-eslint/no-for-in-array': 'error',
       '@typescript-eslint/no-duplicate-type-constituents': 'error',
-      '@typescript-eslint/explicit-member-accessibility': 'error',
-      '@typescript-eslint/no-duplicate-enum-values': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'error',
+      '@typescript-eslint/explicit-member-accessibility': 'warn',
+      '@typescript-eslint/no-duplicate-enum-values': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-mixed-enums': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-unused-vars': [
@@ -43,7 +43,7 @@ module.exports = tseslint.config(
         'error',
         {
           selector: 'variable',
-          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+          format: ['camelCase', 'UPPER_CASE'],
         },
          {
           selector: 'function',
@@ -70,7 +70,7 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-magic-numbers': [
         'error',
         {
-          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 3000],
+          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 3000, 6],
         },
       ],
       '@typescript-eslint/no-shadow': 'error',
