@@ -127,13 +127,14 @@ export class AuthService {
         where: { id: user.id },
         data: { isVerified: true },
       }),
+      this.prisma.logEvent.create({
+        data: {
+          eventType: EventType.CONFIRM_EMAIL,
+          details: `Email ${user.email} was confirmed`,
+          userId: user.id,
+        },
+      }),
     ]);
-
-    await this.logEventsService.addLogEvent(
-      EventType.CONFIRM_EMAIL,
-      user.id,
-      `Email ${user.email} was confirmed`,
-    );
 
     return {
       success: true,
