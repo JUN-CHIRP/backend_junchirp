@@ -7,7 +7,7 @@ export class CreateUserDto {
   @IsString({ message: 'Must be a string' })
   @Length(7, 254, { message: 'Must be between 7 and 254 characters' })
   @Matches(
-    /^(?!.*\.ru$)([a-zA-Z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~]+)*)@([a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
+    /^(?!.*\.ru$)([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+)*)@([a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
     { message: 'Invalid email format or contains a restricted domain' },
   )
   public readonly email: string;
@@ -16,7 +16,7 @@ export class CreateUserDto {
   @IsString({ message: 'Must be a string' })
   @Length(8, 20, { message: 'Must be between 8 and 32 characters' })
   @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~])\S{8,20}$/,
+    /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,\\\-./:;<=>?@[\]^_`{|}~])\S{8,20}$/,
     { message: 'Password is incorrect' },
   )
   @IsPasswordNotContainName()
