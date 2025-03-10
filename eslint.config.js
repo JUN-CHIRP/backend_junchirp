@@ -3,8 +3,9 @@
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
-const stylisticTs = require('@stylistic/eslint-plugin-ts');
+const stylisticTs = require('@stylistic/eslint-plugin-ts').default;
 const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
+const simpleImportSort = require('eslint-plugin-simple-import-sort');
 
 module.exports = tseslint.config(
   {
@@ -21,39 +22,52 @@ module.exports = tseslint.config(
       eslintPluginPrettierRecommended,
     ],
     plugins: {
-      '@typescript-eslint/eslint-plugin': typescriptEslintPlugin,
+      'simple-import-sort': simpleImportSort,
+      '@typescript-eslint': typescriptEslintPlugin,
       '@stylistic/ts': stylisticTs,
     },
     rules: {
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            ['^node:.*'],
+            ['^@?\\w'],
+            ['^(@|src)(/.*|$)'],
+            ['^\\.\\.(/.*|$)'],
+            ['^\\./'],
+            ['.+\\.(css|scss|sass|less|png|jpg|jpeg|svg|gif|ico|json)$'],
+          ],
+        },
+      ],
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-includes': 'error',
       '@typescript-eslint/no-implied-eval': 'error',
       '@typescript-eslint/no-for-in-array': 'error',
       '@typescript-eslint/no-duplicate-type-constituents': 'error',
-      '@typescript-eslint/explicit-member-accessibility': 'warn',
       '@typescript-eslint/no-duplicate-enum-values': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-mixed-enums': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_' },
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/naming-convention': [
         'error',
         {
           selector: 'variable',
-          format: ['camelCase', 'UPPER_CASE'],
+          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
         },
-         {
+        {
           selector: 'function',
-            format: ['camelCase', 'PascalCase'],
-          },
+          format: ['camelCase', 'PascalCase'],
+        },
         {
           selector: 'typeLike',
           format: ['PascalCase'],
         },
-     ],
+      ],
       '@stylistic/ts/comma-dangle': ['error', {
         'arrays': 'always-multiline',
         'objects': 'always-multiline',

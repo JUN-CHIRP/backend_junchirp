@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+
 import { IsPasswordNotContainName } from '../../shared/validators/is-password-not-contain-name.validator';
 
 export class CreateUserDto {
