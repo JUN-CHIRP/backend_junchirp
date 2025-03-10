@@ -4,26 +4,48 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UsePipes,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { MessageResponseDto } from './dto/message.response-dto';
+import { Response } from 'express';
+
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import { EmailDto } from './dto/email.dto';
+
+import { AuthService } from './auth.service';
+import { AuthDto } from './dto/auth.dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
+import { EmailDto } from './dto/email.dto';
+import { LoginResponseDto } from './dto/login.response-dto';
+import { MessageResponseDto } from './dto/message.response-dto';
 
 @ApiTags('Authorization')
 @Controller('auth')
 export class AuthController {
-  public constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {}
+
+  @ApiOperation({ summary: 'Login' })
+  @ApiResponse({ status: HttpStatus.OK, type: LoginResponseDto })
+  @UsePipes(ValidationPipe)
+  @HttpCode(200)
+  @Post('login')
+  async login(
+    @Body() dto: AuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginResponseDto> {
+    const { refreshToken, ...response } = await this.authService.login(dto);
+
+    this.authService.addRefreshTokenToResponse(res, refreshToken);
+
+    return response;
+  }
 
   @ApiOperation({ summary: 'Registration' })
   @ApiResponse({ status: HttpStatus.CREATED, type: MessageResponseDto })
   @UsePipes(ValidationPipe)
   @Post('register')
-  public async registration(
+  async registration(
     @Body() createUserDto: CreateUserDto,
   ): Promise<MessageResponseDto> {
     return this.authService.registration(createUserDto);
@@ -33,7 +55,7 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
   @HttpCode(200)
   @Post('send-confirmation-email')
-  public async sendConfirmationEmail(
+  async sendConfirmationEmail(
     @Body() body: EmailDto,
   ): Promise<MessageResponseDto> {
     return this.authService.sendVerificationCode(
@@ -46,7 +68,7 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
   @HttpCode(200)
   @Post('confirm-email')
-  public async confirmEmail(
+  async confirmEmail(
     @Body() confirmEmailDto: ConfirmEmailDto,
   ): Promise<MessageResponseDto> {
     return this.authService.confirmEmail(confirmEmailDto);
