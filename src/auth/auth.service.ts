@@ -57,8 +57,6 @@ export class AuthService {
     }
 
     const hashPassword = await bcrypt.hash(createUserDto.password, 10);
-    const message =
-      'Registration successful. Please check your email for confirmation.';
     await this.usersService.createUser({
       ...createUserDto,
       password: hashPassword,
@@ -66,7 +64,7 @@ export class AuthService {
 
     return {
       success: true,
-      message,
+      message: 'Registration successful',
     };
   }
 
