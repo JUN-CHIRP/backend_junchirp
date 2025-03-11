@@ -8,14 +8,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const PORT = Number(process.env.PORT ?? 3000);
-  // const httpsOptions = {
-  //   key: fs.readFileSync(
-  //     path.join(__dirname, '..', 'ssl', 'localhost-key.pem')
-  //   ),
-  //   cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'localhost.pem')),
-  // };
+  const httpsOptions = {
+    key: fs.readFileSync(
+      path.join(__dirname, '..', 'ssl', 'localhost-key.pem'),
+    ),
+    cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'localhost.pem')),
+  };
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { httpsOptions });
 
   app.enableCors({
     origin: '*',
@@ -30,9 +30,7 @@ async function bootstrap(): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
-
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  SwaggerModule.setup('swagger', app, document);
 
   await app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

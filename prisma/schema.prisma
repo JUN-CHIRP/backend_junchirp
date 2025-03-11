@@ -16,11 +16,12 @@ datasource db {
 model User {
   id               String            @id @default(uuid())
   email            String            @unique
-  name             String
+  firstName        String            @map("first_name")
+  lastName         String            @map("last_name")
   avatarUrl        String?           @map("avatar_url")
   password         String
   createdAt        DateTime          @default(now()) @map("created_at")
-  isVerified       Boolean           @default(false) @map("is_verified")
+  status           UserStatus        @default(UNVERIFIED)
   role             Role              @default(USER)
   LogEvents        LogEvent[]
   VerificationCode VerificationCode?
@@ -64,4 +65,10 @@ enum Role {
   USER
   ADMIN
   MANAGER
+}
+
+enum UserStatus {
+  UNVERIFIED
+  VERIFIED
+  BLOCKED
 }

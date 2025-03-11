@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User, VerificationCode } from '@prisma/client';
+import { User, UserStatus, VerificationCode } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Response } from 'express';
@@ -64,10 +64,6 @@ export class AuthService {
       password: hashPassword,
     });
 
-    this.sendVerificationCode(createUserDto.email, message).catch((err) => {
-      console.error('Error sending verification code:', err);
-    });
-
     return {
       success: true,
       message,
@@ -76,12 +72,11 @@ export class AuthService {
 
   async createVerificationCode(email: string): Promise<VerificationCode> {
     const user = await this.validateUser(email);
-
     const code = crypto.randomInt(100000, 999999).toString();
 
     return this.prisma.verificationCode.upsert({
       where: { userId: user.id },
-      update: { code, expiresAt: new Date(Date.now() + 30 * 60 * 1000) },
+      update: { code, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
       create: {
         userId: user.id,
         code,
@@ -125,7 +120,7 @@ export class AuthService {
       this.prisma.verificationCode.delete({ where: { userId: user.id } }),
       this.prisma.user.update({
         where: { id: user.id },
-        data: { isVerified: true },
+        data: { status: UserStatus.VERIFIED },
       }),
     ]);
 
