@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 
 import { IsPasswordNotContainName } from '../../shared/validators/is-password-not-contain-name.validator';
 
