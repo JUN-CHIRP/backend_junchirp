@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, Length } from 'class-validator';
+import { IsEmail, IsNotEmpty, Length, Matches } from 'class-validator';
 
 export class AuthDto {
   @ApiProperty({
@@ -8,7 +8,10 @@ export class AuthDto {
     description: 'Email',
   })
   @IsNotEmpty({ message: 'Email is required' })
-  @IsEmail()
+  @IsEmail({}, { message: 'Email is incorrect' })
+  @Matches(/^(?!.*[а-яА-ЯіІєЄїЇ])(?!.*\.ru$)/, {
+    message: 'Invalid email format or contains a restricted domain',
+  })
   email: string;
 
   @ApiProperty({

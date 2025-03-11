@@ -10,7 +10,10 @@ import {
 export class ConfirmEmailDto {
   @ApiProperty({ example: 'email@mail.com', description: 'Email' })
   @IsNotEmpty({ message: 'Email is required' })
-  @IsEmail()
+  @IsEmail({}, { message: 'Email is incorrect' })
+  @Matches(/^(?!.*[а-яА-ЯіІєЄїЇ])(?!.*\.ru$)/, {
+    message: 'Invalid email format or contains a restricted domain',
+  })
   public readonly email: string;
 
   @ApiProperty({ example: '527249', description: 'Confirmation code' })
