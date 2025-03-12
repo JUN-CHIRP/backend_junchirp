@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 import { MessageResponseDto } from './message.response-dto';
 
@@ -12,7 +12,7 @@ export class LoginResponseDto extends MessageResponseDto {
       avatarUrl: null,
       createdAt: '2025-03-10T12:43:26.437Z',
       isVerified: false,
-      role: 'USER',
+      role: Role.USER,
     },
     description: 'Response data user',
   })

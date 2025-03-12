@@ -3,7 +3,7 @@
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
-const stylisticTs = require('@stylistic/eslint-plugin-ts').default;
+const stylisticTs = require('@stylistic/eslint-plugin-ts');
 const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
 

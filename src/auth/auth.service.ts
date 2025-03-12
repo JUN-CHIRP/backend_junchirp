@@ -47,7 +47,7 @@ export class AuthService {
 
   async registration(
     createUserDto: CreateUserDto,
-  ): Promise<MessageResponseDto> {
+  ): Promise<LoginResponseDto & { refreshToken: string }> {
     const candidate = await this.usersService.getUserByEmail(
       createUserDto.email,
     );
@@ -64,11 +64,17 @@ export class AuthService {
       password: hashPassword,
     });
 
+    const user = await this.validateUser(createUserDto.email);
+    const tokens = this.issueTokens(user.id);
+    const { password, ...userWithoutPassword } = user;
+
     this.sendVerificationCode(createUserDto.email, message).catch((err) => {
       console.error('Error sending verification code:', err);
     });
 
     return {
+      user: userWithoutPassword,
+      ...tokens,
       success: true,
       message,
     };
@@ -76,12 +82,11 @@ export class AuthService {
 
   async createVerificationCode(email: string): Promise<VerificationCode> {
     const user = await this.validateUser(email);
-
     const code = crypto.randomInt(100000, 999999).toString();
 
     return this.prisma.verificationCode.upsert({
       where: { userId: user.id },
-      update: { code, expiresAt: new Date(Date.now() + 30 * 60 * 1000) },
+      update: { code, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
       create: {
         userId: user.id,
         code,
