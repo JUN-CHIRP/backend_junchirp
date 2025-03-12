@@ -7,7 +7,7 @@ import {
   Res,
   UsePipes,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
@@ -19,6 +19,7 @@ import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { EmailDto } from './dto/email.dto';
 import { LoginResponseDto } from './dto/login.response-dto';
 import { MessageResponseDto } from './dto/message.response-dto';
+import { Auth } from './decorators/auth.decorator';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -42,15 +43,23 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Registration' })
-  @ApiResponse({ status: HttpStatus.CREATED, type: MessageResponseDto })
+  @ApiResponse({ status: HttpStatus.CREATED, type: LoginResponseDto })
   @UsePipes(ValidationPipe)
   @Post('register')
   async registration(
     @Body() createUserDto: CreateUserDto,
-  ): Promise<MessageResponseDto> {
-    return this.authService.registration(createUserDto);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginResponseDto> {
+    const { refreshToken, ...response } =
+      await this.authService.registration(createUserDto);
+
+    this.authService.addRefreshTokenToResponse(res, refreshToken);
+
+    return response;
   }
 
+  @Auth()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Send confirmation email' })
   @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
   @HttpCode(200)
@@ -64,6 +73,8 @@ export class AuthController {
     );
   }
 
+  @Auth()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Confirm email' })
   @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
   @HttpCode(200)

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User, UserStatus, VerificationCode } from '@prisma/client';
+import { User, VerificationCode } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Response } from 'express';
@@ -47,7 +47,7 @@ export class AuthService {
 
   async registration(
     createUserDto: CreateUserDto,
-  ): Promise<MessageResponseDto> {
+  ): Promise<LoginResponseDto & { refreshToken: string }> {
     const candidate = await this.usersService.getUserByEmail(
       createUserDto.email,
     );
@@ -57,14 +57,26 @@ export class AuthService {
     }
 
     const hashPassword = await bcrypt.hash(createUserDto.password, 10);
+    const message =
+      'Registration successful. Please check your email for confirmation.';
     await this.usersService.createUser({
       ...createUserDto,
       password: hashPassword,
     });
 
+    const user = await this.validateUser(createUserDto.email);
+    const tokens = this.issueTokens(user.id);
+    const { password, ...userWithoutPassword } = user;
+
+    this.sendVerificationCode(createUserDto.email, message).catch((err) => {
+      console.error('Error sending verification code:', err);
+    });
+
     return {
+      user: userWithoutPassword,
+      ...tokens,
       success: true,
-      message: 'Registration successful',
+      message,
     };
   }
 
@@ -118,7 +130,7 @@ export class AuthService {
       this.prisma.verificationCode.delete({ where: { userId: user.id } }),
       this.prisma.user.update({
         where: { id: user.id },
-        data: { status: UserStatus.VERIFIED },
+        data: { isVerified: true },
       }),
     ]);
 

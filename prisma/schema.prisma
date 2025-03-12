@@ -13,7 +13,7 @@ model User {
   avatarUrl        String?           @map("avatar_url")
   password         String
   createdAt        DateTime          @default(now()) @map("created_at")
-  status           UserStatus        @default(UNVERIFIED)
+  isVerified       Boolean           @default(false) @map("is_verified")
   role             Role              @default(USER)
   firstName        String            @map("first_name")
   lastName         String            @map("last_name")
@@ -59,10 +59,4 @@ enum Role {
   USER
   ADMIN
   MANAGER
-}
-
-enum UserStatus {
-  UNVERIFIED
-  VERIFIED
-  BLOCKED
 }
