@@ -11,13 +11,14 @@ import { MailService } from './mail.service';
       transport: {
         host: process.env.MAIL_HOST,
         port: Number(process.env.MAIL_PORT),
+        secure: Number(process.env.MAIL_PORT) === 465,
         auth: {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASSWORD,
         },
       },
       defaults: {
-        from: '"No Reply" <noreply@example.com>',
+        from: `"No Reply" <${process.env.MAIL_USER}>`,
       },
       template: {
         dir: path.join(__dirname, 'templates'),

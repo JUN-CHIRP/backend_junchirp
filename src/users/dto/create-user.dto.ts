@@ -7,6 +7,7 @@ import {
   Matches,
 } from 'class-validator';
 
+import { IsPasswordInBlackList } from '../../shared/validators/is-in-black-list.validator';
 import { IsPasswordNotContainName } from '../../shared/validators/is-password-not-contain-name.validator';
 
 export class CreateUserDto {
@@ -28,6 +29,7 @@ export class CreateUserDto {
     { message: 'Password is incorrect' },
   )
   @IsPasswordNotContainName()
+  @IsPasswordInBlackList()
   @IsNotEmpty({ message: 'Password is required' })
   public readonly password: string;
 
