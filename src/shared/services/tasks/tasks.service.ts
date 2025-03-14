@@ -4,7 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
-export class CronService {
+export class TasksService {
   public constructor(private prisma: PrismaService) {}
 
   @Cron(CronExpression.EVERY_MINUTE)

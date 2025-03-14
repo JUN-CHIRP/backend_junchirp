@@ -6,7 +6,7 @@ import { MailModule } from './mail/mail.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { CronService } from './shared/services/cron/cron.service';
+import { TasksService } from './shared/services/tasks/tasks.service';
 
 @Module({
   imports: [
@@ -20,6 +20,6 @@ import { CronService } from './shared/services/cron/cron.service';
     MailModule,
     ScheduleModule.forRoot(),
   ],
-  providers: [CronService],
+  providers: [TasksService],
 })
 export class AppModule {}
