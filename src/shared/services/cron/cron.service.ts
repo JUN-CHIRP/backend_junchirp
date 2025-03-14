@@ -9,7 +9,19 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   public async deleteEveryMinute(): Promise<void> {
-    this.deleteUnverifiedUsers()
+    await this.deleteUnverifiedUsers();
+    await this.deleteEntryAttempts();
+    await this.deleteBlockedEmails();
+    await this.deleteUsersAfterVerificationError();
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  public async deleteUnusedCodes(): Promise<void> {
+    await this.prisma.verificationCode.deleteMany({
+      where: {
+        expiresAt: { lte: new Date() },
+      },
+    });
   }
 
   private async deleteUnverifiedUsers(): Promise<void> {
@@ -23,8 +35,7 @@ export class CronService {
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  public async deleteEntryAttempts(): Promise<void> {
+  private async deleteEntryAttempts(): Promise<void> {
     const thresholdDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     await this.prisma.codeEntryAttempt.deleteMany({
@@ -34,17 +45,7 @@ export class CronService {
     });
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  public async deleteUnusedCodes(): Promise<void> {
-    await this.prisma.verificationCode.deleteMany({
-      where: {
-        expiresAt: { lte: new Date() },
-      },
-    });
-  }
-
-  @Cron(CronExpression.EVERY_MINUTE)
-  public async deleteBlockedEmails(): Promise<void> {
+  private async deleteBlockedEmails(): Promise<void> {
     const thresholdDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     await this.prisma.blockedEmail.deleteMany({
@@ -54,7 +55,6 @@ export class CronService {
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
   public async deleteUsersAfterVerificationError(): Promise<void> {
     const usersToDelete = await this.prisma.user.findMany({
       where: {
