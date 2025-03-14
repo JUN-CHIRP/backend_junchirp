@@ -26,6 +26,7 @@ import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { EmailDto } from './dto/email.dto';
 import { LoginResponseDto } from './dto/login.response-dto';
 import { MessageResponseDto } from './dto/message.response-dto';
+import { RegistrationResponseDto } from './dto/registration.response-dto';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -49,13 +50,13 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Registration' })
-  @ApiResponse({ status: HttpStatus.CREATED, type: LoginResponseDto })
+  @ApiResponse({ status: HttpStatus.CREATED, type: RegistrationResponseDto })
   @UsePipes(ValidationPipe)
   @Post('register')
   async registration(
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<LoginResponseDto> {
+  ): Promise<RegistrationResponseDto> {
     const { refreshToken, ...response } =
       await this.authService.registration(createUserDto);
 
