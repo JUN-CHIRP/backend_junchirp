@@ -7,19 +7,25 @@ import {
   Res,
   UsePipes,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
 import { AuthService } from './auth.service';
+import { Auth } from './decorators/auth.decorator';
 import { AuthDto } from './dto/auth.dto';
+import { CodeResponseDto } from './dto/code.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { EmailDto } from './dto/email.dto';
 import { LoginResponseDto } from './dto/login.response-dto';
 import { MessageResponseDto } from './dto/message.response-dto';
-import { Auth } from './decorators/auth.decorator';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -61,12 +67,12 @@ export class AuthController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send confirmation email' })
-  @ApiResponse({ status: HttpStatus.OK, type: MessageResponseDto })
+  @ApiResponse({ status: HttpStatus.OK, type: CodeResponseDto })
   @HttpCode(200)
   @Post('send-confirmation-email')
   async sendConfirmationEmail(
     @Body() body: EmailDto,
-  ): Promise<MessageResponseDto> {
+  ): Promise<CodeResponseDto> {
     return this.authService.sendVerificationCode(
       body.email,
       'Confirmation email sent. Please check your inbox.',

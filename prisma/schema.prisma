@@ -17,6 +17,7 @@ model User {
   role             Role              @default(USER)
   firstName        String            @map("first_name")
   lastName         String            @map("last_name")
+  CodeEntryAttempt CodeEntryAttempt?
   LogEvents        LogEvent[]
   VerificationCode VerificationCode?
 
@@ -31,6 +32,24 @@ model VerificationCode {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("verification_codes")
+}
+
+model CodeEntryAttempt {
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+  attemptsNumber Int      @default(1) @map("attempts_number")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("code_entry_attempts")
+}
+
+model BlockedEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("blocked_emails")
 }
 
 model LogEvent {
