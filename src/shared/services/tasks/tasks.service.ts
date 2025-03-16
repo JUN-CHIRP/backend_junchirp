@@ -38,7 +38,7 @@ export class TasksService {
   private async deleteEntryAttempts(): Promise<void> {
     const thresholdDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    await this.prisma.codeEntryAttempt.deleteMany({
+    await this.prisma.verificationAttempt.deleteMany({
       where: {
         updatedAt: { lt: thresholdDate },
       },
@@ -61,10 +61,8 @@ export class TasksService {
         VerificationCode: {
           expiresAt: { lt: new Date() },
         },
-        CodeEntryAttempt: {
-          some: {
-            attemptsNumber: 5,
-          },
+        VerificationAttempt: {
+          attemptsCount: 5,
         },
       },
       select: {

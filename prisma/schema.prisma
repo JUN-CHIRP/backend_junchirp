@@ -8,18 +8,18 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(uuid())
-  email            String            @unique
-  avatarUrl        String?           @map("avatar_url")
-  password         String
-  createdAt        DateTime          @default(now()) @map("created_at")
-  isVerified       Boolean           @default(false) @map("is_verified")
-  role             Role              @default(USER)
-  firstName        String            @map("first_name")
-  lastName         String            @map("last_name")
-  CodeEntryAttempt CodeEntryAttempt?
-  LogEvents        LogEvent[]
-  VerificationCode VerificationCode?
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  avatarUrl           String?              @map("avatar_url")
+  password            String
+  createdAt           DateTime             @default(now()) @map("created_at")
+  isVerified          Boolean              @default(false) @map("is_verified")
+  role                Role                 @default(USER)
+  firstName           String               @map("first_name")
+  lastName            String               @map("last_name")
+  LogEvents           LogEvent[]
+  VerificationAttempt VerificationAttempt?
+  VerificationCode    VerificationCode?
 
   @@map("users")
 }
@@ -34,14 +34,14 @@ model VerificationCode {
   @@map("verification_codes")
 }
 
-model CodeEntryAttempt {
-  id             String   @id @default(uuid())
-  userId         String   @unique @map("user_id")
-  updatedAt      DateTime @default(now()) @map("updated_at")
-  attemptsNumber Int      @default(1) @map("attempts_number")
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model VerificationAttempt {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  attemptsCount Int      @default(1) @map("attempts_count")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("code_entry_attempts")
+  @@map("verification_attempts")
 }
 
 model BlockedEmail {

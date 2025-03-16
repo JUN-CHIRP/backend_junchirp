@@ -100,11 +100,11 @@ export class AuthService {
       this.configService.get<number>('CODE_EXPIRATION_TIME') ?? 10;
 
     return this.prisma.$transaction(async (prisma) => {
-      const attempt = await prisma.codeEntryAttempt.findUnique({
+      const attempt = await prisma.verificationAttempt.findUnique({
         where: { userId: user.id },
       });
 
-      if (attempt && attempt.attemptsNumber >= 5) {
+      if (attempt && attempt.attemptsCount >= 5) {
         throw new ForbiddenException(
           'You have reached your attempt limit. Please try again later',
         );
@@ -123,10 +123,10 @@ export class AuthService {
         },
       });
 
-      await prisma.codeEntryAttempt.upsert({
+      await prisma.verificationAttempt.upsert({
         where: { userId: user.id },
         update: {
-          attemptsNumber: { increment: 1 },
+          attemptsCount: { increment: 1 },
           updatedAt: new Date(),
         },
         create: {
