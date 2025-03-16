@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(uuid())
-  email            String            @unique
-  avatarUrl        String?           @map("avatar_url")
-  password         String
-  createdAt        DateTime          @default(now()) @map("created_at")
-  isVerified       Boolean           @default(false) @map("is_verified")
-  role             Role              @default(USER)
-  firstName        String            @map("first_name")
-  lastName         String            @map("last_name")
-  LogEvents        LogEvent[]
-  VerificationCode VerificationCode?
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  avatarUrl           String?              @map("avatar_url")
+  password            String
+  createdAt           DateTime             @default(now()) @map("created_at")
+  isVerified          Boolean              @default(false) @map("is_verified")
+  role                Role                 @default(USER)
+  firstName           String               @map("first_name")
+  lastName            String               @map("last_name")
+  LogEvents           LogEvent[]
+  VerificationAttempt VerificationAttempt?
+  VerificationCode    VerificationCode?
 
   @@map("users")
 }
@@ -31,6 +32,24 @@ model VerificationCode {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("verification_codes")
+}
+
+model VerificationAttempt {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  attemptsCount Int      @default(1) @map("attempts_count")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_attempts")
+}
+
+model BlockedEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("blocked_emails")
 }
 
 model LogEvent {

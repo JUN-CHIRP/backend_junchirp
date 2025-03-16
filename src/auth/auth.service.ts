@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,9 +18,11 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 
 import { AuthDto } from './dto/auth.dto';
+import { CodeResponseDto } from './dto/code.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { LoginResponseDto } from './dto/login.response-dto';
 import { MessageResponseDto } from './dto/message.response-dto';
+import { RegistrationResponseDto } from './dto/registration.response-dto';
 
 @Injectable()
 export class AuthService {
@@ -47,7 +50,15 @@ export class AuthService {
 
   async registration(
     createUserDto: CreateUserDto,
-  ): Promise<LoginResponseDto & { refreshToken: string }> {
+  ): Promise<RegistrationResponseDto & { refreshToken: string }> {
+    const isBlockedEmail = !!(await this.prisma.blockedEmail.findUnique({
+      where: { email: createUserDto.email },
+    }));
+
+    if (isBlockedEmail) {
+      throw new ForbiddenException('This email is blocked');
+    }
+
     const candidate = await this.usersService.getUserByEmail(
       createUserDto.email,
     );
@@ -67,8 +78,9 @@ export class AuthService {
     const user = await this.validateUser(createUserDto.email);
     const tokens = this.issueTokens(user.id);
     const { password, ...userWithoutPassword } = user;
+    const record = await this.createVerificationCode(createUserDto.email);
 
-    this.sendVerificationCode(createUserDto.email, message).catch((err) => {
+    this.mailService.sendMail(createUserDto.email, record.code).catch((err) => {
       console.error('Error sending verification code:', err);
     });
 
@@ -77,34 +89,67 @@ export class AuthService {
       ...tokens,
       success: true,
       message,
+      codeExpiresAt: record.expiresAt,
     };
   }
 
   async createVerificationCode(email: string): Promise<VerificationCode> {
     const user = await this.validateUser(email);
     const code = crypto.randomInt(100000, 999999).toString();
+    const expirationTime =
+      this.configService.get<number>('CODE_EXPIRATION_TIME') ?? 10;
 
-    return this.prisma.verificationCode.upsert({
-      where: { userId: user.id },
-      update: { code, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
-      create: {
-        userId: user.id,
-        code,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
+    return this.prisma.$transaction(async (prisma) => {
+      const attempt = await prisma.verificationAttempt.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (attempt && attempt.attemptsCount >= 5) {
+        throw new ForbiddenException(
+          'You have reached your attempt limit. Please try again later',
+        );
+      }
+
+      const verificationCode = await prisma.verificationCode.upsert({
+        where: { userId: user.id },
+        update: {
+          code,
+          expiresAt: new Date(Date.now() + expirationTime * 60 * 1000),
+        },
+        create: {
+          userId: user.id,
+          code,
+          expiresAt: new Date(Date.now() + expirationTime * 60 * 1000),
+        },
+      });
+
+      await prisma.verificationAttempt.upsert({
+        where: { userId: user.id },
+        update: {
+          attemptsCount: { increment: 1 },
+          updatedAt: new Date(),
+        },
+        create: {
+          userId: user.id,
+          updatedAt: new Date(),
+        },
+      });
+
+      return verificationCode;
     });
   }
 
   async sendVerificationCode(
     email: string,
     message: string,
-  ): Promise<MessageResponseDto> {
+  ): Promise<CodeResponseDto> {
     const record = await this.createVerificationCode(email);
     await this.mailService.sendMail(email, record.code);
 
     return {
       success: true,
       message,
+      expiresAt: record.expiresAt,
     };
   }
 

@@ -18,6 +18,6 @@ export class LoginResponseDto extends MessageResponseDto {
   })
   user: Omit<User, 'password'>;
 
-  @ApiProperty({ example: 'token', description: 'Response status' })
+  @ApiProperty({ example: 'token', description: 'Access token' })
   accessToken: string;
 }
