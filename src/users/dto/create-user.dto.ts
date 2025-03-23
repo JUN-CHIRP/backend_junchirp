@@ -23,7 +23,7 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'q1we5?!ER234', description: 'Password' })
   @IsString({ message: 'Must be a string' })
-  @Length(8, 20, { message: 'Must be between 8 and 32 characters' })
+  @Length(8, 20, { message: 'Must be between 8 and 20 characters' })
   @Matches(
     /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,\\\-./:;<=>?@[\]^_`{|}~])\S{8,20}$/,
     { message: 'Password is incorrect' },

@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { User } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -20,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   public async validate({ id }: { id: string }): Promise<User> {
-    const user = await this.userService.getById(id);
+    const user = await this.userService.getUserById(id);
     if (!user) {
       throw new UnauthorizedException('Invalid token: user not found');
     }

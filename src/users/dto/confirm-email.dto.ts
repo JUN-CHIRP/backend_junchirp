@@ -16,9 +16,8 @@ export class ConfirmEmailDto {
   })
   public readonly email: string;
 
-  @ApiProperty({ example: '527249', description: 'Confirmation code' })
+  @ApiProperty({ example: 'token', description: 'Confirmation token' })
+  @IsNotEmpty({ message: 'Token is required' })
   @IsString({ message: 'Must be a string' })
-  @Length(6, 6, { message: 'Must contain 6 characters' })
-  @Matches(/^d{6}$/, { message: 'Must contain 6 digits' })
-  public readonly code: string;
+  public readonly token: string;
 }
