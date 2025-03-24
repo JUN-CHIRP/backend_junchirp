@@ -33,7 +33,7 @@ export class IsPasswordInBlackListValidator
   implements ValidatorConstraintInterface
 {
   public validate(password: string): boolean {
-    return BLACK_LIST.includes(password);
+    return !BLACK_LIST.includes(password);
   }
 
   public defaultMessage(): string {

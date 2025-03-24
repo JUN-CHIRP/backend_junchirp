@@ -8,74 +8,197 @@ datasource db {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  avatarUrl           String?              @map("avatar_url")
-  password            String
-  createdAt           DateTime             @default(now()) @map("created_at")
-  isVerified          Boolean              @default(false) @map("is_verified")
-  role                Role                 @default(USER)
-  firstName           String               @map("first_name")
-  lastName            String               @map("last_name")
-  LogEvents           LogEvent[]
-  VerificationAttempt VerificationAttempt?
-  VerificationCode    VerificationCode?
+  id                   String                @id @default(dbgenerated("gen_random_uuid()"))
+  email                String                @unique
+  avatarUrl            String?               @map("avatar_url")
+  password             String
+  createdAt            DateTime              @default(now()) @map("created_at")
+  isVerified           Boolean               @default(false) @map("is_verified")
+  firstName            String                @map("first_name")
+  lastName             String                @map("last_name")
+  hard_skils           String[]              @default([])
+  soft_skils           String[]              @default([])
+  roleId               String                @map("role_id")
+  role                 Role                  @relation(fields: [roleId], references: [id])
+  verificationToken    VerificationToken?
+  verificationAttempts VerificationAttempt[]
+  projectRoles         ProjectRole[]         @relation("UserProjectRoles")
+  tasks                Task[]
+  logEvents            LogEvent[]
+  educations           Education[]
+  socials              Social[]
+  Project              Project[]
 
   @@map("users")
 }
 
-model VerificationCode {
-  id        String   @id @default(uuid())
-  code      String
-  expiresAt DateTime @map("expires_at")
+model Role {
+  id       String @id @default(dbgenerated("gen_random_uuid()"))
+  roleName String @unique @map("role_name")
+  users    User[]
+
+  @@map("roles")
+}
+
+model VerificationToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  token     String
+  createdAt DateTime @default(now()) @map("created_at")
   userId    String   @unique @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("verification_codes")
+  @@map("verification_tokens")
 }
 
 model VerificationAttempt {
-  id            String   @id @default(uuid())
-  userId        String   @unique @map("user_id")
-  updatedAt     DateTime @default(now()) @map("updated_at")
-  attemptsCount Int      @default(1) @map("attempts_count")
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("verification_attempts")
 }
 
-model BlockedEmail {
-  id        String   @id @default(uuid())
-  email     String   @unique
+model RefreshPasswordToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  token     String
   createdAt DateTime @default(now()) @map("created_at")
+  email     String   @unique
 
-  @@map("blocked_emails")
+  @@map("refresh_password_tokens")
+}
+
+model RefreshPasswordAttempt {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  createdAt DateTime @default(now())
+  email     String
+
+  @@map("refresh_password_attempts")
+}
+
+model Project {
+  id                String          @id @default(dbgenerated("gen_random_uuid()"))
+  projectName       String          @map("project_name")
+  description       String
+  status            String
+  createdAt         DateTime        @default(now()) @map("created_at")
+  slackUrl          String          @map("slack_url")
+  logoUrl           String          @map("logo_url")
+  participantsCount Int             @map("participiants_count")
+  ownerId           String          @map("owner_id")
+  owner             User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categoryId        String          @map("category_id")
+  category          ProjectCategory @relation(fields: [categoryId], references: [id])
+  roles             ProjectRole[]
+  boards            Board[]
+  documents         Document[]
+
+  @@index([status, participantsCount])
+  @@index([status, categoryId])
+  @@index([participantsCount, categoryId])
+  @@index([categoryId, status, participantsCount])
+  @@index([status])
+  @@index([categoryId])
+  @@index([participantsCount])
+  @@map("projects")
+}
+
+model Document {
+  id        String  @id @default(dbgenerated("gen_random_uuid()"))
+  name      String
+  url       String
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model ProjectRole {
+  id         String          @id @default(dbgenerated("gen_random_uuid()"))
+  slots      Int
+  projectId  String          @map("project_id")
+  project    Project         @relation(fields: [projectId], references: [id])
+  roleTypeId String          @map("role_type_id")
+  roleType   ProjectRoleType @relation(fields: [roleTypeId], references: [id])
+  users      User[]          @relation("UserProjectRoles")
+
+  @@map("project_roles")
+}
+
+model ProjectRoleType {
+  id       String        @id @default(dbgenerated("gen_random_uuid()"))
+  roleName String        @unique @map("role_name")
+  roles    ProjectRole[]
+
+  @@map("project_role_types")
+}
+
+model ProjectCategory {
+  id           String    @id @default(dbgenerated("gen_random_uuid()"))
+  categoryName String    @unique @map("category_name")
+  projects     Project[]
+
+  @@map("project_categories")
+}
+
+model Board {
+  id        String       @id @default(dbgenerated("gen_random_uuid()"))
+  boardName String       @map("board_name")
+  projectId String       @map("project_id")
+  project   Project      @relation(fields: [projectId], references: [id])
+  columns   TaskStatus[]
+  tasks     Task[]
+
+  @@map("boards")
+}
+
+model TaskStatus {
+  id      String @id @default(dbgenerated("gen_random_uuid()"))
+  name    String
+  boardId String @map("board_id")
+  board   Board  @relation(fields: [boardId], references: [id])
+
+  @@map("task_statuses")
+}
+
+model Task {
+  id      String  @id @default(dbgenerated("gen_random_uuid()"))
+  taskName String @map("task_name")
+  description String
+  priority String
+  deadline DateTime
+  boardId String  @map("board_id")
+  board   Board   @relation(fields: [boardId], references: [id])
+  userId  String? @map("user_id")
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("tasks")
 }
 
 model LogEvent {
-  id        String @id @default(uuid())
-  eventType String @map("event_type")
-  userId    String @map("user_id")
-  details   String
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String @id @default(dbgenerated("gen_random_uuid()"))
+  message String
+  userId  String @map("user_id")
+  user    User   @relation(fields: [userId], references: [id])
 
   @@map("log_events")
 }
 
-model Project {
-  id String @id @default(uuid())
+model Education {
+  id     String @id @default(dbgenerated("gen_random_uuid()"))
+  name   String
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("projects")
+  @@map("educations")
 }
 
-model Team {
-  id String @id @default(uuid())
+model Social {
+  id     String @id @default(dbgenerated("gen_random_uuid()"))
+  name   String
+  url    String
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("teams")
-}
-
-enum Role {
-  USER
-  ADMIN
-  MANAGER
+  @@map("socials")
 }

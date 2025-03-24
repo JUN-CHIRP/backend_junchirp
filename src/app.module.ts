@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TasksService } from './shared/services/tasks/tasks.service';
+import { CronTasksService } from './shared/services/cron-tasks/cron-tasks.service';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env',
+      envFilePath: `.env.${process.env.NODE_ENV}.local`,
       isGlobal: true,
     }),
     PrismaModule,
@@ -19,7 +19,8 @@ import { TasksService } from './shared/services/tasks/tasks.service';
     AuthModule,
     MailModule,
     ScheduleModule.forRoot(),
+    RolesModule,
   ],
-  providers: [TasksService],
+  providers: [CronTasksService],
 })
 export class AppModule {}

@@ -9,14 +9,14 @@ export class MailService {
     private configService: ConfigService,
   ) {}
 
-  public async sendMail(email: string, code: string): Promise<void> {
+  public async sendVerificationMail(email: string, url: string): Promise<void> {
     await this.mailerService.sendMail({
       to: email,
       from: `Support Team <${this.configService.get<string>('EMAIL_USER')}>`,
-      subject: 'Welcome to Nice App! Confirm your Email',
-      template: './confirmation-code',
+      subject: 'Підтвердження електронної пошти',
+      template: './confirmation-email',
       context: {
-        code: code,
+        url: url,
       },
     });
   }

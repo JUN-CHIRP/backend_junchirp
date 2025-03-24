@@ -1,11 +1,9 @@
 // @ts-check
-
 const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
 const stylisticTs = require('@stylistic/eslint-plugin-ts');
 const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
-const simpleImportSort = require('eslint-plugin-simple-import-sort');
 
 module.exports = tseslint.config(
   {
@@ -22,36 +20,23 @@ module.exports = tseslint.config(
       eslintPluginPrettierRecommended,
     ],
     plugins: {
-      'simple-import-sort': simpleImportSort,
-      '@typescript-eslint': typescriptEslintPlugin,
+      '@typescript-eslint/eslint-plugin': typescriptEslintPlugin,
       '@stylistic/ts': stylisticTs,
     },
     rules: {
-      'simple-import-sort/imports': [
-        'error',
-        {
-          groups: [
-            ['^node:.*'],
-            ['^@?\\w'],
-            ['^(@|src)(/.*|$)'],
-            ['^\\.\\.(/.*|$)'],
-            ['^\\./'],
-            ['.+\\.(css|scss|sass|less|png|jpg|jpeg|svg|gif|ico|json)$'],
-          ],
-        },
-      ],
-      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@typescript-eslint/prefer-includes': 'error',
       '@typescript-eslint/no-implied-eval': 'error',
       '@typescript-eslint/no-for-in-array': 'error',
       '@typescript-eslint/no-duplicate-type-constituents': 'error',
-      '@typescript-eslint/no-duplicate-enum-values': 'warn',
-      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/explicit-member-accessibility': 'error',
+      '@typescript-eslint/no-duplicate-enum-values': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'error',
       '@typescript-eslint/no-mixed-enums': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        'error',
+        { argsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
       '@typescript-eslint/naming-convention': [
         'error',
@@ -84,7 +69,7 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-magic-numbers': [
         'error',
         {
-          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 3000, 6, 24, 465, 5],
+          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 4000, 6, 24, 465, 5],
         },
       ],
       '@typescript-eslint/no-shadow': 'error',
