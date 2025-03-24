@@ -163,7 +163,10 @@ model TaskStatus {
 
 model Task {
   id      String  @id @default(dbgenerated("gen_random_uuid()"))
-  name    String
+  taskName String @map("task_name")
+  description String
+  priority String
+  deadline DateTime
   boardId String  @map("board_id")
   board   Board   @relation(fields: [boardId], references: [id])
   userId  String? @map("user_id")
