@@ -16,8 +16,8 @@ model User {
   isVerified           Boolean              @default(false) @map("is_verified")
   firstName            String               @map("first_name")
   lastName             String               @map("last_name")
-  hardSkills            String[]             @default([]) @map("hard_skills")
-  softSkills            String[]             @default([]) @map("soft_skills")
+  hardSkills           String[]             @default([]) @map("hard_skills")
+  softSkills           String[]             @default([]) @map("soft_skills")
   roleId               String               @map("role_id")
   educations           Education[]
   logEvents            LogEvent[]
