@@ -13,7 +13,6 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -29,6 +28,7 @@ import { AuthResponseDto } from './dto/auth.response-dto';
 import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
 import { TokenResponseDto } from './dto/token.response-dto';
 import { Auth } from './decorators/auth.decorator';
+import { MessageResponseDto } from '../users/dto/message.response-dto';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -77,14 +77,14 @@ export class AuthController {
 
   @Auth()
   @ApiOperation({ summary: 'Logout' })
-  @ApiNoContentResponse()
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOkResponse({ type: MessageResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Token is invalid' })
+  @HttpCode(HttpStatus.OK)
   @Post('logout')
   public async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
+  ): Promise<MessageResponseDto> {
     return this.authService.logout(req, res);
   }
 }

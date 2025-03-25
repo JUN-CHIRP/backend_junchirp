@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -25,10 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     req: Request,
     { id }: { id: string },
   ): Promise<UserResponseDto> {
-    const accessToken = req.headers.authorization?.split(' ')[1];
-    if (!accessToken) {
-      throw new UnauthorizedException('Access token is missing');
-    }
+    const accessToken = req.headers.authorization?.split(' ')[1] as string;
     const isBlacklisted = await this.redisService.isBlacklisted(accessToken);
     if (isBlacklisted) {
       throw new UnauthorizedException('Token is invalid');

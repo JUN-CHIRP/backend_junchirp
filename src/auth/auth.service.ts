@@ -18,6 +18,7 @@ import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TooManyRequestsException } from '../shared/exceptions/too-many-requests.exception';
 import { RedisService } from '../redis/redis.service';
+import { MessageResponseDto } from '../users/dto/message.response-dto';
 
 @Injectable()
 export class AuthService {
@@ -243,7 +244,7 @@ export class AuthService {
     return { accessToken: newAccessToken };
   }
 
-  public async logout(req: Request, res: Response): Promise<void> {
+  public async logout(req: Request, res: Response): Promise<MessageResponseDto> {
     const accessToken = req.headers.authorization?.split(' ')[1];
 
     if (!accessToken) {
@@ -259,6 +260,7 @@ export class AuthService {
       }
 
       res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+      return { message: 'Logged out successfully' };
     } catch (error) {
       throw new UnauthorizedException(`Token is invalid: ${error}`);
     }
