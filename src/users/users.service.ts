@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { User, VerificationToken } from '@prisma/client';
+import { VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
