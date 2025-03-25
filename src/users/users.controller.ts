@@ -3,10 +3,10 @@ import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
-  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { MessageResponseDto } from './dto/message.response-dto';
@@ -24,7 +24,7 @@ export class UsersController {
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  @ApiForbiddenResponse({
+  @ApiTooManyRequestsResponse({
     description:
       'You have used up all your attempts. The next available attempt will be at HH:MM',
   })

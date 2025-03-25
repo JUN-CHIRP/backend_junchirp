@@ -69,7 +69,7 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-magic-numbers': [
         'error',
         {
-          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 4000, 6, 24, 465, 5],
+          ignore: [-1, 0, 1, 2, 50, 7, 8, 20, 254, 10, 30, 60, 1000, 100000, 999999, 200, 4000, 6, 24, 465, 5, 15, 365],
         },
       ],
       '@typescript-eslint/no-shadow': 'error',

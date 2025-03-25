@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +13,7 @@ import { MessageResponseDto } from './dto/message.response-dto';
 import { MailService } from '../mail/mail.service';
 import { UserResponseDto } from './dto/user.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
+import { TooManyRequestsException } from '../shared/exceptions/too-many-requests.exception';
 
 @Injectable()
 export class UsersService {
@@ -43,14 +43,14 @@ export class UsersService {
   ): Promise<UserWithPasswordResponseDto | null> {
     return this.prisma.user.findUnique({
       where: { email },
-      include: { role: true },
+      include: { role: true, educations: true, socials: true },
     });
   }
 
   public async getUserById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { role: true },
+      include: { role: true, educations: true, socials: true },
     });
   }
 
@@ -78,7 +78,7 @@ export class UsersService {
         : new Date();
       newAvailableTime.setHours(newAvailableTime.getHours() + 1);
 
-      throw new ForbiddenException(
+      throw new TooManyRequestsException(
         `You have used up all your attempts. The next available attempt will be at ${newAvailableTime}`,
       );
     }

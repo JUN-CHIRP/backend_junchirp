@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoleResponseDto } from '../../roles/dto/role.response-dto';
+import { EducationResponseDto } from './education.response-dto';
+import { SocialResponseDto } from './social.response-dto';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -30,6 +32,20 @@ export class UserResponseDto {
   public readonly createdAt: Date;
 
   @ApiProperty({
+    example: ['JavaScript', 'TypeScript', 'NestJS'],
+    maxItems: 20,
+    description: 'Date of profile creation',
+  })
+  public readonly softSkills: string[];
+
+  @ApiProperty({
+    example: ['Communication', 'Teamwork'],
+    maxItems: 20,
+    description: 'Date of profile creation',
+  })
+  public readonly hardSkills: string[];
+
+  @ApiProperty({
     example: 'd6686d4c-9485-4256-8410-193860442a86',
     description: 'Role identifier',
   })
@@ -37,4 +53,10 @@ export class UserResponseDto {
 
   @ApiProperty({ type: () => RoleResponseDto })
   public readonly role: RoleResponseDto;
+
+  @ApiProperty({ type: () => [EducationResponseDto] })
+  public readonly educations: EducationResponseDto[];
+
+  @ApiProperty({ type: () => [SocialResponseDto] })
+  public readonly socials: SocialResponseDto[];
 }
