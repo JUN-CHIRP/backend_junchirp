@@ -8,10 +8,16 @@ import { RedisService } from './redis.service';
     IoRedisModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'single',
-        url: `rediss://${configService.get<string>('REDIS_HOST')}:${configService.get<string>('REDIS_PORT')}`,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const isRender = configService.get<string>('RENDER_ENV') === 'true';
+
+        return {
+          type: 'single',
+          url: isRender
+            ? `redis://${configService.get<string>('REDIS_HOST')}:${configService.get<string>('REDIS_PORT')}`
+            : `rediss://${configService.get<string>('REDIS_HOST')}:${configService.get<string>('REDIS_PORT')}`,
+        };
+      },
     }),
   ],
   providers: [RedisService],

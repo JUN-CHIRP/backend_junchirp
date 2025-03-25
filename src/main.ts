@@ -11,11 +11,8 @@ async function bootstrap(): Promise<void> {
   const PORT = Number(process.env.PORT) || 4000;
   const useSSL = process.env.USE_SSL === 'true';
   const isRender = process.env.RENDER_ENV === 'true';
-  const redis = new Redis(
-    `rediss://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-  );
-  redis.on('error', (err) => console.error('Redis Error:', err));
 
+  let redis: Redis;
   let httpsOptions: HttpsOptions | undefined;
 
   if (useSSL && !isRender) {
@@ -25,7 +22,16 @@ async function bootstrap(): Promise<void> {
       ),
       cert: fs.readFileSync(path.join(__dirname, '..', 'ssl', 'localhost.pem')),
     };
+    redis = new Redis(
+      `rediss://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    );
+  } else {
+    redis = new Redis(
+      `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    );
   }
+
+  redis.on('error', (err) => console.error('Redis Error:', err));
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
 

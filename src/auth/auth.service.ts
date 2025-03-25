@@ -244,7 +244,10 @@ export class AuthService {
     return { accessToken: newAccessToken };
   }
 
-  public async logout(req: Request, res: Response): Promise<MessageResponseDto> {
+  public async logout(
+    req: Request,
+    res: Response,
+  ): Promise<MessageResponseDto> {
     const accessToken = req.headers.authorization?.split(' ')[1];
 
     if (!accessToken) {
