@@ -15,6 +15,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
@@ -34,6 +35,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Login' })
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiUnauthorizedResponse({ description: 'Email or password is incorrect' })
+  @ApiTooManyRequestsResponse({
+    description: 'Too many failed attempts. Please try again later',
+  })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)

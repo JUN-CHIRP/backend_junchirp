@@ -15,9 +15,7 @@ export class MailService {
       from: `Support Team <${this.configService.get<string>('EMAIL_USER')}>`,
       subject: 'Підтвердження електронної пошти',
       template: './confirmation-email',
-      context: {
-        url: url,
-      },
+      context: { url },
     });
   }
 }
