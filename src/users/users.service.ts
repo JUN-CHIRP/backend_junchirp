@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
+  NotFoundException, UnauthorizedException,
 } from '@nestjs/common';
 import { User, VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -47,11 +47,18 @@ export class UsersService {
     });
   }
 
-  public async getUserById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+  public async getUserById(id: string): Promise<UserResponseDto> {
+    const user = await this.prisma.user.findUnique({
       where: { id },
       include: { role: true, educations: true, socials: true },
     });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid token: user not found');
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   public async createVerificationUrl(
