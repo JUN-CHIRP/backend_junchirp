@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Post, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  UsePipes,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
@@ -14,6 +22,8 @@ import { EmailDto } from './dto/email.dto';
 import { UserResponseDto } from './dto/user.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
+import { Request } from 'express';
+import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
 
 @Controller('users')
 export class UsersController {
@@ -46,10 +56,21 @@ export class UsersController {
   })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
-  @Post('confirm-email')
+  @Post('confirm')
   public async confirmEmail(
     @Body() confirmEmailDto: ConfirmEmailDto,
   ): Promise<UserResponseDto> {
     return this.usersService.confirmEmail(confirmEmailDto);
+  }
+
+  @Auth()
+  @ApiOperation({ summary: 'Get current user' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Invalid token: user not found' })
+  @Get('current')
+  public async getCurrentUser(@Req() req: Request): Promise<UserResponseDto> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.getUserById(user.id);
   }
 }
