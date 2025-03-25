@@ -1,24 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
 import { UserResponseDto } from '../../users/dto/user.response-dto';
+import { RedisService } from '../../redis/redis.service';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   public constructor(
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
+    private readonly redisService: RedisService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: true, // Щоб кожен раз не перелогінюватись токен не втрачає актуальності
       secretOrKey: configService.get<string>('JWT_SECRET') as string,
+      passReqToCallback: true,
     });
   }
 
-  public async validate({ id }: { id: string }): Promise<UserResponseDto> {
+  public async validate(
+    req: Request,
+    { id }: { id: string },
+  ): Promise<UserResponseDto> {
+    const accessToken = req.headers.authorization?.split(' ')[1];
+    if (!accessToken) {
+      throw new UnauthorizedException('Access token is missing');
+    }
+    const isBlacklisted = await this.redisService.isBlacklisted(accessToken);
+    if (isBlacklisted) {
+      throw new UnauthorizedException('Token is invalid');
+    }
+
     return await this.userService.getUserById(id);
   }
 }

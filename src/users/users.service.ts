@@ -1,7 +1,8 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException, UnauthorizedException,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { User, VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';

@@ -1,7 +1,7 @@
 import {
   Body,
   Controller,
-  HttpCode,
+  HttpCode, HttpStatus,
   Post,
   Req,
   Res,
@@ -11,7 +11,7 @@ import {
 import {
   ApiBody,
   ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiCreatedResponse, ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -26,6 +26,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth.response-dto';
 import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
 import { TokenResponseDto } from './dto/token.response-dto';
+import { Auth } from './decorators/auth.decorator';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -40,7 +41,7 @@ export class AuthController {
   })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   public async login(
     @Req() req: Request,
@@ -64,11 +65,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh token' })
   @ApiOkResponse({ type: TokenResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid or expired refresh token' })
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @Post('refresh-token')
   public async refreshToken(
     @Req() req: Request,
   ): Promise<{ accessToken: string }> {
     return this.authService.regenerateAccessToken(req);
+  }
+
+  @Auth()
+  @ApiOperation({ summary: 'Logout' })
+  @ApiNoContentResponse()
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('logout')
+  public async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    return this.authService.logout(req, res);
   }
 }

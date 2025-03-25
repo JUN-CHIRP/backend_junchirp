@@ -5,11 +5,16 @@ import * as path from 'path';
 import { AppModule } from './app.module';
 import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface';
 import * as cookieParser from 'cookie-parser';
+import Redis from 'ioredis';
 
 async function bootstrap(): Promise<void> {
   const PORT = Number(process.env.PORT) || 4000;
   const useSSL = process.env.USE_SSL === 'true';
   const isRender = process.env.RENDER_ENV === 'true';
+  const redis = new Redis(
+    `rediss://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+  );
+  redis.on('error', (err) => console.error('Redis Error:', err));
 
   let httpsOptions: HttpsOptions | undefined;
 
