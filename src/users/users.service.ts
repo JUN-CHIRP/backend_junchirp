@@ -1,9 +1,10 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException, UnauthorizedException,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { User, VerificationToken } from '@prisma/client';
+import { VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
@@ -14,6 +15,7 @@ import { MailService } from '../mail/mail.service';
 import { UserResponseDto } from './dto/user.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { TooManyRequestsException } from '../shared/exceptions/too-many-requests.exception';
+import { RolesService } from '../roles/roles.service';
 
 @Injectable()
 export class UsersService {
@@ -22,9 +24,12 @@ export class UsersService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailService,
+    private rolesService: RolesService,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
+    const role = await this.rolesService.findOrCreateRole('user');
+
     await this.prisma.user.create({
       data: {
         firstName: createUserDto.firstName,
@@ -32,7 +37,7 @@ export class UsersService {
         email: createUserDto.email,
         password: createUserDto.password,
         role: {
-          connect: { roleName: 'user' },
+          connect: { id: role.id },
         },
       },
     });

@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronTasksService } from './shared/services/cron-tasks/cron-tasks.service';
 import { RolesModule } from './roles/roles.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RolesModule } from './roles/roles.module';
     MailModule,
     ScheduleModule.forRoot(),
     RolesModule,
+    RedisModule,
   ],
   providers: [CronTasksService],
 })
