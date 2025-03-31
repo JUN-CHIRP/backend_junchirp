@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  doubleCsrf,
-  DoubleCsrfUtilities,
-} from 'csrf-csrf';
+import { doubleCsrf, DoubleCsrfUtilities } from 'csrf-csrf';
 import { CsrfTokenResponseDto } from './dto/csrf-token.response-dto';
 import { NextFunction, Request, Response } from 'express';
 
