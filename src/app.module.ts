@@ -10,6 +10,7 @@ import { RolesModule } from './roles/roles.module';
 import { RedisModule } from './redis/redis.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CsrfModule } from './csrf/csrf.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { APP_GUARD } from '@nestjs/core';
     ScheduleModule.forRoot(),
     RolesModule,
     RedisModule,
+    CsrfModule,
   ],
   providers: [
     CronTasksService,
