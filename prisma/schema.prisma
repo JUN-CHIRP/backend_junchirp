@@ -8,27 +8,27 @@ datasource db {
 }
 
 model User {
-  id                   String               @id @default(dbgenerated("gen_random_uuid()"))
-  email                String               @unique
-  avatarUrl            String?              @map("avatar_url")
+  id                   String                @id @default(dbgenerated("gen_random_uuid()"))
+  email                String                @unique
+  avatarUrl            String?               @map("avatar_url")
   password             String
-  createdAt            DateTime             @default(now()) @map("created_at")
-  isVerified           Boolean              @default(false) @map("is_verified")
-  firstName            String               @map("first_name")
-  lastName             String               @map("last_name")
-  hardSkills           String[]             @default([]) @map("hard_skills")
-  softSkills           String[]             @default([]) @map("soft_skills")
-  roleId               String               @map("role_id")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  isVerified           Boolean               @default(false) @map("is_verified")
+  firstName            String                @map("first_name")
+  lastName             String                @map("last_name")
+  hardSkills           String[]              @default([]) @map("hard_skills")
+  softSkills           String[]              @default([]) @map("soft_skills")
+  roleId               String                @map("role_id")
   educations           Education[]
   logEvents            LogEvent[]
   loginAttempt         LoginAttempt?
   ownProjects          Project[]
   socials              Social[]
   tasks                Task[]
-  role                 Role                 @relation(fields: [roleId], references: [id])
-  verificationAttempts VerificationAttempt?
+  role                 Role                  @relation(fields: [roleId], references: [id])
+  verificationAttempts VerificationAttempt[]
   verificationToken    VerificationToken?
-  projectRoles         ProjectRole[]        @relation("UserProjectRoles")
+  projectRoles         ProjectRole[]         @relation("UserProjectRoles")
 
   @@map("users")
 }
@@ -54,7 +54,7 @@ model VerificationToken {
 model VerificationAttempt {
   id        String   @id @default(dbgenerated("gen_random_uuid()"))
   createdAt DateTime @default(now()) @map("created_at")
-  userId    String   @unique @map("user_id")
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("verification_attempts")

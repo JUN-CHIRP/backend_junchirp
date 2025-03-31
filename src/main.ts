@@ -6,6 +6,7 @@ import { AppModule } from './app.module';
 import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface';
 import * as cookieParser from 'cookie-parser';
 import Redis from 'ioredis';
+import helmet from 'helmet';
 
 async function bootstrap(): Promise<void> {
   const PORT = Number(process.env.PORT) || 4000;
@@ -29,7 +30,15 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
 
-  app.enableCors({ origin: '*' });
+  app.use(helmet());
+  app.enableCors({
+    origin: [
+      'https://localhost:4200',
+      'https://localhost:3000',
+      'https://frontend-junchirp-123.vercel.app',
+    ],
+    credentials: true,
+  });
   app.use(cookieParser());
   app.setGlobalPrefix('api');
 

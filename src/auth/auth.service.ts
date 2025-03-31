@@ -125,7 +125,7 @@ export class AuthService {
     }
   }
 
-  public login(req: Request, res: Response): AuthResponseDto {
+  public async login(req: Request, res: Response): Promise<AuthResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     const { accessToken, refreshToken } = this.createTokens(user.id);
@@ -218,7 +218,6 @@ export class AuthService {
 
     res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
       httpOnly: true,
-      domain: this.configService.get<string>('SERVER_DOMAIN'),
       expires: expiresIn,
       secure: true,
       sameSite: 'none',

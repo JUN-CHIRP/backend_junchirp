@@ -80,18 +80,8 @@ export class UsersService {
     });
 
     if (count >= 5) {
-      const oldestToken = await this.prisma.verificationAttempt.findFirst({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'asc' },
-        select: { createdAt: true },
-      });
-      const newAvailableTime = oldestToken
-        ? new Date(oldestToken.createdAt)
-        : new Date();
-      newAvailableTime.setHours(newAvailableTime.getHours() + 1);
-
       throw new TooManyRequestsException(
-        `You have used up all your attempts. The next available attempt will be at ${newAvailableTime}`,
+        'You have used up all your attempts. Please try again later.',
       );
     }
 

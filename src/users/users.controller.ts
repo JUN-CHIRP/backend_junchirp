@@ -35,8 +35,7 @@ export class UsersController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiTooManyRequestsResponse({
-    description:
-      'You have used up all your attempts. The next available attempt will be at HH:MM',
+    description: 'You have used up all your attempts. Please try again later.',
   })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
