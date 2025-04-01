@@ -24,6 +24,7 @@ import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Request } from 'express';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -71,5 +72,34 @@ export class UsersController {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.usersService.getUserById(user.id);
+  }
+
+  @ApiOperation({ summary: 'Send email to reset your password' })
+  @ApiOkResponse({ type: MessageResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiTooManyRequestsResponse({
+    description: 'You have used up all your attempts. Please try again later.',
+  })
+  @HttpCode(200)
+  @UsePipes(ValidationPipe)
+  @Post('request-password-reset')
+  public async sendPasswordResetUrl(
+    @Body() body: EmailDto,
+  ): Promise<MessageResponseDto> {
+    return this.usersService.sendPasswordResetUrl(body.email);
+  }
+
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiOkResponse({ type: MessageResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid or expired token',
+  })
+  @HttpCode(200)
+  @UsePipes(ValidationPipe)
+  @Post('reset-password')
+  public async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<MessageResponseDto> {
+    return this.usersService.resetPassword(resetPasswordDto);
   }
 }

@@ -10,13 +10,14 @@ export class CronTasksService {
   public async deleteEveryMinute(): Promise<void> {
     await this.deleteUnverifiedUsers();
     await this.deleteEntryAttempts();
+    await this.deletePasswordAttempts();
+    await this.deleteUnusedPasswordTokens();
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  public async deleteUnusedCodes(): Promise<void> {
+  private async deleteUnusedPasswordTokens(): Promise<void> {
     const thresholdDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    await this.prisma.verificationToken.deleteMany({
+    await this.prisma.resetPasswordToken.deleteMany({
       where: {
         createdAt: { lte: thresholdDate },
       },
@@ -38,6 +39,16 @@ export class CronTasksService {
     const thresholdDate = new Date(Date.now() - 60 * 60 * 1000);
 
     await this.prisma.verificationAttempt.deleteMany({
+      where: {
+        createdAt: { lt: thresholdDate },
+      },
+    });
+  }
+
+  private async deletePasswordAttempts(): Promise<void> {
+    const thresholdDate = new Date(Date.now() - 60 * 60 * 1000);
+
+    await this.prisma.resetPasswordAttempt.deleteMany({
       where: {
         createdAt: { lt: thresholdDate },
       },

@@ -18,4 +18,17 @@ export class MailService {
       context: { url },
     });
   }
+
+  public async sendResetPasswordMail(
+    email: string,
+    url: string,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: email,
+      from: `Support Team <${this.configService.get<string>('EMAIL_USER')}>`,
+      subject: 'Твоє посилання для відновлення паролю',
+      template: './reset-password-email',
+      context: { url },
+    });
+  }
 }
