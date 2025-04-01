@@ -12,7 +12,7 @@ import {
 import {
   ApiBody,
   ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiCreatedResponse, ApiHeader,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -41,6 +41,11 @@ export class AuthController {
   @ApiTooManyRequestsResponse({
     description: 'Too many failed attempts. Please try again later',
   })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -55,6 +60,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Registration' })
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiConflictResponse({ description: 'User with this email already exists' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @UsePipes(ValidationPipe)
   @Post('register')
   public async registration(
@@ -68,6 +78,11 @@ export class AuthController {
   @ApiOkResponse({ type: TokenResponseDto })
   @ApiUnauthorizedResponse({ description: 'Invalid or expired refresh token' })
   @HttpCode(HttpStatus.OK)
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @Post('refresh-token')
   public async refreshToken(
     @Req() req: Request,
@@ -79,6 +94,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiUnauthorizedResponse({ description: 'Token is invalid' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   public async logout(
