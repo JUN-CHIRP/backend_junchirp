@@ -6,6 +6,9 @@ import { AppModule } from './app.module';
 import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface';
 import * as cookieParser from 'cookie-parser';
 import Redis from 'ioredis';
+import helmet from 'helmet';
+import { CsrfService } from './csrf/csrf.service';
+import { NextFunction, Request, Response } from 'express';
 
 async function bootstrap(): Promise<void> {
   const PORT = Number(process.env.PORT) || 4000;
@@ -28,9 +31,21 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
+  const csrfService = app.get(CsrfService);
 
-  app.enableCors({ origin: '*' });
-  app.use(cookieParser());
+  app.use(helmet());
+  app.enableCors({
+    origin: [
+      'https://localhost:4200',
+      'https://localhost:3000',
+      'https://frontend-junchirp-123.vercel.app',
+    ],
+    credentials: true,
+  });
+  app.use(cookieParser(process.env.CSRF_SECRET ?? 'default_secret'));
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    csrfService.doubleCsrfProtection(req, res, next),
+  );
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
