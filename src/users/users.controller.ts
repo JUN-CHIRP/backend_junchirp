@@ -10,7 +10,7 @@ import {
 import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
-  ApiBadRequestResponse,
+  ApiBadRequestResponse, ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -38,6 +38,11 @@ export class UsersController {
   @ApiTooManyRequestsResponse({
     description: 'You have used up all your attempts. Please try again later.',
   })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
   @Post('send-confirmation-email')
@@ -53,6 +58,11 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User with this email not found' })
   @ApiBadRequestResponse({
     description: 'Invalid or expired verification token',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
   })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
@@ -80,6 +90,11 @@ export class UsersController {
   @ApiTooManyRequestsResponse({
     description: 'You have used up all your attempts. Please try again later.',
   })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
   @Post('request-password-reset')
@@ -93,6 +108,11 @@ export class UsersController {
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({
     description: 'Invalid or expired token',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
   })
   @HttpCode(200)
   @UsePipes(ValidationPipe)
