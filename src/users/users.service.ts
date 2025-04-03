@@ -280,33 +280,44 @@ export class UsersService {
   public async createOrUpdateGoogleUser(
     createGoogleUserDto: CreateGoogleUserDto,
   ): Promise<UserResponseDto> {
-    const role = await this.rolesService.findOrCreateRole('user');
+    const user = await this.getUserByEmail(createGoogleUserDto.email);
+    let updatedUser: UserResponseDto;
 
-    const user = await this.prisma.user.upsert({
-      where: { email: createGoogleUserDto.email },
-      update: {
-        googleId: createGoogleUserDto.googleId,
-      },
-      create: {
-        firstName: createGoogleUserDto.firstName,
-        lastName: createGoogleUserDto.lastName,
-        email: createGoogleUserDto.email,
-        googleId: createGoogleUserDto.googleId,
-        role: {
-          connect: { id: role.id },
+    if (!user) {
+      const role = await this.rolesService.findOrCreateRole('user');
+
+      updatedUser = await this.prisma.user.create({
+        data: {
+          firstName: createGoogleUserDto.firstName,
+          lastName: createGoogleUserDto.lastName,
+          email: createGoogleUserDto.email,
+          googleId: createGoogleUserDto.googleId,
+          role: {
+            connect: { id: role.id },
+          },
         },
-      },
-      include: { role: true, educations: true, socials: true },
-    });
-
-    if (!user.isVerified) {
-      const record = await this.createVerificationUrl(user.email);
-      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
-      this.mailService.sendVerificationMail(user.email, url).catch((err) => {
-        console.error('Error sending verification url:', err);
+        include: { role: true, educations: true, socials: true },
       });
+    } else if (user && !user.googleId) {
+      updatedUser = await this.prisma.user.update({
+        where: { email: createGoogleUserDto.email },
+        data: { googleId: createGoogleUserDto.googleId },
+        include: { role: true, educations: true, socials: true },
+      });
+    } else {
+      updatedUser = user;
     }
 
-    return user;
+    if (!updatedUser.isVerified) {
+      const record = await this.createVerificationUrl(updatedUser.email);
+      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+      this.mailService
+        .sendVerificationMail(updatedUser.email, url)
+        .catch((err) => {
+          console.error('Error sending verification url:', err);
+        });
+    }
+
+    return updatedUser;
   }
 }
