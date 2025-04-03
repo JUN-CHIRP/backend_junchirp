@@ -267,4 +267,29 @@ export class AuthService {
       throw new UnauthorizedException(`Token is invalid: ${error}`);
     }
   }
+
+  public async googleLogin(
+    req: Request,
+    res: Response,
+  ): Promise<AuthResponseDto> {
+    if (!req.user) {
+      throw new UnauthorizedException('Google authentication failed');
+    }
+
+    const reqUser = req.user as {
+      googleId: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      picture: string;
+      accessToken: string;
+      refreshToken: string;
+    };
+
+    const user = await this.usersService.createOrUpdateGoogleUser(reqUser);
+    const { accessToken, refreshToken } = this.createTokens(user.id);
+    this.addRefreshTokenToResponse(res, refreshToken);
+
+    return { user, accessToken };
+  }
 }

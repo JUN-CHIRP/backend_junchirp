@@ -10,7 +10,8 @@ import {
 import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
-  ApiBadRequestResponse, ApiHeader,
+  ApiBadRequestResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,

@@ -18,6 +18,7 @@ import { TooManyRequestsException } from '../shared/exceptions/too-many-requests
 import { RolesService } from '../roles/roles.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as bcrypt from 'bcrypt';
+import { CreateGoogleUserDto } from './dto/create-google-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -274,5 +275,49 @@ export class UsersService {
     });
 
     return { message: 'Password has been reset successfully.' };
+  }
+
+  public async createOrUpdateGoogleUser(
+    createGoogleUserDto: CreateGoogleUserDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.getUserByEmail(createGoogleUserDto.email);
+    let updatedUser: UserResponseDto;
+
+    if (!user) {
+      const role = await this.rolesService.findOrCreateRole('user');
+
+      updatedUser = await this.prisma.user.create({
+        data: {
+          firstName: createGoogleUserDto.firstName,
+          lastName: createGoogleUserDto.lastName,
+          email: createGoogleUserDto.email,
+          googleId: createGoogleUserDto.googleId,
+          role: {
+            connect: { id: role.id },
+          },
+        },
+        include: { role: true, educations: true, socials: true },
+      });
+    } else if (user && !user.googleId) {
+      updatedUser = await this.prisma.user.update({
+        where: { email: createGoogleUserDto.email },
+        data: { googleId: createGoogleUserDto.googleId },
+        include: { role: true, educations: true, socials: true },
+      });
+    } else {
+      updatedUser = user;
+    }
+
+    if (!updatedUser.isVerified) {
+      const record = await this.createVerificationUrl(updatedUser.email);
+      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+      this.mailService
+        .sendVerificationMail(updatedUser.email, url)
+        .catch((err) => {
+          console.error('Error sending verification url:', err);
+        });
+    }
+
+    return updatedUser;
   }
 }
