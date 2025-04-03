@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -12,9 +13,11 @@ import {
 import {
   ApiBody,
   ApiConflictResponse,
-  ApiCreatedResponse, ApiHeader,
+  ApiCreatedResponse,
+  ApiHeader,
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
@@ -29,6 +32,7 @@ import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
 import { TokenResponseDto } from './dto/token.response-dto';
 import { Auth } from './decorators/auth.decorator';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
+import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -106,5 +110,25 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<MessageResponseDto> {
     return this.authService.logout(req, res);
+  }
+
+  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiResponse({ status: HttpStatus.FOUND })
+  @HttpCode(HttpStatus.FOUND)
+  @UseGuards(GoogleAuthGuard)
+  @Get('google')
+  // eslint-disable-next-line
+  public async googleAuth(): Promise<void> {}
+
+  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiOkResponse({ type: AuthResponseDto })
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Callback endpoint for Google authentication' })
+  public async googleRedirect(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    return this.authService.googleLogin(req, res);
   }
 }

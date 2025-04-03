@@ -10,6 +10,12 @@ export class UserResponseDto {
   })
   public readonly id: string;
 
+  @ApiProperty({
+    example: '113273902301932041645',
+    description: 'Google identifier',
+  })
+  public readonly googleId: string | null;
+
   @ApiProperty({ example: 'email@mail.com', description: 'Email' })
   public readonly email: string;
 
