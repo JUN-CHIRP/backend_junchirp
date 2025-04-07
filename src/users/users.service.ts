@@ -1,8 +1,9 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ResetPasswordToken, VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +20,8 @@ import { RolesService } from '../roles/roles.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as bcrypt from 'bcrypt';
 import { CreateGoogleUserDto } from './dto/create-google-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class UsersService {
@@ -51,18 +54,30 @@ export class UsersService {
   ): Promise<UserWithPasswordResponseDto | null> {
     return this.prisma.user.findUnique({
       where: { email },
-      include: { role: true, educations: true, socials: true },
+      include: {
+        role: true,
+        educations: true,
+        socials: true,
+        softSkills: true,
+        hardSkills: true,
+      },
     });
   }
 
   public async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { role: true, educations: true, socials: true },
+      include: {
+        role: true,
+        educations: true,
+        socials: true,
+        softSkills: true,
+        hardSkills: true,
+      },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid token: user not found');
+      throw new NotFoundException('User not found');
     }
 
     const { password, ...userWithoutPassword } = user;
@@ -296,13 +311,25 @@ export class UsersService {
             connect: { id: role.id },
           },
         },
-        include: { role: true, educations: true, socials: true },
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
       });
     } else if (user && !user.googleId) {
       updatedUser = await this.prisma.user.update({
         where: { email: createGoogleUserDto.email },
         data: { googleId: createGoogleUserDto.googleId },
-        include: { role: true, educations: true, socials: true },
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
       });
     } else {
       updatedUser = user;
@@ -319,5 +346,51 @@ export class UsersService {
     }
 
     return updatedUser;
+  }
+
+  public async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    try {
+      const user = await this.getUserById(id);
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: updateUserDto,
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
+      });
+
+      if (user.email !== updatedUser.email) {
+        const record = await this.createVerificationUrl(updatedUser.email);
+        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+
+        this.mailService
+          .sendVerificationMail(updatedUser.email, url)
+          .catch((err) => {
+            console.error('Error sending verification url:', err);
+          });
+      }
+
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        switch (error.code) {
+          case 'P2001':
+            throw new NotFoundException('User not found');
+          case 'P2002':
+            throw new ConflictException('Email is already in use');
+          default:
+            throw new InternalServerErrorException('Database error');
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 }

@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoleResponseDto } from '../../roles/dto/role.response-dto';
-import { EducationResponseDto } from './education.response-dto';
-import { SocialResponseDto } from './social.response-dto';
+import { EducationResponseDto } from '../../educations/dto/education.response-dto';
+import { SocialResponseDto } from '../../socials/dto/social.response-dto';
+import { SoftSkillResponseDto } from '../../soft-skills/dto/soft-skill.response-dto';
+import { HardSkillResponseDto } from '../../hard-skills/dto/hard-skill.response-dto';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -13,6 +15,7 @@ export class UserResponseDto {
   @ApiProperty({
     example: '113273902301932041645',
     description: 'Google identifier',
+    type: String,
   })
   public readonly googleId: string | null;
 
@@ -25,7 +28,11 @@ export class UserResponseDto {
   @ApiProperty({ example: 'Doe', description: 'Last name' })
   public readonly lastName: string;
 
-  @ApiProperty({ example: 'avatar-url', description: 'Avatar URL' })
+  @ApiProperty({
+    example: 'avatar-url',
+    description: 'Avatar URL',
+    type: String,
+  })
   public readonly avatarUrl: string | null;
 
   @ApiProperty({ example: false, description: `Is user's email verified?` })
@@ -36,20 +43,6 @@ export class UserResponseDto {
     description: 'Date of profile creation',
   })
   public readonly createdAt: Date;
-
-  @ApiProperty({
-    example: ['JavaScript', 'TypeScript', 'NestJS'],
-    maxItems: 20,
-    description: 'Date of profile creation',
-  })
-  public readonly softSkills: string[];
-
-  @ApiProperty({
-    example: ['Communication', 'Teamwork'],
-    maxItems: 20,
-    description: 'Date of profile creation',
-  })
-  public readonly hardSkills: string[];
 
   @ApiProperty({
     example: 'd6686d4c-9485-4256-8410-193860442a86',
@@ -65,4 +58,10 @@ export class UserResponseDto {
 
   @ApiProperty({ type: () => [SocialResponseDto] })
   public readonly socials: SocialResponseDto[];
+
+  @ApiProperty({ type: () => [SoftSkillResponseDto] })
+  public readonly softSkills: SoftSkillResponseDto[];
+
+  @ApiProperty({ type: () => [HardSkillResponseDto] })
+  public readonly hardSkills: HardSkillResponseDto[];
 }

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   UsePipes,
@@ -11,6 +12,7 @@ import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -26,6 +28,7 @@ import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Request } from 'express';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -77,7 +80,7 @@ export class UsersController {
   @Auth()
   @ApiOperation({ summary: 'Get current user' })
   @ApiOkResponse({ type: UserResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Invalid token: user not found' })
+  @ApiNotFoundResponse({ description: 'User not found' })
   @Get('current')
   public async getCurrentUser(@Req() req: Request): Promise<UserResponseDto> {
     const user: UserWithPasswordResponseDto =
@@ -122,5 +125,26 @@ export class UsersController {
     @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<MessageResponseDto> {
     return this.usersService.resetPassword(resetPasswordDto);
+  }
+
+  @Auth()
+  @ApiOperation({ summary: 'Update current user' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiConflictResponse({ description: 'Email is already in use' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @UsePipes(ValidationPipe)
+  @Patch('current')
+  public async updateUser(
+    @Req() req: Request,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.updateUser(user.id, updateUserDto);
   }
 }

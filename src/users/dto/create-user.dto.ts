@@ -6,7 +6,6 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-
 import { IsPasswordInBlackList } from '../../shared/validators/is-in-black-list.validator';
 import { IsPasswordNotContainName } from '../../shared/validators/is-password-not-contain-name.validator';
 

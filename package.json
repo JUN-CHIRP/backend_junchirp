@@ -18,7 +18,15 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "neon:reset": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate reset",
+    "neon:reset:force": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate reset --force",
+    "neon:generate": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma generate",
+    "neon:migrate:create": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate dev --create-only --name",
+    "neon:migrate:dev": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate dev --name",
+    "neon:migrate:deploy": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate deploy",
+    "neon:db:push": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma db push",
+    "neon:db:pull": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma db pull"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
@@ -49,7 +57,8 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -67,6 +76,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.0",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.26.0",
     "@typescript-eslint/parser": "^8.26.0",
     "eslint": "^9.21.0",
