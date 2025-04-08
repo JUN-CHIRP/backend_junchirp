@@ -5,6 +5,6 @@ import { AtLeastOneField } from '../../shared/validators/at-least-one-field.vali
 export class UpdateUserDto extends PartialType(
   PickType(CreateUserDto, ['firstName', 'lastName', 'email']),
 ) {
-  @AtLeastOneField(['userName', 'email'])
+  @AtLeastOneField(['firstName', 'lastName', 'email'])
   public readonly atLeastOneFieldValidator?: unknown;
 }
