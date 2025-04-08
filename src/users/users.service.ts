@@ -22,6 +22,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateGoogleUserDto } from './dto/create-google-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { UserMapper } from '../shared/mappers/user.mapper';
 
 @Injectable()
 export class UsersService {
@@ -51,8 +52,9 @@ export class UsersService {
 
   public async getUserByEmail(
     email: string,
-  ): Promise<UserWithPasswordResponseDto | null> {
-    return this.prisma.user.findUnique({
+    withPassword: boolean,
+  ): Promise<UserWithPasswordResponseDto | UserResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
         role: true,
@@ -62,6 +64,8 @@ export class UsersService {
         hardSkills: true,
       },
     });
+
+    return user ? UserMapper.toResponse(user, withPassword) : null;
   }
 
   public async getUserById(id: string): Promise<UserResponseDto> {
@@ -80,14 +84,13 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return UserMapper.toResponse(user, false);
   }
 
   public async createVerificationUrl(
     email: string,
   ): Promise<VerificationToken> {
-    const user = await this.getUserByEmail(email);
+    const user = await this.getUserByEmail(email, false);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -148,7 +151,7 @@ export class UsersService {
   public async confirmEmail(
     confirmEmailDto: ConfirmEmailDto,
   ): Promise<UserResponseDto> {
-    const user = await this.getUserByEmail(confirmEmailDto.email);
+    const user = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!user) {
       throw new NotFoundException('User with this email not found');
@@ -184,14 +187,13 @@ export class UsersService {
       }
     });
 
-    const updatedUser = await this.getUserByEmail(confirmEmailDto.email);
+    const updatedUser = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!updatedUser) {
       throw new NotFoundException('User with this email not found');
     }
 
-    const { password, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
+    return updatedUser;
   }
 
   public async sendPasswordResetUrl(
@@ -210,7 +212,7 @@ export class UsersService {
   public async createPasswordResetUrl(
     email: string,
   ): Promise<ResetPasswordToken> {
-    const user = await this.getUserByEmail(email);
+    const user = await this.getUserByEmail(email, false);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -295,13 +297,13 @@ export class UsersService {
   public async createOrUpdateGoogleUser(
     createGoogleUserDto: CreateGoogleUserDto,
   ): Promise<UserResponseDto> {
-    const user = await this.getUserByEmail(createGoogleUserDto.email);
+    const user = await this.getUserByEmail(createGoogleUserDto.email, false);
     let updatedUser: UserResponseDto;
 
     if (!user) {
       const role = await this.rolesService.findOrCreateRole('user');
 
-      updatedUser = await this.prisma.user.create({
+      const userFromDB = await this.prisma.user.create({
         data: {
           firstName: createGoogleUserDto.firstName,
           lastName: createGoogleUserDto.lastName,
@@ -319,8 +321,9 @@ export class UsersService {
           hardSkills: true,
         },
       });
+      updatedUser = UserMapper.toResponse(userFromDB, false);
     } else if (user && !user.googleId) {
-      updatedUser = await this.prisma.user.update({
+      const userFromDB = await this.prisma.user.update({
         where: { email: createGoogleUserDto.email },
         data: { googleId: createGoogleUserDto.googleId },
         include: {
@@ -331,6 +334,7 @@ export class UsersService {
           hardSkills: true,
         },
       });
+      updatedUser = UserMapper.toResponse(userFromDB, false);
     } else {
       updatedUser = user;
     }
@@ -377,7 +381,7 @@ export class UsersService {
           });
       }
 
-      return updatedUser;
+      return UserMapper.toResponse(updatedUser, false);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {

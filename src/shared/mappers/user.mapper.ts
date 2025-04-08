@@ -11,6 +11,7 @@ import { EducationMapper } from './education.mapper';
 import { SocialMapper } from './social.mapper';
 import { SoftSkillMapper } from './soft-skill.mapper';
 import { HardSkillMapper } from './hard-skill.mapper';
+import { UserWithPasswordResponseDto } from '../../users/dto/user-with-password.response-dto';
 
 export class UserMapper {
   public static toResponse(
@@ -21,8 +22,9 @@ export class UserMapper {
       softSkills: UserSoftSkill[];
       hardSkills: UserHardSkill[];
     },
-  ): UserResponseDto {
-    return {
+    withPassword: boolean,
+  ): UserResponseDto | UserWithPasswordResponseDto {
+    const base = {
       id: user.id,
       googleId: user.googleId,
       firstName: user.firstName,
@@ -30,8 +32,6 @@ export class UserMapper {
       email: user.email,
       avatarUrl: user.avatarUrl,
       isVerified: user.isVerified,
-      createdAt: user.createdAt,
-      roleId: user.roleId,
       role: user.role,
       educations: user.educations.map((education) =>
         EducationMapper.toResponse(education),
@@ -44,5 +44,12 @@ export class UserMapper {
         HardSkillMapper.toResponse(skill),
       ),
     };
+
+    return withPassword
+      ? {
+          ...base,
+          password: user.password,
+        }
+      : base;
   }
 }

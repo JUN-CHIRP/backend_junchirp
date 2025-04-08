@@ -38,18 +38,6 @@ export class UserResponseDto {
   @ApiProperty({ example: false, description: `Is user's email verified?` })
   public readonly isVerified: boolean;
 
-  @ApiProperty({
-    example: '2025-03-10T12:43:26.437Z',
-    description: 'Date of profile creation',
-  })
-  public readonly createdAt: Date;
-
-  @ApiProperty({
-    example: 'd6686d4c-9485-4256-8410-193860442a86',
-    description: 'Role identifier',
-  })
-  public readonly roleId: string;
-
   @ApiProperty({ type: () => RoleResponseDto })
   public readonly role: RoleResponseDto;
 

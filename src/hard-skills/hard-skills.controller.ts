@@ -1,13 +1,14 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UsePipes,
   Req,
+  Put,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { HardSkillsService } from './hard-skills.service';
 import { CreateHardSkillDto } from './dto/create-hard-skill.dto';
@@ -15,53 +16,77 @@ import { UpdateHardSkillDto } from './dto/update-hard-skill.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiHeader,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { EducationResponseDto } from '../educations/dto/education.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Request } from 'express';
-import { CreateEducationDto } from '../educations/dto/create-education.dto';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { HardSkillResponseDto } from './dto/hard-skill.response-dto';
+import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 
 @Auth()
 @Controller('hard-skills')
 export class HardSkillsController {
-  // public constructor(private hardSkillsService: HardSkillsService) {}
+  public constructor(private hardSkillsService: HardSkillsService) {}
 
-  // @ApiOperation({ summary: 'Add hard skill' })
-  // @ApiCreatedResponse({ type: HardSkillResponseDto })
-  // @ApiBadRequestResponse({
-  //   description: 'You can only add up to 5 educations',
-  // })
-  // @ApiHeader({
-  //   name: 'x-csrf-token',
-  //   description: 'CSRF token for the request',
-  //   required: true,
-  // })
-  // @UsePipes(ValidationPipe)
-  // @Post('')
-  // public async addSocialNetwork(
-  //   @Req() req: Request,
-  //   @Body() createEducationDto: CreateEducationDto,
-  // ): Promise<EducationResponseDto> {
-  //   const user: UserWithPasswordResponseDto =
-  //     req.user as UserWithPasswordResponseDto;
-  //   return this.educationsService.addEducation(user.id, createEducationDto);
-  // }
+  @ApiOperation({ summary: 'Add hard skill' })
+  @ApiCreatedResponse({ type: HardSkillResponseDto })
+  @ApiBadRequestResponse({
+    description: 'You can only add up to 20 hard skills.',
+  })
+  @ApiConflictResponse({ description: 'Hard skill is already in list' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @UsePipes(ValidationPipe)
+  @Post('')
+  public async addHardSkill(
+    @Req() req: Request,
+    @Body() createHardSkillDto: CreateHardSkillDto,
+  ): Promise<HardSkillResponseDto> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.hardSkillsService.addHardSkill(user.id, createHardSkillDto);
+  }
 
-  // @Patch(':id')
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updateHardSkillDto: UpdateHardSkillDto,
-  // ) {
-  //   return this.hardSkillsService.update(+id, updateHardSkillDto);
-  // }
-  //
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.hardSkillsService.remove(+id);
-  // }
+  @ApiOperation({ summary: 'Update hard skill' })
+  @ApiOkResponse({ type: HardSkillResponseDto })
+  @ApiNotFoundResponse({ description: 'Hard skill not found' })
+  @ApiConflictResponse({ description: 'Hard skill is already in list' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @Put(':id')
+  public async updateHardSkill(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Body(ValidationPipe) updateHardSkillDto: UpdateHardSkillDto,
+  ): Promise<HardSkillResponseDto> {
+    return this.hardSkillsService.updateHardSkill(id, updateHardSkillDto);
+  }
+
+  @ApiOperation({ summary: 'Delete hard skill' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({ description: 'Hard skill not found' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  public async deleteHardSkill(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<void> {
+    return this.hardSkillsService.deleteHardSkill(id);
+  }
 }

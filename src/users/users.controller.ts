@@ -128,7 +128,9 @@ export class UsersController {
   }
 
   @Auth()
-  @ApiOperation({ summary: 'Update current user' })
+  @ApiOperation({
+    summary: 'Update current user (first name, last name, email)',
+  })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiConflictResponse({ description: 'Email is already in use' })

@@ -197,6 +197,7 @@ model Education {
   specialization String
   user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, institution, specialization])
   @@map("educations")
 }
 
