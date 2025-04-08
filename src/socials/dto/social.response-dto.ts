@@ -11,11 +11,11 @@ export class SocialResponseDto {
     example: 'LinkedIn',
     description: 'Social network name',
   })
-  public readonly socialName: string;
+  public readonly network: string;
 
   @ApiProperty({
     example: 'https://linkedin.com/in/user-125478',
     description: 'Profile url',
   })
-  public readonly profileLink: string;
+  public readonly url: string;
 }

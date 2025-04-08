@@ -13,6 +13,6 @@ export class EducationResponseDto {
   })
   public readonly institution: string;
 
-  @ApiProperty({ example: 'Mathematics', description: 'Speciality' })
-  public readonly speciality: string;
+  @ApiProperty({ example: 'Mathematics', description: 'Specialization' })
+  public readonly specialization: string;
 }

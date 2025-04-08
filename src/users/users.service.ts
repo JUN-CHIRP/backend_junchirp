@@ -1,8 +1,9 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ResetPasswordToken, VerificationToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +20,9 @@ import { RolesService } from '../roles/roles.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as bcrypt from 'bcrypt';
 import { CreateGoogleUserDto } from './dto/create-google-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { UserMapper } from '../shared/mappers/user.mapper';
 
 @Injectable()
 export class UsersService {
@@ -48,31 +52,45 @@ export class UsersService {
 
   public async getUserByEmail(
     email: string,
-  ): Promise<UserWithPasswordResponseDto | null> {
-    return this.prisma.user.findUnique({
+    withPassword: boolean,
+  ): Promise<UserWithPasswordResponseDto | UserResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { role: true, educations: true, socials: true },
+      include: {
+        role: true,
+        educations: true,
+        socials: true,
+        softSkills: true,
+        hardSkills: true,
+      },
     });
+
+    return user ? UserMapper.toResponse(user, withPassword) : null;
   }
 
   public async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { role: true, educations: true, socials: true },
+      include: {
+        role: true,
+        educations: true,
+        socials: true,
+        softSkills: true,
+        hardSkills: true,
+      },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid token: user not found');
+      throw new NotFoundException('User not found');
     }
 
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return UserMapper.toResponse(user, false);
   }
 
   public async createVerificationUrl(
     email: string,
   ): Promise<VerificationToken> {
-    const user = await this.getUserByEmail(email);
+    const user = await this.getUserByEmail(email, false);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -133,7 +151,7 @@ export class UsersService {
   public async confirmEmail(
     confirmEmailDto: ConfirmEmailDto,
   ): Promise<UserResponseDto> {
-    const user = await this.getUserByEmail(confirmEmailDto.email);
+    const user = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!user) {
       throw new NotFoundException('User with this email not found');
@@ -169,14 +187,13 @@ export class UsersService {
       }
     });
 
-    const updatedUser = await this.getUserByEmail(confirmEmailDto.email);
+    const updatedUser = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!updatedUser) {
       throw new NotFoundException('User with this email not found');
     }
 
-    const { password, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
+    return updatedUser;
   }
 
   public async sendPasswordResetUrl(
@@ -195,7 +212,7 @@ export class UsersService {
   public async createPasswordResetUrl(
     email: string,
   ): Promise<ResetPasswordToken> {
-    const user = await this.getUserByEmail(email);
+    const user = await this.getUserByEmail(email, false);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -280,13 +297,13 @@ export class UsersService {
   public async createOrUpdateGoogleUser(
     createGoogleUserDto: CreateGoogleUserDto,
   ): Promise<UserResponseDto> {
-    const user = await this.getUserByEmail(createGoogleUserDto.email);
+    const user = await this.getUserByEmail(createGoogleUserDto.email, false);
     let updatedUser: UserResponseDto;
 
     if (!user) {
       const role = await this.rolesService.findOrCreateRole('user');
 
-      updatedUser = await this.prisma.user.create({
+      const userFromDB = await this.prisma.user.create({
         data: {
           firstName: createGoogleUserDto.firstName,
           lastName: createGoogleUserDto.lastName,
@@ -296,14 +313,28 @@ export class UsersService {
             connect: { id: role.id },
           },
         },
-        include: { role: true, educations: true, socials: true },
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
       });
+      updatedUser = UserMapper.toResponse(userFromDB, false);
     } else if (user && !user.googleId) {
-      updatedUser = await this.prisma.user.update({
+      const userFromDB = await this.prisma.user.update({
         where: { email: createGoogleUserDto.email },
         data: { googleId: createGoogleUserDto.googleId },
-        include: { role: true, educations: true, socials: true },
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
       });
+      updatedUser = UserMapper.toResponse(userFromDB, false);
     } else {
       updatedUser = user;
     }
@@ -319,5 +350,51 @@ export class UsersService {
     }
 
     return updatedUser;
+  }
+
+  public async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    try {
+      const user = await this.getUserById(id);
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: updateUserDto,
+        include: {
+          role: true,
+          educations: true,
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
+      });
+
+      if (user.email !== updatedUser.email) {
+        const record = await this.createVerificationUrl(updatedUser.email);
+        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+
+        this.mailService
+          .sendVerificationMail(updatedUser.email, url)
+          .catch((err) => {
+            console.error('Error sending verification url:', err);
+          });
+      }
+
+      return UserMapper.toResponse(updatedUser, false);
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        switch (error.code) {
+          case 'P2001':
+            throw new NotFoundException('User not found');
+          case 'P2002':
+            throw new ConflictException('Email is already in use');
+          default:
+            throw new InternalServerErrorException('Database error');
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 }

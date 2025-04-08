@@ -11,6 +11,10 @@ import { RedisModule } from './redis/redis.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CsrfModule } from './csrf/csrf.module';
+import { SocialsModule } from './socials/socials.module';
+import { EducationsModule } from './educations/educations.module';
+import { SoftSkillsModule } from './soft-skills/soft-skills.module';
+import { HardSkillsModule } from './hard-skills/hard-skills.module';
 
 @Module({
   imports: [
@@ -34,6 +38,10 @@ import { CsrfModule } from './csrf/csrf.module';
     RolesModule,
     RedisModule,
     CsrfModule,
+    SocialsModule,
+    EducationsModule,
+    SoftSkillsModule,
+    HardSkillsModule,
   ],
   providers: [
     CronTasksService,

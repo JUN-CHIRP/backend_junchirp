@@ -36,7 +36,10 @@ export class AuthService {
   ) {}
 
   public async validateUser(loginDto: LoginDto): Promise<UserResponseDto> {
-    const user = await this.usersService.getUserByEmail(loginDto.email);
+    const user = (await this.usersService.getUserByEmail(
+      loginDto.email,
+      true,
+    )) as UserWithPasswordResponseDto | null;
 
     if (!user) {
       throw new UnauthorizedException('Email or password is incorrect');
@@ -144,6 +147,7 @@ export class AuthService {
   ): Promise<AuthResponseDto> {
     const candidate = await this.usersService.getUserByEmail(
       createUserDto.email,
+      false,
     );
 
     if (candidate) {
@@ -156,7 +160,11 @@ export class AuthService {
       password: hashPassword,
     });
 
-    const user = await this.usersService.getUserByEmail(createUserDto.email);
+    const user = await this.usersService.getUserByEmail(
+      createUserDto.email,
+      false,
+    );
+
     if (!user) {
       throw new InternalServerErrorException(
         'Something went wrong. Please try again later',
@@ -165,7 +173,6 @@ export class AuthService {
 
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
-    const { password, ...userWithoutPassword } = user;
     const record = await this.usersService.createVerificationUrl(
       createUserDto.email,
     );
@@ -177,10 +184,7 @@ export class AuthService {
         console.error('Error sending verification url:', err);
       });
 
-    return {
-      user: userWithoutPassword,
-      accessToken,
-    };
+    return { user, accessToken };
   }
 
   public createAccessToken(userId: string): string {
