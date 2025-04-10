@@ -23,6 +23,7 @@ import { CreateGoogleUserDto } from './dto/create-google-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { UserMapper } from '../shared/mappers/user.mapper';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
@@ -32,6 +33,7 @@ export class UsersService {
     private configService: ConfigService,
     private mailService: MailService,
     private rolesService: RolesService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
@@ -43,6 +45,7 @@ export class UsersService {
         lastName: createUserDto.lastName,
         email: createUserDto.email,
         password: createUserDto.password,
+        avatarUrl: this.cloudinaryService.getUrl('avatars/avatar_beta'),
         role: {
           connect: { id: role.id },
         },
@@ -309,6 +312,7 @@ export class UsersService {
           lastName: createGoogleUserDto.lastName,
           email: createGoogleUserDto.email,
           googleId: createGoogleUserDto.googleId,
+          avatarUrl: this.cloudinaryService.getUrl('avatars/avatar_beta'),
           role: {
             connect: { id: role.id },
           },
