@@ -28,12 +28,8 @@ export class UserResponseDto {
   @ApiProperty({ example: 'Doe', description: 'Last name' })
   public readonly lastName: string;
 
-  @ApiProperty({
-    example: 'avatar-url',
-    description: 'Avatar URL',
-    type: String,
-  })
-  public readonly avatarUrl: string | null;
+  @ApiProperty({ example: 'avatar-url', description: 'Avatar URL' })
+  public readonly avatarUrl: string;
 
   @ApiProperty({ example: false, description: `Is user's email verified?` })
   public readonly isVerified: boolean;

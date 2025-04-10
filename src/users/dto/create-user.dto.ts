@@ -14,7 +14,7 @@ export class CreateUserDto {
   @IsString({ message: 'Must be a string' })
   @Length(7, 254, { message: 'Must be between 7 and 254 characters' })
   @IsEmail({}, { message: 'Email is incorrect' })
-  @Matches(/^(?!.*[а-яА-ЯіІєЄїЇ])(?!.*\.ru$)/, {
+  @Matches(/^(?!.*[а-яА-ЯґҐіІєЄїЇ])(?!.*\.ru$)/, {
     message: 'Invalid email format or contains a restricted domain',
   })
   @IsNotEmpty({ message: 'Email is required' })
@@ -35,7 +35,7 @@ export class CreateUserDto {
   @ApiProperty({ example: 'John', description: 'First name' })
   @IsString({ message: 'Must be a string' })
   @Length(2, 50, { message: 'Must be between 2 and 50 characters' })
-  @Matches(/^[a-zA-Zа-яА-ЯґҐїЇєЄ' -]{2,50}$/, {
+  @Matches(/^[a-zA-Zа-яА-ЯґҐіІїЇєЄ'’ -]{2,50}$/, {
     message: 'First name is incorrect',
   })
   @IsNotEmpty({ message: 'First name is required' })
@@ -44,8 +44,8 @@ export class CreateUserDto {
   @ApiProperty({ example: 'Doe', description: 'Last name' })
   @IsString({ message: 'Must be a string' })
   @Length(2, 50, { message: 'Must be between 2 and 50 characters' })
-  @Matches(/^[a-zA-Zа-яА-ЯґҐїЇєЄ' -]{2,50}$/, {
-    message: 'First name is incorrect',
+  @Matches(/^[a-zA-Zа-яА-ЯґҐіІїЇєЄ'’ -]{2,50}$/, {
+    message: 'Last name is incorrect',
   })
   @IsNotEmpty({ message: 'Last name is required' })
   public readonly lastName: string;
