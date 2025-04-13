@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from '../mail/mail.module';
 import { RolesModule } from '../roles/roles.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { ProjectsModule } from '../projects/projects.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
     MailModule,
     RolesModule,
     CloudinaryModule,
+    ProjectsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

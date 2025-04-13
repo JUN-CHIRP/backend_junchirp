@@ -3,8 +3,10 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Patch,
   Post,
+  Query,
   Req,
   UsePipes,
 } from '@nestjs/common';
@@ -29,6 +31,9 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
+import { PaginationDto } from '../shared/dto/pagination.dto';
+import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -81,7 +86,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user' })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
-  @Get('current')
+  @Get('me')
   public async getCurrentUser(@Req() req: Request): Promise<UserResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
@@ -140,7 +145,7 @@ export class UsersController {
     required: true,
   })
   @UsePipes(ValidationPipe)
-  @Patch('current')
+  @Patch('me')
   public async updateUser(
     @Req() req: Request,
     @Body() updateUserDto: UpdateUserDto,
@@ -148,5 +153,49 @@ export class UsersController {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.usersService.updateUser(user.id, updateUserDto);
+  }
+
+  @Auth()
+  @ApiOperation({
+    summary: 'Get active projects of current user',
+  })
+  @ApiOkResponse({ type: ProjectsListResponseDto })
+  @UsePipes(ValidationPipe)
+  @Get('me/projects/active')
+  public async getMyProjects(
+    @Req() req: Request,
+    @Query() query: PaginationDto,
+  ): Promise<ProjectsListResponseDto> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.getMyActiveProjects(
+      user.id,
+      query.page,
+      query.limit,
+    );
+  }
+
+  @Auth()
+  @ApiOperation({
+    summary: 'Get user projects',
+  })
+  @ApiOkResponse({ type: ProjectsListResponseDto })
+  @Get(':id/projects')
+  public async getUserProjects(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Query(ValidationPipe) query: PaginationDto,
+  ): Promise<ProjectsListResponseDto> {
+    return this.usersService.getUserProjects(id, query.page, query.limit);
+  }
+
+  @Auth()
+  @ApiOperation({ summary: 'Get current user' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @Get(':id')
+  public async getUserById(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<UserResponseDto> {
+    return this.usersService.getUserById(id);
   }
 }
