@@ -16,6 +16,7 @@ import { EducationsModule } from './educations/educations.module';
 import { SoftSkillsModule } from './soft-skills/soft-skills.module';
 import { HardSkillsModule } from './hard-skills/hard-skills.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     SoftSkillsModule,
     HardSkillsModule,
     CloudinaryModule,
+    ProjectsModule,
   ],
   providers: [
     CronTasksService,

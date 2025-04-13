@@ -86,10 +86,10 @@ model Project {
   id                String          @id @default(dbgenerated("gen_random_uuid()"))
   projectName       String          @map("project_name")
   description       String
-  status            String
+  status            ProjectStatus   @default(active)
   createdAt         DateTime        @default(now()) @map("created_at")
-  slackUrl          String          @map("slack_url")
-  logoUrl           String          @map("logo_url")
+  slackUrl          String?         @map("slack_url")
+  logoUrl           String?         @map("logo_url")
   participantsCount Int             @map("participiants_count")
   ownerId           String          @map("owner_id")
   categoryId        String          @map("category_id")
@@ -124,7 +124,7 @@ model ProjectRole {
   slots      Int
   projectId  String          @map("project_id")
   roleTypeId String          @map("role_type_id")
-  project    Project         @relation(fields: [projectId], references: [id])
+  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   roleType   ProjectRoleType @relation(fields: [roleTypeId], references: [id])
   users      User[]          @relation("UserProjectRoles")
 
@@ -247,4 +247,9 @@ model Institution {
   institutionName String @map("institution_name")
 
   @@map("institutions")
+}
+
+enum ProjectStatus {
+  active
+  done
 }

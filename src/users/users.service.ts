@@ -5,7 +5,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ResetPasswordToken, VerificationToken } from '@prisma/client';
+import {
+  ProjectStatus,
+  ResetPasswordToken,
+  VerificationToken,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
@@ -24,6 +28,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { UserMapper } from '../shared/mappers/user.mapper';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ProjectsService } from '../projects/projects.service';
+import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +40,7 @@ export class UsersService {
     private mailService: MailService,
     private rolesService: RolesService,
     private cloudinaryService: CloudinaryService,
+    private projectsService: ProjectsService,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
@@ -400,5 +407,26 @@ export class UsersService {
         throw error;
       }
     }
+  }
+
+  public async getUserProjects(
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<ProjectsListResponseDto> {
+    return this.projectsService.getProjects({ userId, page, limit });
+  }
+
+  public async getMyActiveProjects(
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<ProjectsListResponseDto> {
+    return this.projectsService.getProjects({
+      userId,
+      page,
+      limit,
+      status: ProjectStatus.active,
+    });
   }
 }
