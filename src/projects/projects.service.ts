@@ -176,7 +176,9 @@ export class ProjectsService {
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new InternalServerErrorException('Database error');
+        throw new InternalServerErrorException(
+          `Database error: ${error.message}`,
+        );
       }
       throw error;
     }
