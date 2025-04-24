@@ -32,7 +32,7 @@ import { UserWithPasswordResponseDto } from './dto/user-with-password.response-d
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
-import { PaginationDto } from '../shared/dto/pagination.dto';
+import { UserProjectsFilterDto } from './dto/user-projects-filter.dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 
 @Controller('users')
@@ -157,21 +157,22 @@ export class UsersController {
 
   @Auth()
   @ApiOperation({
-    summary: 'Get active projects of current user',
+    summary: 'Get projects of current user',
   })
   @ApiOkResponse({ type: ProjectsListResponseDto })
   @UsePipes(ValidationPipe)
-  @Get('me/projects/active')
+  @Get('me/projects')
   public async getMyProjects(
     @Req() req: Request,
-    @Query() query: PaginationDto,
+    @Query() query: UserProjectsFilterDto,
   ): Promise<ProjectsListResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
-    return this.usersService.getMyActiveProjects(
+    return this.usersService.getUserProjects(
       user.id,
       query.page,
       query.limit,
+      query.status,
     );
   }
 
@@ -183,13 +184,13 @@ export class UsersController {
   @Get(':id/projects')
   public async getUserProjects(
     @Param('id', ParseUUIDv4Pipe) id: string,
-    @Query(ValidationPipe) query: PaginationDto,
+    @Query(ValidationPipe) query: UserProjectsFilterDto,
   ): Promise<ProjectsListResponseDto> {
     return this.usersService.getUserProjects(id, query.page, query.limit);
   }
 
   @Auth()
-  @ApiOperation({ summary: 'Get current user' })
+  @ApiOperation({ summary: 'Get user by id' })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
   @Get(':id')

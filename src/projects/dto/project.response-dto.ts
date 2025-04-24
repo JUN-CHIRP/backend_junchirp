@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectStatus } from '@prisma/client';
 import { ProjectCategoryResponseDto } from './project-category.response-dto';
+import { ProjectRoleResponseDto } from '../../project-roles/dto/project-role.response-dto';
 
 export class ProjectResponseDto {
   @ApiProperty({
@@ -57,4 +58,7 @@ export class ProjectResponseDto {
 
   @ApiProperty({ type: () => ProjectCategoryResponseDto })
   public readonly category: ProjectCategoryResponseDto;
+
+  @ApiProperty({ type: () => [ProjectRoleResponseDto] })
+  public readonly roles: ProjectRoleResponseDto[];
 }

@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   Query,
@@ -11,6 +11,8 @@ import {
   Req,
   UploadedFile,
   UseInterceptors,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -23,10 +25,11 @@ import {
   ApiConsumes,
   ApiCreatedResponse,
   ApiHeader,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { ProjectRoleTypeResponseDto } from './dto/project-role-type.response-dto';
 import { ProjectsListResponseDto } from './dto/projects-list.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { ProjectsFilterDto } from './dto/projects-filter.dto';
@@ -35,6 +38,8 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseImageFilePipe } from '../shared/pipes/parse-image-file/parse-image-file.pipe';
+import { Owner } from '../auth/decorators/owner.decorator';
+import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 
 @Auth()
 @Controller('projects')
@@ -46,15 +51,6 @@ export class ProjectsController {
   @Get('categories')
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
     return this.projectsService.getCategories();
-  }
-
-  @ApiOperation({
-    summary: 'Get array of all project roles available on the platform',
-  })
-  @ApiOkResponse({ type: [ProjectRoleTypeResponseDto] })
-  @Get('roles')
-  public async getProjectRoleTypes(): Promise<ProjectRoleTypeResponseDto[]> {
-    return this.projectsService.getProjectRoleTypes();
   }
 
   @ApiOperation({
@@ -82,7 +78,6 @@ export class ProjectsController {
     required: true,
   })
   @ApiBody({
-    description: 'Create a new project with a logo file',
     schema: {
       type: 'object',
       properties: {
@@ -105,42 +100,91 @@ export class ProjectsController {
           description: 'Category ID',
           example: 'e960a0fb-891a-4f02-9f39-39ac3bb08621',
         },
-        roles: {
-          type: 'string',
-          example: JSON.stringify([
-            {
-              roleTypeId: 'e960a0fb-891a-4f02-9f39-39ac3bb08621',
-              slots: 3,
-            },
-          ]),
-        },
       },
     },
   })
   @Post('')
   public async createProject(
     @Req() req: Request,
-    @Body(new ValidationPipe()) createProjectDto: CreateProjectDto,
+    @Body(ValidationPipe) createProjectDto: CreateProjectDto,
     @UploadedFile(ParseImageFilePipe) file: Express.Multer.File,
   ): Promise<ProjectResponseDto> {
-    console.log(createProjectDto);
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.projectsService.createProject(user.id, createProjectDto, file);
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.projectsService.findOne(+id);
-  // }
+  @Owner()
+  @ApiOperation({ summary: 'Update project' })
+  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @Put(':id')
+  public async updateProject(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Body(ValidationPipe) updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectResponseDto> {
+    return this.projectsService.updateProject(id, updateProjectDto);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-  //   return this.projectsService.update(+id, updateProjectDto);
-  // }
+  @ApiOperation({ summary: 'Get project by id' })
+  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiNotFoundResponse({ description: 'Project not found' })
+  @Get(':id')
+  public async getProjectById(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<ProjectResponseDto> {
+    return this.projectsService.getProjectById(id);
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.projectsService.remove(+id);
-  // }
+  @Owner()
+  @ApiOperation({ summary: 'Delete project' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  public async deleteProject(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<void> {
+    return this.projectsService.deleteProject(id);
+  }
+
+  @Owner()
+  @ApiOperation({ summary: 'Update project logo' })
+  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiNotFoundResponse({ description: 'Project not found' })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @Put(':id/logo')
+  public async updateProjectLogo(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @UploadedFile(ParseImageFilePipe) file: Express.Multer.File,
+  ): Promise<ProjectResponseDto> {
+    return this.projectsService.updateProjectLogo(id, file);
+  }
 }

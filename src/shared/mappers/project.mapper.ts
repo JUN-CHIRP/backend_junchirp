@@ -1,10 +1,12 @@
-import { Project, ProjectCategory } from '@prisma/client';
+import { Project, ProjectCategory, ProjectRole } from '@prisma/client';
 import { ProjectResponseDto } from '../../projects/dto/project.response-dto';
+import { ProjectRoleMapper } from './project-role.mapper';
 
 export class ProjectMapper {
   public static toResponse(
     project: Project & {
       category: ProjectCategory;
+      roles: ProjectRole[];
     },
   ): ProjectResponseDto {
     return {
@@ -17,10 +19,8 @@ export class ProjectMapper {
       slackUrl: project.slackUrl,
       logoUrl: project.logoUrl ?? '',
       createdAt: project.createdAt,
-      category: {
-        id: project.category.id,
-        categoryName: project.category.categoryName,
-      },
+      category: project.category,
+      roles: project.roles.map((role) => ProjectRoleMapper.toResponse(role)),
     };
   }
 }

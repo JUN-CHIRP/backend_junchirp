@@ -2,19 +2,19 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectCategoryResponseDto } from './dto/project-category.response-dto';
-import { ProjectRoleTypeResponseDto } from './dto/project-role-type.response-dto';
 import { ProjectResponseDto } from './dto/project.response-dto';
 import { ProjectsListResponseDto } from './dto/projects-list.response-dto';
 import { ProjectMapper } from '../shared/mappers/project.mapper';
-import { Prisma, ProjectRoleType, ProjectStatus } from '@prisma/client';
+import { Prisma, ProjectStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { CreateProjectRoleDto } from './dto/create-project-role.dto';
+import { ProjectRolesService } from '../project-roles/project-roles.service';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -31,14 +31,11 @@ export class ProjectsService {
   public constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
+    private projectRolesService: ProjectRolesService,
   ) {}
 
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
     return this.prisma.projectCategory.findMany();
-  }
-
-  public async getProjectRoleTypes(): Promise<ProjectRoleTypeResponseDto[]> {
-    return this.prisma.projectRoleType.findMany();
   }
 
   public async getProjects(
@@ -85,7 +82,7 @@ export class ProjectsService {
         where,
         skip,
         take: limit,
-        include: { category: true },
+        include: { category: true, roles: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.project.count({ where }),
@@ -115,28 +112,20 @@ export class ProjectsService {
 
     try {
       return this.prisma.$transaction(async (prisma) => {
-        const projectRoles: CreateProjectRoleDto[] = JSON.parse(
-          createProjectDto.roles as unknown as string,
-        );
-
         const project = await prisma.project.create({
           data: {
             ownerId: userId,
             projectName: createProjectDto.projectName,
             description: createProjectDto.description,
             categoryId: createProjectDto.categoryId,
-            participantsCount: projectRoles.reduce(
-              (sum, role) => sum + role.slots,
-              1,
-            ),
           },
         });
 
-        const ownerRoleType = await this.findOrCreateRole('Project owner');
+        const ownerRoleType =
+          await this.projectRolesService.findOrCreateRole('Project owner');
         const ownerRole = await prisma.projectRole.create({
           data: {
             roleTypeId: ownerRoleType.id,
-            slots: 1,
             projectId: project.id,
           },
         });
@@ -150,15 +139,6 @@ export class ProjectsService {
           },
         });
 
-        await prisma.projectRole.createMany({
-          data: [
-            ...projectRoles.map((role) => ({
-              ...role,
-              projectId: project.id,
-            })),
-          ],
-        });
-
         const logoUrl = await this.cloudinaryService.uploadProjectLogo(
           file,
           project.id,
@@ -169,7 +149,7 @@ export class ProjectsService {
           data: {
             logoUrl,
           },
-          include: { category: true },
+          include: { category: true, roles: true },
         });
 
         return ProjectMapper.toResponse(updatedProject);
@@ -184,11 +164,89 @@ export class ProjectsService {
     }
   }
 
-  public async findOrCreateRole(roleName: string): Promise<ProjectRoleType> {
-    return this.prisma.projectRoleType.upsert({
-      where: { roleName },
-      update: {},
-      create: { roleName },
+  public async getProjectById(id: string): Promise<ProjectResponseDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        roles: true,
+      },
     });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return ProjectMapper.toResponse(project);
+  }
+
+  public async updateProject(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<ProjectResponseDto> {
+    try {
+      const updatedProject = await this.prisma.project.update({
+        where: { id },
+        data: updateProjectDto,
+        include: {
+          category: true,
+          roles: true,
+        },
+      });
+
+      return ProjectMapper.toResponse(updatedProject);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2001'
+      ) {
+        throw new NotFoundException('Project not found');
+      }
+      throw error;
+    }
+  }
+
+  public async deleteProject(id: string): Promise<void> {
+    try {
+      await this.prisma.project.delete({
+        where: { id },
+      });
+      await this.cloudinaryService.deleteProjectFolder(id);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Project not found');
+      }
+      throw error;
+    }
+  }
+
+  public async updateProjectLogo(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<ProjectResponseDto> {
+    try {
+      const logoUrl = await this.cloudinaryService.uploadProjectLogo(file, id);
+      const updatedProject = await this.prisma.project.update({
+        where: { id },
+        data: { logoUrl },
+        include: {
+          category: true,
+          roles: true,
+        },
+      });
+
+      return ProjectMapper.toResponse(updatedProject);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2001'
+      ) {
+        throw new NotFoundException('Project not found');
+      }
+      throw error;
+    }
   }
 }

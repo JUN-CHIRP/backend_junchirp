@@ -413,20 +413,8 @@ export class UsersService {
     userId: string,
     page = 1,
     limit = 10,
+    status?: ProjectStatus,
   ): Promise<ProjectsListResponseDto> {
-    return this.projectsService.getProjects({ userId, page, limit });
-  }
-
-  public async getMyActiveProjects(
-    userId: string,
-    page = 1,
-    limit = 10,
-  ): Promise<ProjectsListResponseDto> {
-    return this.projectsService.getProjects({
-      userId,
-      page,
-      limit,
-      status: ProjectStatus.active,
-    });
+    return this.projectsService.getProjects({ userId, page, limit, status });
   }
 }
