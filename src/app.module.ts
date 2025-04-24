@@ -17,6 +17,7 @@ import { SoftSkillsModule } from './soft-skills/soft-skills.module';
 import { HardSkillsModule } from './hard-skills/hard-skills.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ProjectRolesModule } from './project-roles/project-roles.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ProjectsModule } from './projects/projects.module';
     HardSkillsModule,
     CloudinaryModule,
     ProjectsModule,
+    ProjectRolesModule,
   ],
   providers: [
     CronTasksService,

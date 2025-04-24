@@ -50,4 +50,17 @@ export class CloudinaryService {
       throw new InternalServerErrorException(`Error: ${error.message}`);
     }
   }
+
+  public async deleteProjectFolder(projectId: string): Promise<void> {
+    try {
+      await cloudinary.api.delete_resources_by_prefix(`projects/${projectId}`, {
+        resource_type: 'image',
+      });
+      await cloudinary.api.delete_folder(`projects/${projectId}`);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error deleting project folder: ${error.message}`,
+      );
+    }
+  }
 }

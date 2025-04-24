@@ -1,15 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  Length,
-  ValidateNested,
-} from 'class-validator';
-import { CreateProjectRoleDto } from './create-project-role.dto';
-import { Transform, Type } from 'class-transformer';
+import { IsNotEmpty, IsString, IsUUID, Length } from 'class-validator';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'Project name', description: 'Project name' })
@@ -34,21 +24,4 @@ export class CreateProjectDto {
   @IsUUID(4, { message: 'Must be a string in UUIDv4 format' })
   @IsNotEmpty({ message: 'ID is required' })
   public readonly categoryId: string;
-
-  @ApiProperty({
-    type: [CreateProjectRoleDto],
-    description: 'Array of project roles',
-  })
-  @Transform(({ value }) => {
-    try {
-      return typeof value === 'string' ? JSON.parse(value) : value;
-    } catch {
-      throw new Error('Invalid JSON for roles');
-    }
-  })
-  @IsArray({ message: 'Roles must be an array' })
-  @ArrayNotEmpty({ message: 'Roles must contain at least one item' })
-  @ValidateNested({ each: true })
-  @Type(() => CreateProjectRoleDto)
-  public readonly roles: CreateProjectRoleDto[];
 }
