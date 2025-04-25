@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 import {
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../decorators/owner.decorator';
+} from '../../../shared/constants/project-metadata';
 
 @Injectable()
 export class OwnerGuard implements CanActivate {

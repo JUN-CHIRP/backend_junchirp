@@ -40,6 +40,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseImageFilePipe } from '../shared/pipes/parse-image-file/parse-image-file.pipe';
 import { Owner } from '../auth/decorators/owner.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { Member } from '../auth/decorators/member.decorator';
 
 @Auth()
 @Controller('projects')
@@ -131,6 +132,7 @@ export class ProjectsController {
     return this.projectsService.updateProject(id, updateProjectDto);
   }
 
+  @Member()
   @ApiOperation({ summary: 'Get project by id' })
   @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
