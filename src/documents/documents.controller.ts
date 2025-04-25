@@ -5,7 +5,9 @@ import {
   Param,
   Delete,
   UsePipes,
-  Put, HttpCode, HttpStatus,
+  Put,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -15,7 +17,8 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiHeader, ApiNoContentResponse,
+  ApiHeader,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,

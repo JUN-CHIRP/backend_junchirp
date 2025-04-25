@@ -1,6 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProjectStatus } from '@prisma/client';
-import { ProjectCategoryResponseDto } from './project-category.response-dto';
 import { ProjectRoleResponseDto } from '../../project-roles/dto/project-role.response-dto';
 import { DocumentResponseDto } from '../../documents/dto/document.response-dto';
 import { ProjectCardResponseDto } from './project-card.response-dto';
