@@ -135,6 +135,7 @@ model ProjectRoleType {
   id       String        @id @default(dbgenerated("gen_random_uuid()"))
   roleName String        @unique @map("role_name")
   roles    ProjectRole[]
+  educations Education[]
 
   @@map("project_role_types")
 }
@@ -191,13 +192,14 @@ model LogEvent {
 }
 
 model Education {
-  id             String @id @default(dbgenerated("gen_random_uuid()"))
-  userId         String @map("user_id")
-  institution    String
-  specialization String
-  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String          @id @default(dbgenerated("gen_random_uuid()"))
+  userId           String          @map("user_id")
+  specializationId String          @map("specialization_id")
+  institution      String
+  specialization   ProjectRoleType @relation(fields: [specializationId], references: [id], onDelete: Cascade)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, institution, specialization])
+  @@unique([userId, institution, specializationId])
   @@map("educations")
 }
 
