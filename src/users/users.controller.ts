@@ -34,6 +34,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
 import { UserProjectsFilterDto } from './dto/user-projects-filter.dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { UsersListResponseDto } from './dto/users-list.response-dto';
+import { UsersFilterDto } from './dto/users-filter.dto';
 
 @Controller('users')
 export class UsersController {
@@ -198,5 +200,18 @@ export class UsersController {
     @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<UserResponseDto> {
     return this.usersService.getUserById(id);
+  }
+
+  @Auth()
+  @ApiOperation({
+    summary: 'Get list of users with filters and pagination',
+  })
+  @ApiOkResponse({ type: UsersListResponseDto })
+  @UsePipes(ValidationPipe)
+  @Get('')
+  public async getUsers(
+    @Query() query: UsersFilterDto,
+  ): Promise<UsersListResponseDto> {
+    return this.usersService.getUsers(query);
   }
 }
