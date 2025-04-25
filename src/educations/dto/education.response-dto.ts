@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ProjectRoleTypeResponseDto } from '../../project-roles/dto/project-role-type.response-dto';
 
 export class EducationResponseDto {
   @ApiProperty({
@@ -13,6 +14,6 @@ export class EducationResponseDto {
   })
   public readonly institution: string;
 
-  @ApiProperty({ example: 'Mathematics', description: 'Specialization' })
-  public readonly specialization: string;
+  @ApiProperty({ type: () => ProjectRoleTypeResponseDto })
+  public readonly specialization: ProjectRoleTypeResponseDto;
 }

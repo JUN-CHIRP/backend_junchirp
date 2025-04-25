@@ -52,6 +52,7 @@ export class EducationsService {
             ...createEducationDto,
             userId,
           },
+          include: { specialization: true },
         });
 
         const record = await prisma.institution.findFirst({
@@ -106,6 +107,7 @@ export class EducationsService {
           data: {
             ...updateEducationDto,
           },
+          include: { specialization: true },
         });
 
         return EducationMapper.toResponse(education);
