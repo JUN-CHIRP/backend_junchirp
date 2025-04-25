@@ -22,6 +22,6 @@ export class CreateProjectDto {
     description: 'Category id',
   })
   @IsUUID(4, { message: 'Must be a string in UUIDv4 format' })
-  @IsNotEmpty({ message: 'ID is required' })
+  @IsNotEmpty({ message: 'Category ID is required' })
   public readonly categoryId: string;
 }

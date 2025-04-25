@@ -70,10 +70,10 @@ export class ProjectRolesService {
     return ProjectRoleMapper.toResponse(role);
   }
 
-  public async deleteProjectRole(roleId: string): Promise<void> {
+  public async deleteProjectRole(id: string): Promise<void> {
     try {
       await this.prisma.projectRole.delete({
-        where: { id: roleId },
+        where: { id },
       });
     } catch (error) {
       if (

@@ -82,7 +82,7 @@ export class ProjectsService {
         where,
         skip,
         take: limit,
-        include: { category: true, roles: true },
+        include: { category: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.project.count({ where }),
@@ -90,7 +90,9 @@ export class ProjectsService {
 
     return {
       total,
-      projects: projects.map((project) => ProjectMapper.toResponse(project)),
+      projects: projects.map((project) =>
+        ProjectMapper.toCardResponse(project),
+      ),
     };
   }
 
@@ -149,10 +151,10 @@ export class ProjectsService {
           data: {
             logoUrl,
           },
-          include: { category: true, roles: true },
+          include: { category: true, roles: true, documents: true },
         });
 
-        return ProjectMapper.toResponse(updatedProject);
+        return ProjectMapper.toFullResponse(updatedProject);
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
@@ -170,6 +172,7 @@ export class ProjectsService {
       include: {
         category: true,
         roles: true,
+        documents: true,
       },
     });
 
@@ -177,7 +180,7 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    return ProjectMapper.toResponse(project);
+    return ProjectMapper.toFullResponse(project);
   }
 
   public async updateProject(
@@ -191,10 +194,11 @@ export class ProjectsService {
         include: {
           category: true,
           roles: true,
+          documents: true,
         },
       });
 
-      return ProjectMapper.toResponse(updatedProject);
+      return ProjectMapper.toFullResponse(updatedProject);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -235,10 +239,11 @@ export class ProjectsService {
         include: {
           category: true,
           roles: true,
+          documents: true,
         },
       });
 
-      return ProjectMapper.toResponse(updatedProject);
+      return ProjectMapper.toFullResponse(updatedProject);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&

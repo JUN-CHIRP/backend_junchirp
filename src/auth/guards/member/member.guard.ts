@@ -13,7 +13,7 @@ import {
 } from '../../../shared/constants/project-metadata';
 
 @Injectable()
-export class OwnerGuard implements CanActivate {
+export class MemberGuard implements CanActivate {
   public constructor(
     private prisma: PrismaService,
     private reflector: Reflector,
@@ -36,16 +36,24 @@ export class OwnerGuard implements CanActivate {
       throw new BadRequestException(`Missing project ID in ${source}.${key}`);
     }
 
-    const project = await this.prisma.project.findUnique({
+    const isParticipant = await this.prisma.project.findFirst({
       where: {
         id: projectId,
-        ownerId: user.id,
+        roles: {
+          some: {
+            users: {
+              some: {
+                id: user.id,
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!project) {
+    if (!isParticipant) {
       throw new ForbiddenException(
-        'Access denied: you are not the project owner',
+        'Access denied: you are not a participant of this project',
       );
     }
 
