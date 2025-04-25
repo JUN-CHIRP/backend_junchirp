@@ -68,7 +68,11 @@ export class UsersService {
       where: { email },
       include: {
         role: true,
-        educations: true,
+        educations: {
+          include: {
+            specialization: true,
+          },
+        },
         socials: true,
         softSkills: true,
         hardSkills: true,
@@ -83,7 +87,11 @@ export class UsersService {
       where: { id },
       include: {
         role: true,
-        educations: true,
+        educations: {
+          include: {
+            specialization: true,
+          },
+        },
         socials: true,
         softSkills: true,
         hardSkills: true,
@@ -326,7 +334,11 @@ export class UsersService {
         },
         include: {
           role: true,
-          educations: true,
+          educations: {
+            include: {
+              specialization: true,
+            },
+          },
           socials: true,
           softSkills: true,
           hardSkills: true,
@@ -339,7 +351,11 @@ export class UsersService {
         data: { googleId: createGoogleUserDto.googleId },
         include: {
           role: true,
-          educations: true,
+          educations: {
+            include: {
+              specialization: true,
+            },
+          },
           socials: true,
           softSkills: true,
           hardSkills: true,
@@ -374,7 +390,11 @@ export class UsersService {
         data: updateUserDto,
         include: {
           role: true,
-          educations: true,
+          educations: {
+            include: {
+              specialization: true,
+            },
+          },
           socials: true,
           softSkills: true,
           hardSkills: true,

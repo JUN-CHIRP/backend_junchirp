@@ -1,5 +1,6 @@
 import {
   Education,
+  ProjectRoleType,
   Role,
   Social,
   User,
@@ -17,7 +18,7 @@ export class UserMapper {
   public static toResponse(
     user: User & {
       role: Role;
-      educations: Education[];
+      educations: (Education & { specialization: ProjectRoleType })[];
       socials: Social[];
       softSkills: UserSoftSkill[];
       hardSkills: UserHardSkill[];
