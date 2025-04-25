@@ -132,9 +132,9 @@ model ProjectRole {
 }
 
 model ProjectRoleType {
-  id       String        @id @default(dbgenerated("gen_random_uuid()"))
-  roleName String        @unique @map("role_name")
-  roles    ProjectRole[]
+  id         String        @id @default(dbgenerated("gen_random_uuid()"))
+  roleName   String        @unique @map("role_name")
+  roles      ProjectRole[]
   educations Education[]
 
   @@map("project_role_types")

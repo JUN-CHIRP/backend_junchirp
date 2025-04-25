@@ -48,7 +48,7 @@ export class ProjectsService {
       minParticipants,
       maxParticipants,
       page = 1,
-      limit = 10,
+      limit = 20,
     } = options;
 
     const skip = (page - 1) * limit;

@@ -14,9 +14,9 @@ export class PaginationDto {
   public readonly page?: number = 1;
 
   @ApiProperty({
-    example: 10,
+    example: 20,
     description: 'Number of elements per page',
-    default: 10,
+    default: 20,
     required: false,
   })
   @IsOptional()

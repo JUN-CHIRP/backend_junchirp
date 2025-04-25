@@ -13,9 +13,10 @@ import { SocialMapper } from './social.mapper';
 import { SoftSkillMapper } from './soft-skill.mapper';
 import { HardSkillMapper } from './hard-skill.mapper';
 import { UserWithPasswordResponseDto } from '../../users/dto/user-with-password.response-dto';
+import { UserCardResponseDto } from '../../users/dto/user-card.response-dto';
 
 export class UserMapper {
-  public static toResponse(
+  public static toFullResponse(
     user: User & {
       role: Role;
       educations: (Education & { specialization: ProjectRoleType })[];
@@ -52,5 +53,23 @@ export class UserMapper {
           password: user.password,
         }
       : base;
+  }
+
+  public static toCardResponse(
+    user: User & {
+      educations: (Education & { specialization: ProjectRoleType })[];
+      activeProjectsCount: number;
+    },
+  ): UserCardResponseDto {
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      educations: user.educations.map((education) =>
+        EducationMapper.toResponse(education),
+      ),
+      activeProjectsCount: user.activeProjectsCount,
+    };
   }
 }

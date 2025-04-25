@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  Prisma,
   ProjectStatus,
   ResetPasswordToken,
   VerificationToken,
@@ -30,6 +31,14 @@ import { UserMapper } from '../shared/mappers/user.mapper';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectsService } from '../projects/projects.service';
 import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
+import { UsersListResponseDto } from './dto/users-list.response-dto';
+
+interface GetUsersOptionsInterface {
+  activeProjectsCount: number;
+  specializationIds: string[];
+  page: number;
+  limit: number;
+}
 
 @Injectable()
 export class UsersService {
@@ -79,7 +88,7 @@ export class UsersService {
       },
     });
 
-    return user ? UserMapper.toResponse(user, withPassword) : null;
+    return user ? UserMapper.toFullResponse(user, withPassword) : null;
   }
 
   public async getUserById(id: string): Promise<UserResponseDto> {
@@ -102,7 +111,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return UserMapper.toResponse(user, false);
+    return UserMapper.toFullResponse(user, false);
   }
 
   public async createVerificationUrl(
@@ -344,7 +353,7 @@ export class UsersService {
           hardSkills: true,
         },
       });
-      updatedUser = UserMapper.toResponse(userFromDB, false);
+      updatedUser = UserMapper.toFullResponse(userFromDB, false);
     } else if (user && !user.googleId) {
       const userFromDB = await this.prisma.user.update({
         where: { email: createGoogleUserDto.email },
@@ -361,7 +370,7 @@ export class UsersService {
           hardSkills: true,
         },
       });
-      updatedUser = UserMapper.toResponse(userFromDB, false);
+      updatedUser = UserMapper.toFullResponse(userFromDB, false);
     } else {
       updatedUser = user;
     }
@@ -412,7 +421,7 @@ export class UsersService {
           });
       }
 
-      return UserMapper.toResponse(updatedUser, false);
+      return UserMapper.toFullResponse(updatedUser, false);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {
@@ -436,5 +445,70 @@ export class UsersService {
     status?: ProjectStatus,
   ): Promise<ProjectsListResponseDto> {
     return this.projectsService.getProjects({ userId, page, limit, status });
+  }
+
+  public async getUsers(
+    options: Partial<GetUsersOptionsInterface>,
+  ): Promise<UsersListResponseDto> {
+    const {
+      activeProjectsCount,
+      specializationIds,
+      page = 1,
+      limit = 20,
+    } = options;
+
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {
+      ...(specializationIds?.length
+        ? {
+            educations: {
+              some: {
+                specializationId: { in: specializationIds },
+              },
+            },
+          }
+        : {}),
+    };
+
+    const users = await this.prisma.user.findMany({
+      where,
+      include: {
+        educations: {
+          include: {
+            specialization: true,
+          },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const enrichedUsers = await Promise.all(
+      users.map(async (user) => {
+        const { total: activeCount } = await this.getUserProjects(
+          user.id,
+          1,
+          10,
+          'active',
+        );
+        return {
+          ...user,
+          activeProjectsCount: activeCount,
+        };
+      }),
+    );
+
+    const filteredUsers = enrichedUsers.filter((user) =>
+      typeof activeProjectsCount === 'number'
+        ? user.activeProjectsCount === activeProjectsCount
+        : true,
+    );
+
+    return {
+      total: filteredUsers.length,
+      users: filteredUsers.map((user) => UserMapper.toCardResponse(user)),
+    };
   }
 }
