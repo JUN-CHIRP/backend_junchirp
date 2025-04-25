@@ -1,0 +1,62 @@
+import {
+  BadRequestException,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { Reflector } from '@nestjs/core';
+import {
+  PROJECT_ID_KEY_KEY,
+  PROJECT_ID_SOURCE_KEY,
+} from '../../../shared/constants/project-metadata';
+
+@Injectable()
+export class MemberGuard implements CanActivate {
+  public constructor(
+    private prisma: PrismaService,
+    private reflector: Reflector,
+  ) {}
+
+  public async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+
+    const source: 'params' | 'body' | 'query' =
+      this.reflector.get(PROJECT_ID_SOURCE_KEY, context.getHandler()) ??
+      'params';
+    const key: string =
+      this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
+
+    const container = request[source];
+    const projectId = container?.[key];
+
+    if (!projectId) {
+      throw new BadRequestException(`Missing project ID in ${source}.${key}`);
+    }
+
+    const isParticipant = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        roles: {
+          some: {
+            users: {
+              some: {
+                id: user.id,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'Access denied: you are not a participant of this project',
+      );
+    }
+
+    return true;
+  }
+}
