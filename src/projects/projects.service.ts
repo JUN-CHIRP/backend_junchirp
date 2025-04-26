@@ -15,6 +15,7 @@ import { Prisma, ProjectStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectRolesService } from '../project-roles/project-roles.service';
+import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -253,5 +254,79 @@ export class ProjectsService {
       }
       throw error;
     }
+  }
+
+  public async getProjectUsers(
+    projectId: string,
+  ): Promise<UserCardResponseDto[]> {
+    const projectRoles = await this.prisma.projectRole.findMany({
+      where: { projectId },
+      include: {
+        roleType: true,
+        users: {
+          include: {
+            educations: {
+              include: { specialization: true },
+            },
+          },
+        },
+      },
+    });
+
+    const usersWithRoles = projectRoles.flatMap((role) =>
+      role.users.map((user) => ({
+        user,
+        specializationId: role.roleType.id,
+      })),
+    );
+
+    if (!usersWithRoles.length) {
+      return [];
+    }
+
+    const userIds = usersWithRoles.map((u) => u.user.id);
+    const userRolesOnActiveProjects = await this.prisma.projectRole.findMany({
+      where: {
+        users: {
+          some: { id: { in: userIds } },
+        },
+        project: {
+          status: 'active',
+        },
+      },
+      select: {
+        id: true,
+        projectId: true,
+        users: {
+          select: { id: true },
+        },
+      },
+    });
+
+    const activeProjectsCountMap = new Map<string, number>();
+
+    for (const role of userRolesOnActiveProjects) {
+      for (const user of role.users) {
+        activeProjectsCountMap.set(
+          user.id,
+          (activeProjectsCountMap.get(user.id) ?? 0) + 1,
+        );
+      }
+    }
+
+    return usersWithRoles.map(({ user, specializationId }) => {
+      const matchingEducation = user.educations.find(
+        (edu) => edu.specializationId === specializationId,
+      );
+
+      return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        educations: matchingEducation ? [matchingEducation] : [],
+        activeProjectsCount: activeProjectsCountMap.get(user.id) ?? 0,
+      };
+    });
   }
 }

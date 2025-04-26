@@ -441,7 +441,7 @@ export class UsersService {
   public async getUserProjects(
     userId: string,
     page = 1,
-    limit = 10,
+    limit = 20,
     status?: ProjectStatus,
   ): Promise<ProjectsListResponseDto> {
     return this.projectsService.getProjects({ userId, page, limit, status });
@@ -485,20 +485,51 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const enrichedUsers = await Promise.all(
-      users.map(async (user) => {
-        const { total: activeCount } = await this.getUserProjects(
-          user.id,
-          1,
-          10,
-          'active',
-        );
-        return {
-          ...user,
-          activeProjectsCount: activeCount,
-        };
-      }),
-    );
+    const userIds = users.map((u) => u.id);
+
+    const activeProjects = await this.prisma.project.findMany({
+      where: {
+        status: 'active',
+        roles: {
+          some: {
+            users: {
+              some: {
+                id: { in: userIds },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        roles: {
+          select: {
+            users: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const activeProjectsCountMap = new Map<string, number>();
+
+    for (const project of activeProjects) {
+      for (const role of project.roles) {
+        for (const user of role.users) {
+          activeProjectsCountMap.set(
+            user.id,
+            (activeProjectsCountMap.get(user.id) ?? 0) + 1,
+          );
+        }
+      }
+    }
+
+    const enrichedUsers = users.map((user) => ({
+      ...user,
+      activeProjectsCount: activeProjectsCountMap.get(user.id) ?? 0,
+    }));
 
     const filteredUsers = enrichedUsers.filter((user) =>
       typeof activeProjectsCount === 'number'

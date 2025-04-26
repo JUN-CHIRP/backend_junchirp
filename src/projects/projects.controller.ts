@@ -41,6 +41,7 @@ import { ParseImageFilePipe } from '../shared/pipes/parse-image-file/parse-image
 import { Owner } from '../auth/decorators/owner.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { Member } from '../auth/decorators/member.decorator';
+import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 
 @Auth()
 @Controller('projects')
@@ -188,5 +189,18 @@ export class ProjectsController {
     @UploadedFile(ParseImageFilePipe) file: Express.Multer.File,
   ): Promise<ProjectResponseDto> {
     return this.projectsService.updateProjectLogo(id, file);
+  }
+
+  @Member()
+  @ApiOperation({
+    summary: 'Get project team',
+  })
+  @ApiOkResponse({ type: [UserCardResponseDto] })
+  @UsePipes(ValidationPipe)
+  @Get(':id/users')
+  public async getProjectUsers(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<UserCardResponseDto[]> {
+    return this.projectsService.getProjectUsers(id);
   }
 }
