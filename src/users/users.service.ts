@@ -441,7 +441,7 @@ export class UsersService {
   public async getUserProjects(
     userId: string,
     page = 1,
-    limit = 10,
+    limit = 20,
     status?: ProjectStatus,
   ): Promise<ProjectsListResponseDto> {
     return this.projectsService.getProjects({ userId, page, limit, status });
@@ -469,46 +469,33 @@ export class UsersService {
             },
           }
         : {}),
+      ...(typeof activeProjectsCount === 'number'
+        ? {
+            activeProjectsCount: activeProjectsCount,
+          }
+        : {}),
     };
 
-    const users = await this.prisma.user.findMany({
-      where,
-      include: {
-        educations: {
-          include: {
-            specialization: true,
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        include: {
+          educations: {
+            include: {
+              specialization: true,
+            },
           },
         },
-      },
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const enrichedUsers = await Promise.all(
-      users.map(async (user) => {
-        const { total: activeCount } = await this.getUserProjects(
-          user.id,
-          1,
-          10,
-          'active',
-        );
-        return {
-          ...user,
-          activeProjectsCount: activeCount,
-        };
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
       }),
-    );
-
-    const filteredUsers = enrichedUsers.filter((user) =>
-      typeof activeProjectsCount === 'number'
-        ? user.activeProjectsCount === activeProjectsCount
-        : true,
-    );
+      this.prisma.user.count({ where }),
+    ]);
 
     return {
-      total: filteredUsers.length,
-      users: filteredUsers.map((user) => UserMapper.toCardResponse(user)),
+      total,
+      users: users.map((user) => UserMapper.toCardResponse(user)),
     };
   }
 }

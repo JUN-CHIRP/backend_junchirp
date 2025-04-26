@@ -15,6 +15,7 @@ import { Prisma, ProjectStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectRolesService } from '../project-roles/project-roles.service';
+import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -138,6 +139,7 @@ export class ProjectsService {
             projectRoles: {
               connect: { id: ownerRole.id },
             },
+            activeProjectsCount: { increment: 1 },
           },
         });
 
@@ -212,10 +214,26 @@ export class ProjectsService {
 
   public async deleteProject(id: string): Promise<void> {
     try {
-      await this.prisma.project.delete({
-        where: { id },
+      await this.prisma.$transaction(async (prisma) => {
+        const users = await this.getProjectUsers(id);
+        const userIds = users.map((user) => user.id);
+
+        await prisma.project.delete({
+          where: { id },
+        });
+        await this.cloudinaryService.deleteProjectFolder(id);
+
+        if (userIds.length) {
+          await prisma.user.updateMany({
+            where: {
+              id: { in: userIds },
+            },
+            data: {
+              activeProjectsCount: { decrement: 1 },
+            },
+          });
+        }
       });
-      await this.cloudinaryService.deleteProjectFolder(id);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -253,5 +271,81 @@ export class ProjectsService {
       }
       throw error;
     }
+  }
+
+  public async getProjectUsers(
+    projectId: string,
+  ): Promise<UserCardResponseDto[]> {
+    const projectRoles = await this.prisma.projectRole.findMany({
+      where: { projectId },
+      include: {
+        roleType: true,
+        users: {
+          include: {
+            educations: {
+              include: { specialization: true },
+            },
+          },
+        },
+      },
+    });
+
+    const usersWithRoles = projectRoles.flatMap((role) =>
+      role.users.map((user) => ({
+        user,
+        specializationId: role.roleType.id,
+      })),
+    );
+
+    if (!usersWithRoles.length) {
+      return [];
+    }
+
+    return usersWithRoles.map(({ user, specializationId }) => {
+      const matchingEducation = user.educations.find(
+        (edu) => edu.specializationId === specializationId,
+      );
+
+      return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        educations: matchingEducation ? [matchingEducation] : [],
+        activeProjectsCount: user.activeProjectsCount,
+      };
+    });
+  }
+
+  public async removeUserFromProject(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (prisma) => {
+      const projectRole = await prisma.projectRole.findFirst({
+        where: {
+          projectId,
+          users: {
+            some: {
+              id: userId,
+            },
+          },
+        },
+      });
+
+      if (!projectRole) {
+        throw new NotFoundException('User not found in project team');
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          projectRoles: {
+            disconnect: { id: projectRole.id },
+          },
+          activeProjectsCount: { decrement: 1 },
+        },
+      });
+    });
   }
 }
