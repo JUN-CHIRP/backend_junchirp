@@ -139,6 +139,7 @@ export class ProjectsService {
             projectRoles: {
               connect: { id: ownerRole.id },
             },
+            activeProjectsCount: { increment: 1 },
           },
         });
 
@@ -213,10 +214,26 @@ export class ProjectsService {
 
   public async deleteProject(id: string): Promise<void> {
     try {
-      await this.prisma.project.delete({
-        where: { id },
+      await this.prisma.$transaction(async (prisma) => {
+        const users = await this.getProjectUsers(id);
+        const userIds = users.map((user) => user.id);
+
+        await prisma.project.delete({
+          where: { id },
+        });
+        await this.cloudinaryService.deleteProjectFolder(id);
+
+        if (userIds.length) {
+          await prisma.user.updateMany({
+            where: {
+              id: { in: userIds },
+            },
+            data: {
+              activeProjectsCount: { decrement: 1 },
+            },
+          });
+        }
       });
-      await this.cloudinaryService.deleteProjectFolder(id);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -284,36 +301,6 @@ export class ProjectsService {
       return [];
     }
 
-    const userIds = usersWithRoles.map((u) => u.user.id);
-    const userRolesOnActiveProjects = await this.prisma.projectRole.findMany({
-      where: {
-        users: {
-          some: { id: { in: userIds } },
-        },
-        project: {
-          status: 'active',
-        },
-      },
-      select: {
-        id: true,
-        projectId: true,
-        users: {
-          select: { id: true },
-        },
-      },
-    });
-
-    const activeProjectsCountMap = new Map<string, number>();
-
-    for (const role of userRolesOnActiveProjects) {
-      for (const user of role.users) {
-        activeProjectsCountMap.set(
-          user.id,
-          (activeProjectsCountMap.get(user.id) ?? 0) + 1,
-        );
-      }
-    }
-
     return usersWithRoles.map(({ user, specializationId }) => {
       const matchingEducation = user.educations.find(
         (edu) => edu.specializationId === specializationId,
@@ -325,8 +312,40 @@ export class ProjectsService {
         lastName: user.lastName,
         avatarUrl: user.avatarUrl,
         educations: matchingEducation ? [matchingEducation] : [],
-        activeProjectsCount: activeProjectsCountMap.get(user.id) ?? 0,
+        activeProjectsCount: user.activeProjectsCount,
       };
+    });
+  }
+
+  public async removeUserFromProject(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (prisma) => {
+      const projectRole = await prisma.projectRole.findFirst({
+        where: {
+          projectId,
+          users: {
+            some: {
+              id: userId,
+            },
+          },
+        },
+      });
+
+      if (!projectRole) {
+        throw new NotFoundException('User not found in project team');
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          projectRoles: {
+            disconnect: { id: projectRole.id },
+          },
+          activeProjectsCount: { decrement: 1 },
+        },
+      });
     });
   }
 }

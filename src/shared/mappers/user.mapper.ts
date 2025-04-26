@@ -35,6 +35,7 @@ export class UserMapper {
       avatarUrl: user.avatarUrl,
       isVerified: user.isVerified,
       role: user.role,
+      activeProjectsCount: user.activeProjectsCount,
       educations: user.educations.map((education) =>
         EducationMapper.toResponse(education),
       ),

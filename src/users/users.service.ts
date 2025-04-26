@@ -469,77 +469,33 @@ export class UsersService {
             },
           }
         : {}),
+      ...(typeof activeProjectsCount === 'number'
+        ? {
+            activeProjectsCount: activeProjectsCount,
+          }
+        : {}),
     };
 
-    const users = await this.prisma.user.findMany({
-      where,
-      include: {
-        educations: {
-          include: {
-            specialization: true,
-          },
-        },
-      },
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const userIds = users.map((u) => u.id);
-
-    const activeProjects = await this.prisma.project.findMany({
-      where: {
-        status: 'active',
-        roles: {
-          some: {
-            users: {
-              some: {
-                id: { in: userIds },
-              },
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        include: {
+          educations: {
+            include: {
+              specialization: true,
             },
           },
         },
-      },
-      select: {
-        roles: {
-          select: {
-            users: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const activeProjectsCountMap = new Map<string, number>();
-
-    for (const project of activeProjects) {
-      for (const role of project.roles) {
-        for (const user of role.users) {
-          activeProjectsCountMap.set(
-            user.id,
-            (activeProjectsCountMap.get(user.id) ?? 0) + 1,
-          );
-        }
-      }
-    }
-
-    const enrichedUsers = users.map((user) => ({
-      ...user,
-      activeProjectsCount: activeProjectsCountMap.get(user.id) ?? 0,
-    }));
-
-    const filteredUsers = enrichedUsers.filter((user) =>
-      typeof activeProjectsCount === 'number'
-        ? user.activeProjectsCount === activeProjectsCount
-        : true,
-    );
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
 
     return {
-      total: filteredUsers.length,
-      users: filteredUsers.map((user) => UserMapper.toCardResponse(user)),
+      total,
+      users: users.map((user) => UserMapper.toCardResponse(user)),
     };
   }
 }

@@ -203,4 +203,22 @@ export class ProjectsController {
   ): Promise<UserCardResponseDto[]> {
     return this.projectsService.getProjectUsers(id);
   }
+
+  @Owner('params', 'projectId')
+  @ApiOperation({ summary: 'Remove user from project team' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({ description: 'User not found in project team' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':projectId/users/:userId')
+  public async removeUserFromProject(
+    @Param('projectId', ParseUUIDv4Pipe) projectId: string,
+    @Param('userId', ParseUUIDv4Pipe) userId: string,
+  ): Promise<void> {
+    return this.projectsService.removeUserFromProject(projectId, userId);
+  }
 }

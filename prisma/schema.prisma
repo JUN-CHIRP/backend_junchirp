@@ -18,6 +18,7 @@ model User {
   firstName             String                 @map("first_name")
   lastName              String                 @map("last_name")
   roleId                String                 @map("role_id")
+  activeProjectsCount   Int                    @default(0) @map("active_projects_count")
   educations            Education[]
   logEvents             LogEvent[]
   loginAttempt          LoginAttempt?
@@ -33,6 +34,7 @@ model User {
   hardSkills            UserHardSkill[]
   softSkills            UserSoftSkill[]
 
+  @@index([activeProjectsCount])
   @@map("users")
 }
 
