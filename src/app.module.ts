@@ -19,6 +19,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ProjectRolesModule } from './project-roles/project-roles.module';
 import { DocumentsModule } from './documents/documents.module';
+import { ParticipationsModule } from './participations/participations.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { DocumentsModule } from './documents/documents.module';
     ProjectsModule,
     ProjectRolesModule,
     DocumentsModule,
+    ParticipationsModule,
   ],
   providers: [
     CronTasksService,

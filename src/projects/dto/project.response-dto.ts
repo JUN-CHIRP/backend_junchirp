@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProjectRoleResponseDto } from '../../project-roles/dto/project-role.response-dto';
 import { DocumentResponseDto } from '../../documents/dto/document.response-dto';
 import { ProjectCardResponseDto } from './project-card.response-dto';
 
@@ -16,9 +15,6 @@ export class ProjectResponseDto extends ProjectCardResponseDto {
     description: 'Project logo url',
   })
   public readonly logoUrl: string;
-
-  @ApiProperty({ type: () => [ProjectRoleResponseDto] })
-  public readonly roles: ProjectRoleResponseDto[];
 
   @ApiProperty({ type: () => [DocumentResponseDto] })
   public readonly documents: DocumentResponseDto[];

@@ -36,6 +36,7 @@ import { UserProjectsFilterDto } from './dto/user-projects-filter.dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { UsersFilterDto } from './dto/users-filter.dto';
+import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
 
 @Controller('users')
 export class UsersController {
@@ -213,5 +214,33 @@ export class UsersController {
     @Query() query: UsersFilterDto,
   ): Promise<UsersListResponseDto> {
     return this.usersService.getUsers(query);
+  }
+
+  @Auth()
+  @ApiOperation({
+    summary: 'Get current user invites',
+  })
+  @ApiOkResponse({ type: [ProjectParticipationResponseDto] })
+  @Get('me/invites')
+  public async getInvites(
+    @Req() req: Request,
+  ): Promise<ProjectParticipationResponseDto[]> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.getInvites(user.id);
+  }
+
+  @Auth()
+  @ApiOperation({
+    summary: 'Get current user requests',
+  })
+  @ApiOkResponse({ type: [ProjectParticipationResponseDto] })
+  @Get('me/requests')
+  public async getRequests(
+    @Req() req: Request,
+  ): Promise<ProjectParticipationResponseDto[]> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.getRequests(user.id);
   }
 }

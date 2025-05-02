@@ -32,6 +32,8 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectsService } from '../projects/projects.service';
 import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-dto';
 import { UsersListResponseDto } from './dto/users-list.response-dto';
+import { ParticipationsService } from '../participations/participations.service';
+import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
 
 interface GetUsersOptionsInterface {
   activeProjectsCount: number;
@@ -50,6 +52,7 @@ export class UsersService {
     private rolesService: RolesService,
     private cloudinaryService: CloudinaryService,
     private projectsService: ProjectsService,
+    private participationsService: ParticipationsService,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
@@ -497,5 +500,17 @@ export class UsersService {
       total,
       users: users.map((user) => UserMapper.toCardResponse(user)),
     };
+  }
+
+  public async getInvites(
+    userId: string,
+  ): Promise<ProjectParticipationResponseDto[]> {
+    return this.participationsService.getInvitesWithProjects(userId);
+  }
+
+  public async getRequests(
+    userId: string,
+  ): Promise<ProjectParticipationResponseDto[]> {
+    return this.participationsService.getRequestsWithProjects(userId);
   }
 }

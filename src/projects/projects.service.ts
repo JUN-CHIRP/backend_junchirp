@@ -16,6 +16,8 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectRolesService } from '../project-roles/project-roles.service';
 import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
+import { ParticipationsService } from '../participations/participations.service';
+import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -33,6 +35,7 @@ export class ProjectsService {
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
     private projectRolesService: ProjectRolesService,
+    private participationsService: ParticipationsService,
   ) {}
 
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
@@ -83,7 +86,7 @@ export class ProjectsService {
         where,
         skip,
         take: limit,
-        include: { category: true },
+        include: { category: true, roles: { include: { roleType: true } } },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.project.count({ where }),
@@ -153,7 +156,11 @@ export class ProjectsService {
           data: {
             logoUrl,
           },
-          include: { category: true, roles: true, documents: true },
+          include: {
+            category: true,
+            roles: { include: { roleType: true } },
+            documents: true,
+          },
         });
 
         return ProjectMapper.toFullResponse(updatedProject);
@@ -173,7 +180,7 @@ export class ProjectsService {
       where: { id },
       include: {
         category: true,
-        roles: true,
+        roles: { include: { roleType: true } },
         documents: true,
       },
     });
@@ -195,7 +202,7 @@ export class ProjectsService {
         data: updateProjectDto,
         include: {
           category: true,
-          roles: true,
+          roles: { include: { roleType: true } },
           documents: true,
         },
       });
@@ -256,7 +263,7 @@ export class ProjectsService {
         data: { logoUrl },
         include: {
           category: true,
-          roles: true,
+          roles: { include: { roleType: true } },
           documents: true,
         },
       });
@@ -347,5 +354,17 @@ export class ProjectsService {
         },
       });
     });
+  }
+
+  public async getInvites(
+    projectId: string,
+  ): Promise<UserParticipationResponseDto[]> {
+    return this.participationsService.getInvitesWithUsers(projectId);
+  }
+
+  public async getRequests(
+    projectId: string,
+  ): Promise<UserParticipationResponseDto[]> {
+    return this.participationsService.getRequestsWithUsers(projectId);
   }
 }

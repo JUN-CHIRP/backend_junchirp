@@ -69,11 +69,11 @@ export class ProjectRolesController {
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/:id')
+  @Delete(':projectId/:roleId')
   public async deleteProjectRole(
     @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Param('roleId', ParseUUIDv4Pipe) roleId: string,
   ): Promise<void> {
-    return this.projectRolesService.deleteProjectRole(id);
+    return this.projectRolesService.deleteProjectRole(roleId);
   }
 }

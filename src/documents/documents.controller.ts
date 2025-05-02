@@ -79,11 +79,11 @@ export class DocumentsController {
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/:id')
+  @Delete(':projectId/:docId')
   public async deleteProjectRole(
     @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Param('docId', ParseUUIDv4Pipe) docId: string,
   ): Promise<void> {
-    return this.documentsService.deleteDocument(id);
+    return this.documentsService.deleteDocument(docId);
   }
 }

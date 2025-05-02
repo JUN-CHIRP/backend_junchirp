@@ -86,8 +86,8 @@ export class EducationsService {
     id: string,
     updateEducationDto: UpdateEducationDto,
   ): Promise<EducationResponseDto> {
-    try {
-      return this.prisma.$transaction(async (prisma) => {
+    return this.prisma.$transaction(async (prisma) => {
+      try {
         const record = await prisma.institution.findFirst({
           where: {
             institutionName: updateEducationDto.institution,
@@ -111,21 +111,21 @@ export class EducationsService {
         });
 
         return EducationMapper.toResponse(education);
-      });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2001':
-            throw new NotFoundException('Education not found');
-          case 'P2002':
-            throw new ConflictException('Education is already in list');
-          default:
-            throw new InternalServerErrorException('Database error');
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          switch (error.code) {
+            case 'P2001':
+              throw new NotFoundException('Education not found');
+            case 'P2002':
+              throw new ConflictException('Education is already in list');
+            default:
+              throw new InternalServerErrorException('Database error');
+          }
+        } else {
+          throw error;
         }
-      } else {
-        throw error;
       }
-    }
+    });
   }
 
   public async deleteEducation(id: string): Promise<void> {
