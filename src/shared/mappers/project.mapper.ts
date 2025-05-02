@@ -3,6 +3,7 @@ import {
   ProjectCategory,
   ProjectRole,
   Document,
+  ProjectRoleType,
 } from '@prisma/client';
 import { ProjectResponseDto } from '../../projects/dto/project.response-dto';
 import { ProjectRoleMapper } from './project-role.mapper';
@@ -12,6 +13,7 @@ export class ProjectMapper {
   public static toCardResponse(
     project: Project & {
       category: ProjectCategory;
+      roles: (ProjectRole & { roleType: ProjectRoleType })[];
     },
   ): ProjectCardResponseDto {
     return {
@@ -23,13 +25,16 @@ export class ProjectMapper {
       status: project.status,
       createdAt: project.createdAt,
       category: project.category,
+      roles: project.roles.map((role) =>
+        ProjectRoleMapper.toBaseResponse(role),
+      ),
     };
   }
 
   public static toFullResponse(
     project: Project & {
       category: ProjectCategory;
-      roles: ProjectRole[];
+      roles: (ProjectRole & { roleType: ProjectRoleType })[];
       documents: Document[];
     },
   ): ProjectResponseDto {
@@ -37,7 +42,6 @@ export class ProjectMapper {
       ...this.toCardResponse(project),
       slackUrl: project.slackUrl,
       logoUrl: project.logoUrl ?? '',
-      roles: project.roles.map((role) => ProjectRoleMapper.toResponse(role)),
       documents: project.documents,
     };
   }

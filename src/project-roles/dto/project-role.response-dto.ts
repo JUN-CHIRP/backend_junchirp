@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ProjectRoleTypeResponseDto } from './project-role-type.response-dto';
 
 export class ProjectRoleResponseDto {
   @ApiProperty({
@@ -7,9 +8,6 @@ export class ProjectRoleResponseDto {
   })
   public readonly id: string;
 
-  @ApiProperty({
-    example: '03040bb6-4850-481d-aa52-11d21219a6cb',
-    description: 'Role type id',
-  })
-  public readonly roleTypeId: string;
+  @ApiProperty({ type: () => ProjectRoleTypeResponseDto })
+  public readonly roleType: ProjectRoleTypeResponseDto;
 }

@@ -65,9 +65,10 @@ export class ProjectRolesService {
 
     const role = await this.prisma.projectRole.create({
       data: createProjectRoleDto,
+      include: { roleType: true },
     });
 
-    return ProjectRoleMapper.toResponse(role);
+    return ProjectRoleMapper.toBaseResponse(role);
   }
 
   public async deleteProjectRole(id: string): Promise<void> {

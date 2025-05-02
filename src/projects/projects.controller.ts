@@ -42,6 +42,7 @@ import { Owner } from '../auth/decorators/owner.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { Member } from '../auth/decorators/member.decorator';
 import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
+import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 
 @Auth()
 @Controller('projects')
@@ -220,5 +221,29 @@ export class ProjectsController {
     @Param('userId', ParseUUIDv4Pipe) userId: string,
   ): Promise<void> {
     return this.projectsService.removeUserFromProject(projectId, userId);
+  }
+
+  @Member()
+  @ApiOperation({
+    summary: 'Get current project invites',
+  })
+  @ApiOkResponse({ type: [UserParticipationResponseDto] })
+  @Get(':id/invites')
+  public async getInvites(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<UserParticipationResponseDto[]> {
+    return this.projectsService.getInvites(id);
+  }
+
+  @Member()
+  @ApiOperation({
+    summary: 'Get current project requests',
+  })
+  @ApiOkResponse({ type: [UserParticipationResponseDto] })
+  @Get(':id/requests')
+  public async getRequests(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<UserParticipationResponseDto[]> {
+    return this.projectsService.getRequests(id);
   }
 }
