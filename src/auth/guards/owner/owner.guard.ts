@@ -8,9 +8,10 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Reflector } from '@nestjs/core';
 import {
+  OWNER_MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../../shared/constants/project-metadata';
+} from '../../../shared/constants/owner-metadata';
 
 @Injectable()
 export class OwnerGuard implements CanActivate {
@@ -28,22 +29,81 @@ export class OwnerGuard implements CanActivate {
       'params';
     const key: string =
       this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
+    const model: string =
+      this.reflector.get(OWNER_MODEL_KEY, context.getHandler()) ?? 'project';
 
     const container = request[source];
-    const projectId = container?.[key];
+    const resourceId = container?.[key];
 
-    if (!projectId) {
-      throw new BadRequestException(`Missing project ID in ${source}.${key}`);
+    if (!resourceId) {
+      throw new BadRequestException(`Missing resource ID in ${source}.${key}`);
     }
 
-    const project = await this.prisma.project.findUnique({
-      where: {
-        id: projectId,
-        ownerId: user.id,
-      },
-    });
+    let isOwner = false;
 
-    if (!project) {
+    switch (model) {
+      case 'project':
+        isOwner = !!(await this.prisma.project.findFirst({
+          where: {
+            id: resourceId,
+            ownerId: user.id,
+          },
+        }));
+        break;
+
+      case 'document':
+        isOwner = !!(await this.prisma.document.findFirst({
+          where: {
+            id: resourceId,
+            project: {
+              ownerId: user.id,
+            },
+          },
+        }));
+        break;
+
+      case 'projectRole':
+        isOwner = !!(await this.prisma.projectRole.findFirst({
+          where: {
+            id: resourceId,
+            project: {
+              ownerId: user.id,
+            },
+          },
+        }));
+        break;
+
+      case 'participationRequest':
+        isOwner = !!(await this.prisma.participationRequest.findFirst({
+          where: {
+            id: resourceId,
+            projectRole: {
+              project: {
+                ownerId: user.id,
+              },
+            },
+          },
+        }));
+        break;
+
+      case 'participationInvite':
+        isOwner = !!(await this.prisma.participationInvite.findFirst({
+          where: {
+            id: resourceId,
+            projectRole: {
+              project: {
+                ownerId: user.id,
+              },
+            },
+          },
+        }));
+        break;
+
+      default:
+        throw new BadRequestException(`Unsupported model: ${model}`);
+    }
+
+    if (!isOwner) {
       throw new ForbiddenException(
         'Access denied: you are not the project owner',
       );

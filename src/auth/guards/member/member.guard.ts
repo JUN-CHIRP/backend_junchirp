@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 import {
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../../shared/constants/project-metadata';
+} from '../../../shared/constants/owner-metadata';
 
 @Injectable()
 export class MemberGuard implements CanActivate {

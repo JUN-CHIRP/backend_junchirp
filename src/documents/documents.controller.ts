@@ -17,6 +17,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -31,13 +32,16 @@ import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe'
 export class DocumentsController {
   public constructor(private documentsService: DocumentsService) {}
 
-  @Owner('body', 'projectId')
+  @Owner('body', 'projectId', 'project')
   @ApiOperation({ summary: 'Add document' })
   @ApiCreatedResponse({ type: DocumentResponseDto })
   @ApiBadRequestResponse({
     description: 'Maximum number of documents per project is 20',
   })
   @ApiConflictResponse({ description: 'Duplicate document url' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -51,11 +55,14 @@ export class DocumentsController {
     return this.documentsService.addDocument(createDocumentDto);
   }
 
-  @Owner('body', 'projectId')
+  @Owner('params', 'id', 'document')
   @ApiOperation({ summary: 'Update document' })
   @ApiOkResponse({ type: DocumentResponseDto })
   @ApiNotFoundResponse({ description: 'Document not found' })
   @ApiConflictResponse({ description: 'Duplicate document url' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -69,21 +76,23 @@ export class DocumentsController {
     return this.documentsService.updateDocument(id, updateDocumentDto);
   }
 
-  @Owner('params', 'projectId')
+  @Owner('params', 'id', 'document')
   @ApiOperation({ summary: 'Delete document' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Document not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/:docId')
+  @Delete(':id')
   public async deleteProjectRole(
-    @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('docId', ParseUUIDv4Pipe) docId: string,
+    @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.documentsService.deleteDocument(docId);
+    return this.documentsService.deleteDocument(id);
   }
 }

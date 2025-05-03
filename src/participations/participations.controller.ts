@@ -16,6 +16,7 @@ import { Owner } from '../auth/decorators/owner.decorator';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -34,13 +35,16 @@ import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe'
 export class ParticipationsController {
   public constructor(private participationsService: ParticipationsService) {}
 
-  @Owner('body', 'projectId')
+  @Owner('body', 'projectId', 'project')
   @ApiOperation({ summary: 'Create invite (owner)' })
   @ApiCreatedResponse({ type: UserParticipationResponseDto })
   @ApiNotFoundResponse({ description: 'User not found / Role not found' })
   @ApiConflictResponse({
     description:
       'User is already in the project team / User has already been invited to this project / User has already requested participation in this project',
+  })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -116,40 +120,44 @@ export class ParticipationsController {
     return this.participationsService.rejectInvite(id, user.id);
   }
 
-  @Owner('params', 'projectId')
+  @Owner('params', 'id', 'participationRequest')
   @ApiOperation({ summary: 'Accept request (owner)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Put(':projectId/request/:requestId/accept')
+  @Put('request/:id/accept')
   public async acceptRequest(
-    @Param('requestId', ParseUUIDv4Pipe) requestId: string,
-    @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
+    @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.participationsService.acceptRequest(requestId);
+    return this.participationsService.acceptRequest(id);
   }
 
-  @Owner('params', 'projectId')
+  @Owner('params', 'id', 'participationRequest')
   @ApiOperation({ summary: 'Reject request (owner)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/request/:requestId/reject')
+  @Delete('request/:id/reject')
   public async rejectRequest(
-    @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('requestId', ParseUUIDv4Pipe) requestId: string,
+    @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.participationsService.rejectRequest(requestId);
+    return this.participationsService.rejectRequest(id);
   }
 
   @ApiOperation({ summary: 'Cancel request (user)' })
@@ -171,21 +179,23 @@ export class ParticipationsController {
     return this.participationsService.cancelRequest(id, user.id);
   }
 
-  @Owner('params', 'projectId')
+  @Owner('params', 'id', 'participationInvite')
   @ApiOperation({ summary: 'Cancel invite (owner)' })
   @ApiNoContentResponse()
-  @ApiNotFoundResponse({ description: 'Request not found' })
+  @ApiNotFoundResponse({ description: 'Invite not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/invite/:inviteId/cancel')
+  @Delete('invite/:id/cancel')
   public async cancelInvite(
-    @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('inviteId', ParseUUIDv4Pipe) inviteId: string,
+    @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.participationsService.cancelInvite(inviteId);
+    return this.participationsService.cancelInvite(id);
   }
 }

@@ -24,6 +24,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -121,6 +122,9 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Update project' })
   @ApiCreatedResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -138,6 +142,9 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Get project by id' })
   @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not a participant of this project',
+  })
   @Get(':id')
   public async getProjectById(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -149,6 +156,9 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Delete project' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -168,6 +178,9 @@ export class ProjectsController {
   @ApiNotFoundResponse({ description: 'Project not found' })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -197,6 +210,9 @@ export class ProjectsController {
     summary: 'Get project team',
   })
   @ApiOkResponse({ type: [UserCardResponseDto] })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not a participant of this project',
+  })
   @UsePipes(ValidationPipe)
   @Get(':id/users')
   public async getProjectUsers(
@@ -209,6 +225,9 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Remove user from project team' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'User not found in project team' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -228,6 +247,9 @@ export class ProjectsController {
     summary: 'Get current project invites',
   })
   @ApiOkResponse({ type: [UserParticipationResponseDto] })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not a participant of this project',
+  })
   @Get(':id/invites')
   public async getInvites(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -240,6 +262,9 @@ export class ProjectsController {
     summary: 'Get current project requests',
   })
   @ApiOkResponse({ type: [UserParticipationResponseDto] })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not a participant of this project',
+  })
   @Get(':id/requests')
   public async getRequests(
     @Param('id', ParseUUIDv4Pipe) id: string,
