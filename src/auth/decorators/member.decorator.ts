@@ -2,7 +2,7 @@ import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import {
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../shared/constants/project-metadata';
+} from '../../shared/constants/owner-metadata';
 import { Auth } from './auth.decorator';
 import { MemberGuard } from '../guards/member/member.guard';
 

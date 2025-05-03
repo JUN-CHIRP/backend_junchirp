@@ -13,6 +13,7 @@ import { CreateProjectRoleDto } from './dto/create-project-role.dto';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -40,13 +41,16 @@ export class ProjectRolesController {
     return this.projectRolesService.getProjectRoleTypes();
   }
 
-  @Owner('body', 'projectId')
+  @Owner('body', 'projectId', 'project')
   @ApiOperation({ summary: 'Create project role' })
   @ApiCreatedResponse({ type: ProjectRoleResponseDto })
   @ApiNotFoundResponse({
     description: 'Project not found / Role type not found',
   })
   @ApiConflictResponse({ description: 'Role already exists for this project' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -59,21 +63,23 @@ export class ProjectRolesController {
     return this.projectRolesService.createProjectRole(createProjectRoleDto);
   }
 
-  @Owner('params', 'projectId')
+  @Owner('params', 'id', 'projectRole')
   @ApiOperation({ summary: 'Delete project role' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project role not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/:roleId')
+  @Delete(':id')
   public async deleteProjectRole(
-    @Param('projectId', ParseUUIDv4Pipe) _projectId: string,
-    @Param('roleId', ParseUUIDv4Pipe) roleId: string,
+    @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.projectRolesService.deleteProjectRole(roleId);
+    return this.projectRolesService.deleteProjectRole(id);
   }
 }
