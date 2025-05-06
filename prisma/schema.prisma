@@ -275,6 +275,7 @@ model ParticipationInvite {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectRole   ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, projectRoleId])
   @@map("participation_invites")
 }
 
@@ -285,6 +286,7 @@ model ParticipationRequest {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectRole   ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, projectRoleId])
   @@map("participation_requests")
 }
 

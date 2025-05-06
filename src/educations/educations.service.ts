@@ -45,8 +45,8 @@ export class EducationsService {
       throw new BadRequestException('You can only add up to 5 educations.');
     }
 
-    try {
-      return this.prisma.$transaction(async (prisma) => {
+    return this.prisma.$transaction(async (prisma) => {
+      try {
         const education = await prisma.education.create({
           data: {
             ...createEducationDto,
@@ -70,16 +70,16 @@ export class EducationsService {
         }
 
         return EducationMapper.toResponse(education);
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('Education is already in list');
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException('Education is already in list');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
   public async updateEducation(
