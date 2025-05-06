@@ -112,7 +112,7 @@ export class TasksController {
   @ApiOperation({ summary: 'Update task status' })
   @ApiOkResponse({ type: TaskWithStatusResponseDto })
   @ApiNotFoundResponse({
-    description: 'Task not found / Task status not found',
+    description: 'Task or status not found',
   })
   @ApiForbiddenResponse({
     description: 'Access denied: you are not a participant of this project',

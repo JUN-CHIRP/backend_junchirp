@@ -27,62 +27,23 @@ export class ParticipationsService {
     createInviteDto: CreateInviteDto,
   ): Promise<UserParticipationResponseDto> {
     return this.prisma.$transaction(async (prisma) => {
-      const role = await prisma.projectRole.findUnique({
-        where: {
-          id: createInviteDto.projectRoleId,
-        },
-      });
-
-      if (!role) {
-        throw new NotFoundException('Role not found');
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { id: createInviteDto.userId },
-      });
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      const [existingParticipation, existingInvite, existingRequest] =
-        await Promise.all([
-          prisma.projectRole.findFirst({
-            where: {
-              projectId: createInviteDto.projectId,
-              users: {
-                some: {
-                  id: createInviteDto.userId,
-                },
-              },
-            },
-          }),
-          prisma.participationInvite.findFirst({
-            where: {
-              userId: createInviteDto.userId,
-              projectRole: {
-                projectId: createInviteDto.projectId,
-              },
-            },
-          }),
-          prisma.participationRequest.findFirst({
-            where: {
-              userId: createInviteDto.userId,
-              projectRole: {
-                projectId: createInviteDto.projectId,
-              },
-            },
-          }),
-        ]);
+      const [existingParticipation, existingRequest] = await Promise.all([
+        prisma.projectRole.findFirst({
+          where: {
+            projectId: createInviteDto.projectId,
+            users: { some: { id: createInviteDto.userId } },
+          },
+        }),
+        prisma.participationRequest.findFirst({
+          where: {
+            userId: createInviteDto.userId,
+            projectRole: { projectId: createInviteDto.projectId },
+          },
+        }),
+      ]);
 
       if (existingParticipation) {
         throw new ConflictException('User is already in the project team');
-      }
-
-      if (existingInvite) {
-        throw new ConflictException(
-          'User has already been invited to this project',
-        );
       }
 
       if (existingRequest) {
@@ -91,40 +52,53 @@ export class ParticipationsService {
         );
       }
 
-      const invite = await prisma.participationInvite.create({
-        data: {
-          userId: createInviteDto.userId,
-          projectRoleId: createInviteDto.projectRoleId,
-        },
-        include: {
-          user: {
-            include: {
-              educations: {
-                include: {
-                  specialization: true,
-                },
+      try {
+        const invite = await prisma.participationInvite.create({
+          data: {
+            userId: createInviteDto.userId,
+            projectRoleId: createInviteDto.projectRoleId,
+          },
+          include: {
+            user: {
+              include: {
+                educations: { include: { specialization: true } },
+              },
+            },
+            projectRole: {
+              include: {
+                roleType: true,
+                project: true,
               },
             },
           },
-          projectRole: {
-            include: {
-              roleType: true,
-              project: true,
-            },
-          },
-        },
-      });
-
-      this.mailService
-        .sendParticipationInvite(
-          `${this.configService.get<string>('BASE_FRONTEND_URL')}/invited-project-card`,
-          invite,
-        )
-        .catch((err) => {
-          console.error('Error sending email:', err);
         });
 
-      return UserParticipationMapper.toResponse(invite);
+        this.mailService
+          .sendParticipationInvite(
+            `${this.configService.get<string>('BASE_FRONTEND_URL')}/invited-project-card`,
+            invite,
+          )
+          .catch((err) => {
+            console.error('Error sending email:', err);
+          });
+
+        return UserParticipationMapper.toResponse(invite);
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          switch (error.code) {
+            case 'P2003':
+              throw new NotFoundException('User or project role not found');
+            case 'P2002':
+              throw new ConflictException(
+                'User has already been invited to this role',
+              );
+            default:
+              throw new InternalServerErrorException('Database error');
+          }
+        } else {
+          throw error;
+        }
+      }
     });
   }
 
@@ -133,45 +107,26 @@ export class ParticipationsService {
     userId: string,
   ): Promise<ProjectParticipationResponseDto> {
     return this.prisma.$transaction(async (prisma) => {
-      const role = await prisma.projectRole.findUnique({
-        where: {
-          id: createRequestDto.projectRoleId,
-        },
-      });
-
-      if (!role) {
-        throw new NotFoundException('Role not found');
-      }
-
-      const [existingParticipation, existingInvite, existingRequest] =
-        await Promise.all([
-          prisma.projectRole.findFirst({
-            where: {
-              projectId: createRequestDto.projectId,
-              users: {
-                some: {
-                  id: userId,
-                },
+      const [existingParticipation, existingInvite] = await Promise.all([
+        prisma.projectRole.findFirst({
+          where: {
+            projectId: createRequestDto.projectId,
+            users: {
+              some: {
+                id: userId,
               },
             },
-          }),
-          prisma.participationInvite.findFirst({
-            where: {
-              userId,
-              projectRole: {
-                projectId: createRequestDto.projectRoleId,
-              },
+          },
+        }),
+        prisma.participationInvite.findFirst({
+          where: {
+            userId,
+            projectRole: {
+              projectId: createRequestDto.projectRoleId,
             },
-          }),
-          prisma.participationRequest.findFirst({
-            where: {
-              userId,
-              projectRole: {
-                projectId: createRequestDto.projectRoleId,
-              },
-            },
-          }),
-        ]);
+          },
+        }),
+      ]);
 
       if (existingParticipation) {
         throw new ConflictException('You are already in the project team');
@@ -183,64 +138,69 @@ export class ParticipationsService {
         );
       }
 
-      if (existingRequest) {
-        throw new ConflictException(
-          'You have already requested participation in this project',
-        );
-      }
-
-      const request = await prisma.participationRequest.create({
-        data: {
-          userId,
-          projectRoleId: createRequestDto.projectRoleId,
-        },
-        include: {
-          projectRole: {
-            include: {
-              roleType: true,
-              project: {
-                include: {
-                  category: true,
-                  roles: {
-                    include: {
-                      roleType: true,
+      try {
+        const request = await prisma.participationRequest.create({
+          data: {
+            userId,
+            projectRoleId: createRequestDto.projectRoleId,
+          },
+          include: {
+            projectRole: {
+              include: {
+                roleType: true,
+                project: {
+                  include: {
+                    category: true,
+                    roles: {
+                      include: {
+                        roleType: true,
+                      },
                     },
+                    owner: true,
                   },
-                  owner: true,
                 },
               },
             },
           },
-        },
-      });
-
-      this.mailService
-        .sendParticipationRequest(
-          `${this.configService.get<string>('BASE_FRONTEND_URL')}/users/${request.userId}`,
-          request,
-        )
-        .catch((err) => {
-          console.error('Error sending email:', err);
         });
 
-      return ProjectParticipationMapper.toResponse(request);
+        this.mailService
+          .sendParticipationRequest(
+            `${this.configService.get<string>('BASE_FRONTEND_URL')}/users/${request.userId}`,
+            request,
+          )
+          .catch((err) => {
+            console.error('Error sending email:', err);
+          });
+
+        return ProjectParticipationMapper.toResponse(request);
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          switch (error.code) {
+            case 'P2003':
+              throw new NotFoundException('Project role not found');
+            case 'P2002':
+              throw new ConflictException(
+                'You have already been invited to this role',
+              );
+            default:
+              throw new InternalServerErrorException('Database error');
+          }
+        } else {
+          throw error;
+        }
+      }
     });
   }
 
   public async acceptInvite(id: string, userId: string): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
-      const invite = await prisma.participationInvite.findUnique({
-        where: { id, userId },
-        include: {
-          projectRole: true,
-        },
-      });
-
-      if (!invite) {
-        throw new NotFoundException('Invite not found');
-      }
-
       try {
+        const invite = await prisma.participationInvite.findUniqueOrThrow({
+          where: { id, userId },
+          include: { projectRole: true },
+        });
+
         await prisma.projectRole.update({
           where: { id: invite.projectRoleId },
           data: {
@@ -263,10 +223,11 @@ export class ParticipationsService {
           where: { id },
         });
       } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-          throw new InternalServerErrorException(
-            `Database error: ${error.code} - ${error.message}`,
-          );
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Invite not found');
         }
         throw error;
       }
@@ -291,18 +252,14 @@ export class ParticipationsService {
 
   public async acceptRequest(id: string): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
-      const request = await prisma.participationRequest.findUnique({
-        where: { id },
-        include: {
-          projectRole: true,
-        },
-      });
-
-      if (!request) {
-        throw new NotFoundException('Request not found');
-      }
-
       try {
+        const request = await prisma.participationRequest.findUniqueOrThrow({
+          where: { id },
+          include: {
+            projectRole: true,
+          },
+        });
+
         await prisma.projectRole.update({
           where: { id: request.projectRoleId },
           data: {
@@ -325,10 +282,11 @@ export class ParticipationsService {
           where: { id },
         });
       } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-          throw new InternalServerErrorException(
-            `Database error: ${error.code} - ${error.message}`,
-          );
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Request not found');
         }
         throw error;
       }

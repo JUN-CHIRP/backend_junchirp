@@ -55,27 +55,33 @@ export class TasksService {
   }
 
   public async getTaskById(id: string): Promise<TaskWithStatusResponseDto> {
-    const task = await this.prisma.task.findUnique({
-      where: { id },
-      include: {
-        taskStatus: true,
-        user: {
-          include: {
-            educations: {
-              include: {
-                specialization: true,
+    try {
+      const task = await this.prisma.task.findUniqueOrThrow({
+        where: { id },
+        include: {
+          taskStatus: true,
+          user: {
+            include: {
+              educations: {
+                include: {
+                  specialization: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!task) {
-      throw new NotFoundException('Task not found');
+      return TaskMapper.toExpandResponse(task);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Task not found');
+      }
+      throw error;
     }
-
-    return TaskMapper.toExpandResponse(task);
   }
 
   public async updateTask(
@@ -104,7 +110,7 @@ export class TasksService {
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2001'
+        error.code === 'P2025'
       ) {
         throw new NotFoundException('Task not found');
       }
@@ -132,15 +138,11 @@ export class TasksService {
     id: string,
     updateTaskStatusDto: UpdateTaskStatusDto,
   ): Promise<TaskWithStatusResponseDto> {
-    const status = await this.prisma.taskStatus.findUnique({
-      where: { id: updateTaskStatusDto.taskStatusId },
-    });
-
-    if (!status) {
-      throw new NotFoundException('Status not found');
-    }
-
     try {
+      await this.prisma.taskStatus.findUniqueOrThrow({
+        where: { id: updateTaskStatusDto.taskStatusId },
+      });
+
       const task = await this.prisma.task.update({
         where: { id },
         data: updateTaskStatusDto,
@@ -162,9 +164,9 @@ export class TasksService {
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2001'
+        error.code === 'P2025'
       ) {
-        throw new NotFoundException('Task not found');
+        throw new NotFoundException('Task or status not found');
       }
       throw error;
     }

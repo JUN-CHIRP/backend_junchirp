@@ -74,17 +74,19 @@ export class BoardsService {
   }
 
   public async getBoardById(id: string): Promise<BoardResponseDto> {
-    const board = await this.prisma.board.findUnique({
-      where: { id },
-      include: {
-        columns: {
-          include: {
-            tasks: {
-              include: {
-                user: {
-                  include: {
-                    educations: {
-                      include: { specialization: true },
+    try {
+      const board = await this.prisma.board.findUniqueOrThrow({
+        where: { id },
+        include: {
+          columns: {
+            include: {
+              tasks: {
+                include: {
+                  user: {
+                    include: {
+                      educations: {
+                        include: { specialization: true },
+                      },
                     },
                   },
                 },
@@ -92,14 +94,18 @@ export class BoardsService {
             },
           },
         },
-      },
-    });
+      });
 
-    if (!board) {
-      throw new NotFoundException('Board not found');
+      return BoardMapper.toResponse(board);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Board not found');
+      }
+      throw error;
     }
-
-    return BoardMapper.toResponse(board);
   }
 
   public async updateBoard(
@@ -131,7 +137,7 @@ export class BoardsService {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {
-          case 'P2001':
+          case 'P2025':
             throw new NotFoundException('Board not found');
           case 'P2002':
             throw new ConflictException('Board with this name already exists');

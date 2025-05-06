@@ -45,7 +45,7 @@ export class ProjectRolesController {
   @ApiOperation({ summary: 'Create project role' })
   @ApiCreatedResponse({ type: ProjectRoleResponseDto })
   @ApiNotFoundResponse({
-    description: 'Project not found / Role type not found',
+    description: 'Project or role type not found',
   })
   @ApiConflictResponse({ description: 'Role already exists for this project' })
   @ApiForbiddenResponse({

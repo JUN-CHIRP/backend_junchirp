@@ -104,7 +104,7 @@ export class TaskStatusesService {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {
-          case 'P2001':
+          case 'P2025':
             throw new NotFoundException('Column not found');
           case 'P2002':
             throw new ConflictException(

@@ -64,7 +64,7 @@ export class SoftSkillsService {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {
-          case 'P2001':
+          case 'P2025':
             throw new NotFoundException('Soft skill not found');
           case 'P2002':
             throw new ConflictException('Soft skill is already in list');

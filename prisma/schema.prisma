@@ -129,11 +129,12 @@ model ProjectRole {
   projectId            String                 @map("project_id")
   roleTypeId           String                 @map("role_type_id")
   project              Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  roleType             ProjectRoleType        @relation(fields: [roleTypeId], references: [id])
+  roleType             ProjectRoleType        @relation(fields: [roleTypeId], references: [id], onDelete: Cascade)
   users                User[]                 @relation("UserProjectRoles")
   participationInvite  ParticipationInvite[]
   participationRequest ParticipationRequest[]
 
+  @@unique([projectId, roleTypeId])
   @@map("project_roles")
 }
 

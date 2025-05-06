@@ -1,6 +1,6 @@
 import {
   ConflictException,
-  Injectable,
+  Injectable, InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -36,39 +36,35 @@ export class ProjectRolesService {
   public async createProjectRole(
     createProjectRoleDto: CreateProjectRoleDto,
   ): Promise<ProjectRoleResponseDto> {
-    const project = await this.prisma.project.findUnique({
-      where: { id: createProjectRoleDto.projectId },
-    });
+    try {
+      await this.prisma.project.findUniqueOrThrow({
+        where: { id: createProjectRoleDto.projectId },
+      });
 
-    if (!project) {
-      throw new NotFoundException('Project not found');
+      await this.prisma.projectRoleType.findUniqueOrThrow({
+        where: { id: createProjectRoleDto.roleTypeId },
+      });
+
+      const role = await this.prisma.projectRole.create({
+        data: createProjectRoleDto,
+        include: { roleType: true },
+      });
+
+      return ProjectRoleMapper.toBaseResponse(role);
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        switch (error.code) {
+          case 'P2025':
+            throw new NotFoundException('Project or role type not found');
+          case 'P2002':
+            throw new ConflictException('Role already exists for this project');
+          default:
+            throw new InternalServerErrorException('Database error');
+        }
+      } else {
+        throw error;
+      }
     }
-
-    const roleType = await this.prisma.projectRoleType.findUnique({
-      where: { id: createProjectRoleDto.roleTypeId },
-    });
-
-    if (!roleType) {
-      throw new NotFoundException('Role type not found');
-    }
-
-    const existingRole = await this.prisma.projectRole.findFirst({
-      where: {
-        projectId: createProjectRoleDto.projectId,
-        roleTypeId: createProjectRoleDto.roleTypeId,
-      },
-    });
-
-    if (existingRole) {
-      throw new ConflictException('Role already exists for this project');
-    }
-
-    const role = await this.prisma.projectRole.create({
-      data: createProjectRoleDto,
-      include: { roleType: true },
-    });
-
-    return ProjectRoleMapper.toBaseResponse(role);
   }
 
   public async deleteProjectRole(id: string): Promise<void> {
