@@ -4,11 +4,12 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Reflector } from '@nestjs/core';
 import {
-  OWNER_MODEL_KEY,
+  MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
 } from '../../../shared/constants/owner-member-metadata';
@@ -30,7 +31,7 @@ export class OwnerGuard implements CanActivate {
     const key: string =
       this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
     const model: string =
-      this.reflector.get(OWNER_MODEL_KEY, context.getHandler()) ?? 'project';
+      this.reflector.get(MODEL_KEY, context.getHandler()) ?? 'project';
 
     const container = request[source];
     const resourceId = container?.[key];
@@ -39,100 +40,101 @@ export class OwnerGuard implements CanActivate {
       throw new BadRequestException(`Missing resource ID in ${source}.${key}`);
     }
 
-    let isOwner = false;
+    const checkOwnershipMap: Record<string, () => Promise<boolean>> = {
+      project: async () =>
+        !!(await this.prisma.project.findFirst({
+          where: { id: resourceId, ownerId: user.id },
+        })),
 
-    switch (model) {
-      case 'project':
-        isOwner = !!(await this.prisma.project.findFirst({
+      document: async () =>
+        !!(await this.prisma.document.findFirst({
           where: {
             id: resourceId,
-            ownerId: user.id,
+            project: { ownerId: user.id },
           },
-        }));
-        break;
+        })),
 
-      case 'document':
-        isOwner = !!(await this.prisma.document.findFirst({
+      projectRole: async () =>
+        !!(await this.prisma.projectRole.findFirst({
           where: {
             id: resourceId,
-            project: {
-              ownerId: user.id,
-            },
+            project: { ownerId: user.id },
           },
-        }));
-        break;
+        })),
 
-      case 'projectRole':
-        isOwner = !!(await this.prisma.projectRole.findFirst({
+      participationRequest: async () =>
+        !!(await this.prisma.participationRequest.findFirst({
           where: {
             id: resourceId,
-            project: {
-              ownerId: user.id,
-            },
+            projectRole: { project: { ownerId: user.id } },
           },
-        }));
-        break;
+        })),
 
-      case 'participationRequest':
-        isOwner = !!(await this.prisma.participationRequest.findFirst({
+      participationInvite: async () =>
+        !!(await this.prisma.participationInvite.findFirst({
           where: {
             id: resourceId,
-            projectRole: {
-              project: {
-                ownerId: user.id,
-              },
-            },
+            projectRole: { project: { ownerId: user.id } },
           },
-        }));
-        break;
+        })),
 
-      case 'participationInvite':
-        isOwner = !!(await this.prisma.participationInvite.findFirst({
+      board: async () =>
+        !!(await this.prisma.board.findFirst({
           where: {
             id: resourceId,
-            projectRole: {
-              project: {
-                ownerId: user.id,
-              },
-            },
+            project: { ownerId: user.id },
           },
-        }));
-        break;
+        })),
 
-      case 'board':
-        isOwner = !!(await this.prisma.board.findFirst({
+      taskStatus: async () =>
+        !!(await this.prisma.taskStatus.findFirst({
           where: {
             id: resourceId,
-            project: {
-              ownerId: user.id,
-            },
+            board: { project: { ownerId: user.id } },
           },
-        }));
-        break;
+        })),
+    };
 
-      case 'taskStatus':
-        isOwner = !!(await this.prisma.taskStatus.findFirst({
-          where: {
-            id: resourceId,
-            board: {
-              project: {
-                ownerId: user.id,
-              },
-            },
-          },
-        }));
-        break;
-
-      default:
-        throw new BadRequestException(`Unsupported model: ${model}`);
+    const check = checkOwnershipMap[model];
+    if (!check) {
+      throw new BadRequestException(`Unsupported model: ${model}`);
     }
 
+    const isOwner = await check();
+
     if (!isOwner) {
+      const exists = await this.resourceExists(model, resourceId);
+      if (!exists) {
+        throw new NotFoundException(`Resource not found`);
+      }
+
       throw new ForbiddenException(
         'Access denied: you are not the project owner',
       );
     }
 
     return true;
+  }
+
+  private async resourceExists(model: string, id: string): Promise<boolean> {
+    const findMap: Record<string, () => Promise<unknown>> = {
+      project: () => this.prisma.project.findUnique({ where: { id } }),
+      document: () => this.prisma.document.findUnique({ where: { id } }),
+      projectRole: () => this.prisma.projectRole.findUnique({ where: { id } }),
+      participationRequest: () =>
+        this.prisma.participationRequest.findUnique({ where: { id } }),
+      participationInvite: () =>
+        this.prisma.participationInvite.findUnique({ where: { id } }),
+      board: () => this.prisma.board.findUnique({ where: { id } }),
+      taskStatus: () => this.prisma.taskStatus.findUnique({ where: { id } }),
+    };
+
+    const finder = findMap[model];
+    if (!finder) {
+      return false;
+    }
+
+    const result = await finder();
+    return !!result;
   }
 }

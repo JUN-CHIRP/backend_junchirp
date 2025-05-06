@@ -4,11 +4,12 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Reflector } from '@nestjs/core';
 import {
-  OWNER_MODEL_KEY,
+  MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
 } from '../../../shared/constants/owner-member-metadata';
@@ -30,7 +31,7 @@ export class MemberGuard implements CanActivate {
     const key: string =
       this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
     const model: string =
-      this.reflector.get(OWNER_MODEL_KEY, context.getHandler()) ?? 'project';
+      this.reflector.get(MODEL_KEY, context.getHandler()) ?? 'project';
 
     const container = request[source];
     const resourceId = container?.[key];
@@ -39,47 +40,39 @@ export class MemberGuard implements CanActivate {
       throw new BadRequestException(`Missing resource ID in ${source}.${key}`);
     }
 
-    let isParticipant = false;
-
-    switch (model) {
-      case 'project':
-        isParticipant = !!(await this.prisma.project.findFirst({
+    const checkMembershipMap: Record<string, () => Promise<boolean>> = {
+      project: async () =>
+        !!(await this.prisma.project.findFirst({
           where: {
             id: resourceId,
             roles: {
               some: {
                 users: {
-                  some: {
-                    id: user.id,
-                  },
+                  some: { id: user.id },
                 },
               },
             },
           },
-        }));
-        break;
+        })),
 
-      case 'board':
-        isParticipant = !!(await this.prisma.board.findFirst({
+      board: async () =>
+        !!(await this.prisma.board.findFirst({
           where: {
             id: resourceId,
             project: {
               roles: {
                 some: {
                   users: {
-                    some: {
-                      id: user.id,
-                    },
+                    some: { id: user.id },
                   },
                 },
               },
             },
           },
-        }));
-        break;
+        })),
 
-      case 'task':
-        isParticipant = !!(await this.prisma.task.findFirst({
+      task: async () =>
+        !!(await this.prisma.task.findFirst({
           where: {
             id: resourceId,
             taskStatus: {
@@ -88,9 +81,7 @@ export class MemberGuard implements CanActivate {
                   roles: {
                     some: {
                       users: {
-                        some: {
-                          id: user.id,
-                        },
+                        some: { id: user.id },
                       },
                     },
                   },
@@ -98,19 +89,43 @@ export class MemberGuard implements CanActivate {
               },
             },
           },
-        }));
-        break;
+        })),
+    };
 
-      default:
-        throw new BadRequestException(`Unsupported model: ${model}`);
+    const check = checkMembershipMap[model];
+    if (!check) {
+      throw new BadRequestException(`Unsupported model: ${model}`);
     }
 
+    const isParticipant = await check();
+
     if (!isParticipant) {
+      const exists = await this.resourceExists(model, resourceId);
+      if (!exists) {
+        throw new NotFoundException(`Resource not found`);
+      }
+
       throw new ForbiddenException(
         'Access denied: you are not a participant of this project',
       );
     }
 
     return true;
+  }
+
+  private async resourceExists(model: string, id: string): Promise<boolean> {
+    const findMap: Record<string, () => Promise<unknown>> = {
+      project: () => this.prisma.project.findUnique({ where: { id } }),
+      board: () => this.prisma.board.findUnique({ where: { id } }),
+      task: () => this.prisma.task.findUnique({ where: { id } }),
+    };
+
+    const finder = findMap[model];
+    if (!finder) {
+      return false;
+    }
+
+    const result = await finder();
+    return !!result;
   }
 }

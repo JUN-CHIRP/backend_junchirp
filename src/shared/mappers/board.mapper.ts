@@ -27,7 +27,7 @@ export class BoardMapper {
       id: board.id,
       boardName: board.boardName,
       columns: board.columns.map((column) =>
-        TaskStatusMapper.toResponse(column),
+        TaskStatusMapper.toExpandResponse(column),
       ),
     };
   }
