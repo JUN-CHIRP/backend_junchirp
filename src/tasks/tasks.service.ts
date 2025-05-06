@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TaskMapper } from '../shared/mappers/task.mapper';
 import { TaskWithStatusResponseDto } from './dto/task-with-status.response-dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
+import { UpdateStatusTaskDto } from './dto/update-status-task.dto';
 
 @Injectable()
 export class TasksService {
@@ -136,16 +136,16 @@ export class TasksService {
 
   public async updateTaskStatus(
     id: string,
-    updateTaskStatusDto: UpdateTaskStatusDto,
+    updateStatusTaskDto: UpdateStatusTaskDto,
   ): Promise<TaskWithStatusResponseDto> {
     try {
       await this.prisma.taskStatus.findUniqueOrThrow({
-        where: { id: updateTaskStatusDto.taskStatusId },
+        where: { id: updateStatusTaskDto.taskStatusId },
       });
 
       const task = await this.prisma.task.update({
         where: { id },
-        data: updateTaskStatusDto,
+        data: updateStatusTaskDto,
         include: {
           taskStatus: true,
           user: {

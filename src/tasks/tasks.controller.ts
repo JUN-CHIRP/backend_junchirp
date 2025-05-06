@@ -26,7 +26,7 @@ import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Member } from '../auth/decorators/member.decorator';
 import { TaskWithStatusResponseDto } from './dto/task-with-status.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
-import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
+import { UpdateStatusTaskDto } from './dto/update-status-task.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -125,8 +125,8 @@ export class TasksController {
   @Put(':id')
   public async updateTaskStatus(
     @Param('id', ParseUUIDv4Pipe) id: string,
-    @Body(ValidationPipe) updateTaskStatusDto: UpdateTaskStatusDto,
+    @Body(ValidationPipe) updateStatusTaskDto: UpdateStatusTaskDto,
   ): Promise<TaskWithStatusResponseDto> {
-    return this.tasksService.updateTaskStatus(id, updateTaskStatusDto);
+    return this.tasksService.updateTaskStatus(id, updateStatusTaskDto);
   }
 }
