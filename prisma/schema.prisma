@@ -160,30 +160,33 @@ model Board {
   projectId String       @map("project_id")
   project   Project      @relation(fields: [projectId], references: [id])
   columns   TaskStatus[]
-  tasks     Task[]
 
+  @@unique([boardName, projectId])
   @@map("boards")
 }
 
 model TaskStatus {
-  id      String @id @default(dbgenerated("gen_random_uuid()"))
-  name    String
-  boardId String @map("board_id")
-  board   Board  @relation(fields: [boardId], references: [id])
+  id          String @id @default(dbgenerated("gen_random_uuid()"))
+  statusName  String @map("status_name")
+  columnIndex Int    @map("column_index")
+  boardId     String @map("board_id")
+  board       Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 
+  @@unique([statusName, boardId])
   @@map("task_statuses")
 }
 
 model Task {
-  id          String       @id @default(dbgenerated("gen_random_uuid()"))
-  taskName    String       @map("task_name")
-  description String
-  priority    TaskPriority
-  deadline    DateTime
-  boardId     String       @map("board_id")
-  userId      String?      @map("user_id")
-  board       Board        @relation(fields: [boardId], references: [id])
-  user        User?        @relation(fields: [userId], references: [id])
+  id           String       @id @default(dbgenerated("gen_random_uuid()"))
+  taskName     String       @map("task_name")
+  description  String
+  priority     TaskPriority
+  deadline     DateTime
+  taskStatusId String       @map("task_status_id")
+  userId       String?      @map("user_id")
+  taskStatus   TaskStatus   @relation(fields: [taskStatusId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("tasks")
 }

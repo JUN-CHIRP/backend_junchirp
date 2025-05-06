@@ -8,9 +8,10 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Reflector } from '@nestjs/core';
 import {
+  OWNER_MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../../shared/constants/owner-metadata';
+} from '../../../shared/constants/owner-member-metadata';
 
 @Injectable()
 export class MemberGuard implements CanActivate {
@@ -28,28 +29,81 @@ export class MemberGuard implements CanActivate {
       'params';
     const key: string =
       this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
+    const model: string =
+      this.reflector.get(OWNER_MODEL_KEY, context.getHandler()) ?? 'project';
 
     const container = request[source];
-    const projectId = container?.[key];
+    const resourceId = container?.[key];
 
-    if (!projectId) {
-      throw new BadRequestException(`Missing project ID in ${source}.${key}`);
+    if (!resourceId) {
+      throw new BadRequestException(`Missing resource ID in ${source}.${key}`);
     }
 
-    const isParticipant = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        roles: {
-          some: {
-            users: {
+    let isParticipant = false;
+
+    switch (model) {
+      case 'project':
+        isParticipant = !!(await this.prisma.project.findFirst({
+          where: {
+            id: resourceId,
+            roles: {
               some: {
-                id: user.id,
+                users: {
+                  some: {
+                    id: user.id,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
+        }));
+        break;
+
+      case 'board':
+        isParticipant = !!(await this.prisma.board.findFirst({
+          where: {
+            id: resourceId,
+            project: {
+              roles: {
+                some: {
+                  users: {
+                    some: {
+                      id: user.id,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }));
+        break;
+
+      case 'task':
+        isParticipant = !!(await this.prisma.task.findFirst({
+          where: {
+            id: resourceId,
+            taskStatus: {
+              board: {
+                project: {
+                  roles: {
+                    some: {
+                      users: {
+                        some: {
+                          id: user.id,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }));
+        break;
+
+      default:
+        throw new BadRequestException(`Unsupported model: ${model}`);
+    }
 
     if (!isParticipant) {
       throw new ForbiddenException(

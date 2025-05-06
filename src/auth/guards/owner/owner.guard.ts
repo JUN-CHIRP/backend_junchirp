@@ -11,7 +11,7 @@ import {
   OWNER_MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../../shared/constants/owner-metadata';
+} from '../../../shared/constants/owner-member-metadata';
 
 @Injectable()
 export class OwnerGuard implements CanActivate {
@@ -91,6 +91,30 @@ export class OwnerGuard implements CanActivate {
           where: {
             id: resourceId,
             projectRole: {
+              project: {
+                ownerId: user.id,
+              },
+            },
+          },
+        }));
+        break;
+
+      case 'board':
+        isOwner = !!(await this.prisma.board.findFirst({
+          where: {
+            id: resourceId,
+            project: {
+              ownerId: user.id,
+            },
+          },
+        }));
+        break;
+
+      case 'taskStatus':
+        isOwner = !!(await this.prisma.taskStatus.findFirst({
+          where: {
+            id: resourceId,
+            board: {
               project: {
                 ownerId: user.id,
               },

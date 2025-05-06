@@ -5,7 +5,7 @@ import {
   OWNER_MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../shared/constants/owner-metadata';
+} from '../../shared/constants/owner-member-metadata';
 
 export const Owner = (
   source: 'params' | 'body' | 'query' = 'params',

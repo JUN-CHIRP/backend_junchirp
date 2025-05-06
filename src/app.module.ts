@@ -20,6 +20,9 @@ import { ProjectsModule } from './projects/projects.module';
 import { ProjectRolesModule } from './project-roles/project-roles.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ParticipationsModule } from './participations/participations.module';
+import { BoardsModule } from './boards/boards.module';
+import { TaskStatusesModule } from './task-statuses/task-statuses.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -52,6 +55,9 @@ import { ParticipationsModule } from './participations/participations.module';
     ProjectRolesModule,
     DocumentsModule,
     ParticipationsModule,
+    BoardsModule,
+    TaskStatusesModule,
+    TasksModule,
   ],
   providers: [
     CronTasksService,
