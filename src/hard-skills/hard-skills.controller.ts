@@ -38,7 +38,7 @@ export class HardSkillsController {
   @ApiOperation({ summary: 'Add hard skill' })
   @ApiCreatedResponse({ type: HardSkillResponseDto })
   @ApiBadRequestResponse({
-    description: 'You can only add up to 20 hard skills.',
+    description: 'You can only add up to 20 hard skills',
   })
   @ApiConflictResponse({ description: 'Hard skill is already in list' })
   @ApiHeader({

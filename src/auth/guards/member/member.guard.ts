@@ -4,13 +4,15 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Reflector } from '@nestjs/core';
 import {
+  MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../../shared/constants/owner-metadata';
+} from '../../../shared/constants/owner-member-metadata';
 
 @Injectable()
 export class MemberGuard implements CanActivate {
@@ -28,35 +30,102 @@ export class MemberGuard implements CanActivate {
       'params';
     const key: string =
       this.reflector.get(PROJECT_ID_KEY_KEY, context.getHandler()) ?? 'id';
+    const model: string =
+      this.reflector.get(MODEL_KEY, context.getHandler()) ?? 'project';
 
     const container = request[source];
-    const projectId = container?.[key];
+    const resourceId = container?.[key];
 
-    if (!projectId) {
-      throw new BadRequestException(`Missing project ID in ${source}.${key}`);
+    if (!resourceId) {
+      throw new BadRequestException(`Missing resource ID in ${source}.${key}`);
     }
 
-    const isParticipant = await this.prisma.project.findFirst({
-      where: {
-        id: projectId,
-        roles: {
-          some: {
-            users: {
+    const checkMembershipMap: Record<string, () => Promise<boolean>> = {
+      project: async () =>
+        !!(await this.prisma.project.findFirst({
+          where: {
+            id: resourceId,
+            roles: {
               some: {
-                id: user.id,
+                users: {
+                  some: { id: user.id },
+                },
               },
             },
           },
-        },
-      },
-    });
+        })),
+
+      board: async () =>
+        !!(await this.prisma.board.findFirst({
+          where: {
+            id: resourceId,
+            project: {
+              roles: {
+                some: {
+                  users: {
+                    some: { id: user.id },
+                  },
+                },
+              },
+            },
+          },
+        })),
+
+      task: async () =>
+        !!(await this.prisma.task.findFirst({
+          where: {
+            id: resourceId,
+            taskStatus: {
+              board: {
+                project: {
+                  roles: {
+                    some: {
+                      users: {
+                        some: { id: user.id },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })),
+    };
+
+    const check = checkMembershipMap[model];
+    if (!check) {
+      throw new BadRequestException(`Unsupported model: ${model}`);
+    }
+
+    const isParticipant = await check();
 
     if (!isParticipant) {
+      const exists = await this.resourceExists(model, resourceId);
+      if (!exists) {
+        throw new NotFoundException(`Resource not found`);
+      }
+
       throw new ForbiddenException(
         'Access denied: you are not a participant of this project',
       );
     }
 
     return true;
+  }
+
+  private async resourceExists(model: string, id: string): Promise<boolean> {
+    const findMap: Record<string, () => Promise<unknown>> = {
+      project: () => this.prisma.project.findUnique({ where: { id } }),
+      board: () => this.prisma.board.findUnique({ where: { id } }),
+      task: () => this.prisma.task.findUnique({ where: { id } }),
+    };
+
+    const finder = findMap[model];
+    if (!finder) {
+      return false;
+    }
+
+    const result = await finder();
+    return !!result;
   }
 }

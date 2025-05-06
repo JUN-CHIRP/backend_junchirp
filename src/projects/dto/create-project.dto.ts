@@ -14,7 +14,7 @@ export class CreateProjectDto {
   })
   @IsString({ message: 'Must be a string' })
   @Length(2, 500, { message: 'Must be between 2 and 500 characters' })
-  @IsNotEmpty({ message: 'Project name is required' })
+  @IsNotEmpty({ message: 'Project description is required' })
   public readonly description: string;
 
   @ApiProperty({

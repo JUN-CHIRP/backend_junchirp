@@ -38,7 +38,7 @@ export class ParticipationsController {
   @Owner('body', 'projectId', 'project')
   @ApiOperation({ summary: 'Create invite (owner)' })
   @ApiCreatedResponse({ type: UserParticipationResponseDto })
-  @ApiNotFoundResponse({ description: 'User not found / Role not found' })
+  @ApiNotFoundResponse({ description: 'User or project role not found' })
   @ApiConflictResponse({
     description:
       'User is already in the project team / User has already been invited to this project / User has already requested participation in this project',

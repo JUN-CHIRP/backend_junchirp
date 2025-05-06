@@ -59,7 +59,6 @@ export class UserMapper {
   public static toCardResponse(
     user: User & {
       educations: (Education & { specialization: ProjectRoleType })[];
-      activeProjectsCount: number;
     },
   ): UserCardResponseDto {
     return {

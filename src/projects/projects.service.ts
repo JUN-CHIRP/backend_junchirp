@@ -116,8 +116,8 @@ export class ProjectsService {
       );
     }
 
-    try {
-      return this.prisma.$transaction(async (prisma) => {
+    return this.prisma.$transaction(async (prisma) => {
+      try {
         const project = await prisma.project.create({
           data: {
             ownerId: userId,
@@ -164,32 +164,38 @@ export class ProjectsService {
         });
 
         return ProjectMapper.toFullResponse(updatedProject);
-      });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        throw new InternalServerErrorException(
-          `Database error: ${error.message}`,
-        );
+      } catch (error) {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException(
+            `Database error: ${error.code} ${error.message}`,
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
   public async getProjectById(id: string): Promise<ProjectResponseDto> {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        roles: { include: { roleType: true } },
-        documents: true,
-      },
-    });
+    try {
+      const project = await this.prisma.project.findUniqueOrThrow({
+        where: { id },
+        include: {
+          category: true,
+          roles: { include: { roleType: true } },
+          documents: true,
+        },
+      });
 
-    if (!project) {
-      throw new NotFoundException('Project not found');
+      return ProjectMapper.toFullResponse(project);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Project not found');
+      }
+      throw error;
     }
-
-    return ProjectMapper.toFullResponse(project);
   }
 
   public async updateProject(
@@ -211,7 +217,7 @@ export class ProjectsService {
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2001'
+        error.code === 'P2025'
       ) {
         throw new NotFoundException('Project not found');
       }
@@ -272,7 +278,7 @@ export class ProjectsService {
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2001'
+        error.code === 'P2025'
       ) {
         throw new NotFoundException('Project not found');
       }
@@ -329,30 +335,34 @@ export class ProjectsService {
     userId: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
-      const projectRole = await prisma.projectRole.findFirst({
-        where: {
-          projectId,
-          users: {
-            some: {
-              id: userId,
+      try {
+        const projectRole = await prisma.projectRole.findFirstOrThrow({
+          where: {
+            projectId,
+            users: {
+              some: { id: userId },
             },
           },
-        },
-      });
+        });
 
-      if (!projectRole) {
-        throw new NotFoundException('User not found in project team');
-      }
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          projectRoles: {
-            disconnect: { id: projectRole.id },
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            projectRoles: {
+              disconnect: { id: projectRole.id },
+            },
+            activeProjectsCount: { decrement: 1 },
           },
-          activeProjectsCount: { decrement: 1 },
-        },
-      });
+        });
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('User not found in project team');
+        }
+        throw error;
+      }
     });
   }
 

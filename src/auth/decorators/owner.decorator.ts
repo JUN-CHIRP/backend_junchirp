@@ -2,10 +2,10 @@ import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { Auth } from './auth.decorator';
 import { OwnerGuard } from '../guards/owner/owner.guard';
 import {
-  OWNER_MODEL_KEY,
+  MODEL_KEY,
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
-} from '../../shared/constants/owner-metadata';
+} from '../../shared/constants/owner-member-metadata';
 
 export const Owner = (
   source: 'params' | 'body' | 'query' = 'params',
@@ -23,7 +23,7 @@ export const Owner = (
   applyDecorators(
     SetMetadata(PROJECT_ID_SOURCE_KEY, source),
     SetMetadata(PROJECT_ID_KEY_KEY, key),
-    SetMetadata(OWNER_MODEL_KEY, model),
+    SetMetadata(MODEL_KEY, model),
     Auth(),
     UseGuards(OwnerGuard),
   );

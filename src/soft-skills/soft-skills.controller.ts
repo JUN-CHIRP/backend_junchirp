@@ -38,7 +38,7 @@ export class SoftSkillsController {
   @ApiOperation({ summary: 'Add soft skill' })
   @ApiCreatedResponse({ type: SoftSkillResponseDto })
   @ApiBadRequestResponse({
-    description: 'You can only add up to 20 soft skills.',
+    description: 'You can only add up to 20 soft skills',
   })
   @ApiConflictResponse({ description: 'Soft skill is already in list' })
   @ApiHeader({
