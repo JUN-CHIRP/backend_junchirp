@@ -95,26 +95,32 @@ export class UsersService {
   }
 
   public async getUserById(id: string): Promise<UserResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        role: true,
-        educations: {
-          include: {
-            specialization: true,
+    try {
+      const user = await this.prisma.user.findUniqueOrThrow({
+        where: { id },
+        include: {
+          role: true,
+          educations: {
+            include: {
+              specialization: true,
+            },
           },
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
         },
-        socials: true,
-        softSkills: true,
-        hardSkills: true,
-      },
-    });
+      });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+      return UserMapper.toFullResponse(user, false);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
     }
-
-    return UserMapper.toFullResponse(user, false);
   }
 
   public async createVerificationUrl(

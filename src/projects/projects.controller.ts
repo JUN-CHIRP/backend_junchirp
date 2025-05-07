@@ -213,7 +213,6 @@ export class ProjectsController {
   @ApiForbiddenResponse({
     description: 'Access denied: you are not a participant of this project',
   })
-  @UsePipes(ValidationPipe)
   @Get(':id/users')
   public async getProjectUsers(
     @Param('id', ParseUUIDv4Pipe) id: string,
