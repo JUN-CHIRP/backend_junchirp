@@ -193,9 +193,9 @@ model Task {
 }
 
 model SupportRequest {
-  id         String @id @default(dbgenerated("gen_random_uuid()"))
-  statusName String @map("status_name")
-  request    String
+  id      String @id @default(dbgenerated("gen_random_uuid()"))
+  email   String
+  request String
 
   @@map("support_requests")
 }

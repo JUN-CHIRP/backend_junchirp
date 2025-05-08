@@ -37,20 +37,13 @@ export class TasksService {
 
       return TaskMapper.toExpandResponse(task);
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2003':
-            throw new NotFoundException('Task status not found');
-          case 'P2025':
-            throw new NotFoundException('Task not found');
-          default:
-            throw new InternalServerErrorException(
-              `Database error: ${error.code} - ${error.message}`,
-            );
-        }
-      } else {
-        throw error;
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new NotFoundException('Task status not found');
       }
+      throw error;
     }
   }
 
