@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -55,7 +56,7 @@ export class UsersController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @UsePipes(ValidationPipe)
   @Post('send-confirmation-email')
   public async sendConfirmationEmail(
@@ -76,7 +77,7 @@ export class UsersController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @UsePipes(ValidationPipe)
   @Post('confirm')
   public async confirmEmail(
@@ -107,7 +108,7 @@ export class UsersController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @UsePipes(ValidationPipe)
   @Post('request-password-reset')
   public async sendPasswordResetUrl(
@@ -126,7 +127,7 @@ export class UsersController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @UsePipes(ValidationPipe)
   @Post('reset-password')
   public async resetPassword(

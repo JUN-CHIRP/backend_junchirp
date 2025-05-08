@@ -23,6 +23,7 @@ import { ParticipationsModule } from './participations/participations.module';
 import { BoardsModule } from './boards/boards.module';
 import { TaskStatusesModule } from './task-statuses/task-statuses.module';
 import { TasksModule } from './tasks/tasks.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { TasksModule } from './tasks/tasks.module';
     BoardsModule,
     TaskStatusesModule,
     TasksModule,
+    SupportModule,
   ],
   providers: [
     CronTasksService,

@@ -6,6 +6,7 @@ import {
   Project,
   ProjectRole,
   ProjectRoleType,
+  SupportRequest,
   User,
 } from '@prisma/client';
 import { Participation } from '../shared/types/participation.type';
@@ -77,6 +78,16 @@ export class MailService {
       subject: 'Запит на участь у твоєму проєкті',
       template: './participation-request',
       context: { url, request },
+    });
+  }
+
+  public async sendSupportRequest(request: SupportRequest): Promise<void> {
+    await this.mailerService.sendMail({
+      to: request.email,
+      from: `Support Team <${this.configService.get<string>('EMAIL_USER')}>`,
+      subject: 'Твій запит на підтримку отримано',
+      template: './support-request',
+      context: { request },
     });
   }
 }
