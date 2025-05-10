@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RedisModule } from '../redis/redis.module';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { LoggerModule } from '../logger/logger.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
         secret: configService.get('JWT_SECRET'),
       }),
     }),
+    LoggerModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy],

@@ -169,7 +169,7 @@ export class ParticipationsController {
     required: true,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('request/{id}/cancel')
+  @Delete('request/:id/cancel')
   public async cancelRequest(
     @Req() req: Request,
     @Param('id', ParseUUIDv4Pipe) id: string,

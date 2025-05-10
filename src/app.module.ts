@@ -24,6 +24,7 @@ import { BoardsModule } from './boards/boards.module';
 import { TaskStatusesModule } from './task-statuses/task-statuses.module';
 import { TasksModule } from './tasks/tasks.module';
 import { SupportModule } from './support/support.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SupportModule } from './support/support.module';
     TaskStatusesModule,
     TasksModule,
     SupportModule,
+    LoggerModule,
   ],
   providers: [
     CronTasksService,
