@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Ip,
   Post,
   Req,
   Res,
@@ -55,10 +56,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   public async login(
+    @Ip() ip: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    return this.authService.login(req, res);
+    return this.authService.login(ip, req, res);
   }
 
   @ApiOperation({ summary: 'Registration' })
@@ -73,9 +75,10 @@ export class AuthController {
   @Post('register')
   public async registration(
     @Body() createUserDto: CreateUserDto,
+    @Ip() ip: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    return this.authService.registration(createUserDto, res);
+    return this.authService.registration(createUserDto, ip, res);
   }
 
   @ApiOperation({ summary: 'Refresh token' })
@@ -106,10 +109,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   public async logout(
+    @Ip() ip: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<MessageResponseDto> {
-    return this.authService.logout(req, res);
+    return this.authService.logout(ip, req, res);
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
@@ -126,9 +130,10 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Callback endpoint for Google authentication' })
   public async googleRedirect(
+    @Ip() ip: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    return this.authService.googleLogin(req, res);
+    return this.authService.googleLogin(ip, req, res);
   }
 }

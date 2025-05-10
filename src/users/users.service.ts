@@ -34,6 +34,7 @@ import { ProjectsListResponseDto } from '../projects/dto/projects-list.response-
 import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { ParticipationsService } from '../participations/participations.service';
 import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
+import { LoggerService } from '../logger/logger.service';
 
 interface GetUsersOptionsInterface {
   activeProjectsCount: number;
@@ -53,6 +54,7 @@ export class UsersService {
     private cloudinaryService: CloudinaryService,
     private projectsService: ProjectsService,
     private participationsService: ParticipationsService,
+    private loggerService: LoggerService,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
@@ -124,11 +126,18 @@ export class UsersService {
   }
 
   public async createVerificationUrl(
+    ip: string,
     email: string,
   ): Promise<VerificationToken> {
     const user = await this.getUserByEmail(email, false);
 
     if (!user) {
+      await this.loggerService.log(
+        ip,
+        email,
+        'confirmation email',
+        'User with this email not found',
+      );
       throw new NotFoundException('User not found');
     }
 
@@ -137,6 +146,12 @@ export class UsersService {
     });
 
     if (count >= 5) {
+      await this.loggerService.log(
+        ip,
+        email,
+        'confirmation email',
+        'You have used up all your attempts. Please try again later.',
+      );
       throw new TooManyRequestsException(
         'You have used up all your attempts. Please try again later.',
       );
@@ -173,23 +188,40 @@ export class UsersService {
     });
   }
 
-  public async sendVerificationUrl(email: string): Promise<MessageResponseDto> {
-    const record = await this.createVerificationUrl(email);
+  public async sendVerificationUrl(
+    ip: string,
+    email: string,
+  ): Promise<MessageResponseDto> {
+    const record = await this.createVerificationUrl(ip, email);
     const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
 
     this.mailService.sendVerificationMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
     });
 
+    await this.loggerService.log(
+      ip,
+      email,
+      'confirmation email',
+      'Confirmation email sent successfully',
+    );
+
     return { message: 'Confirmation email sent. Please check your inbox.' };
   }
 
   public async confirmEmail(
+    ip: string,
     confirmEmailDto: ConfirmEmailDto,
   ): Promise<UserResponseDto> {
     const user = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!user) {
+      await this.loggerService.log(
+        ip,
+        confirmEmailDto.email,
+        'confirmation email',
+        'User with this email not found',
+      );
       throw new NotFoundException('User with this email not found');
     }
 
@@ -201,6 +233,12 @@ export class UsersService {
       !verificationToken ||
       verificationToken.token !== confirmEmailDto.token
     ) {
+      await this.loggerService.log(
+        ip,
+        confirmEmailDto.email,
+        'confirmation email',
+        'Invalid or expired verification token',
+      );
       throw new BadRequestException('Invalid or expired verification token');
     }
 
@@ -214,8 +252,22 @@ export class UsersService {
           where: { id: userId },
           data: { isVerified: true },
         });
+        await this.loggerService.log(
+          ip,
+          confirmEmailDto.email,
+          'confirmation email',
+          'email verified successfully',
+          prisma,
+        );
       } catch (error) {
         if (error.name === 'TokenExpiredError') {
+          await this.loggerService.log(
+            ip,
+            confirmEmailDto.email,
+            'confirmation email',
+            'Invalid or expired verification token',
+            prisma,
+          );
           throw new BadRequestException(
             'Invalid or expired verification token',
           );
@@ -233,24 +285,39 @@ export class UsersService {
   }
 
   public async sendPasswordResetUrl(
+    ip: string,
     email: string,
   ): Promise<MessageResponseDto> {
-    const record = await this.createPasswordResetUrl(email);
+    const record = await this.createPasswordResetUrl(ip, email);
     const url = `${this.configService.get('BASE_FRONTEND_URL')}/reset-password?token=${record.token}`;
 
     this.mailService.sendResetPasswordMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
     });
 
+    await this.loggerService.log(
+      ip,
+      email,
+      'reset password',
+      'Password reset link sent successfully',
+    );
+
     return { message: 'Password reset link has been sent to your email.' };
   }
 
   public async createPasswordResetUrl(
+    ip: string,
     email: string,
   ): Promise<ResetPasswordToken> {
     const user = await this.getUserByEmail(email, false);
 
     if (!user) {
+      await this.loggerService.log(
+        ip,
+        email,
+        'reset password',
+        'User with this email not found',
+      );
       throw new NotFoundException('User not found');
     }
 
@@ -259,8 +326,14 @@ export class UsersService {
     });
 
     if (count >= 5) {
+      await this.loggerService.log(
+        ip,
+        email,
+        'reset password',
+        'You have used up all your attempts. Please try again later',
+      );
       throw new TooManyRequestsException(
-        'You have used up all your attempts. Please try again later.',
+        'You have used up all your attempts. Please try again later',
       );
     }
 
@@ -296,6 +369,7 @@ export class UsersService {
   }
 
   public async resetPassword(
+    ip: string,
     resetPasswordDto: ResetPasswordDto,
   ): Promise<MessageResponseDto> {
     const resetPasswordToken = await this.prisma.resetPasswordToken.findUnique({
@@ -316,11 +390,25 @@ export class UsersService {
         const hashPassword = await bcrypt.hash(resetPasswordDto.password, 10);
 
         await prisma.resetPasswordToken.delete({ where: { userId } });
-        await prisma.user.update({
+        const user = await prisma.user.update({
           where: { id: resetPasswordToken.userId },
           data: { password: hashPassword },
         });
+        await this.loggerService.log(
+          ip,
+          user.email,
+          'reset password',
+          'Password reset successfully',
+        );
       } catch (error) {
+        const payload = this.jwtService.verify(resetPasswordToken.token);
+        const userId = payload.id;
+        await this.loggerService.log(
+          ip,
+          userId,
+          'reset password',
+          'Invalid or expired token',
+        );
         if (error.name === 'TokenExpiredError') {
           throw new BadRequestException('Invalid or expired token');
         }
@@ -331,6 +419,7 @@ export class UsersService {
   }
 
   public async createOrUpdateGoogleUser(
+    ip: string,
     createGoogleUserDto: CreateGoogleUserDto,
   ): Promise<UserResponseDto> {
     const user = await this.getUserByEmail(createGoogleUserDto.email, false);
@@ -385,7 +474,7 @@ export class UsersService {
     }
 
     if (!updatedUser.isVerified) {
-      const record = await this.createVerificationUrl(updatedUser.email);
+      const record = await this.createVerificationUrl(ip, updatedUser.email);
       const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
       this.mailService
         .sendVerificationMail(updatedUser.email, url)
@@ -399,6 +488,7 @@ export class UsersService {
 
   public async updateUser(
     id: string,
+    ip: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     try {
@@ -420,7 +510,7 @@ export class UsersService {
       });
 
       if (user.email !== updatedUser.email) {
-        const record = await this.createVerificationUrl(updatedUser.email);
+        const record = await this.createVerificationUrl(ip, updatedUser.email);
         const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
 
         this.mailService

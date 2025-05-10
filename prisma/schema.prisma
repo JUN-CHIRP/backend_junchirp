@@ -20,7 +20,6 @@ model User {
   roleId                String                 @map("role_id")
   activeProjectsCount   Int                    @default(0) @map("active_projects_count")
   educations            Education[]
-  logEvents             LogEvent[]
   loginAttempt          LoginAttempt?
   ownProjects           Project[]
   socials               Social[]
@@ -201,10 +200,12 @@ model SupportRequest {
 }
 
 model LogEvent {
-  id      String @id @default(dbgenerated("gen_random_uuid()"))
-  message String
-  userId  String @map("user_id")
-  user    User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  details   String
+  ip        String
+  email     String
+  eventType String   @map("event_type")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("log_events")
 }

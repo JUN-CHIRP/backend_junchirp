@@ -122,7 +122,7 @@ export class ParticipationsService {
           where: {
             userId,
             projectRole: {
-              projectId: createRequestDto.projectRoleId,
+              projectId: createRequestDto.projectId,
             },
           },
         }),

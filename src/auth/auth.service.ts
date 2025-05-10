@@ -19,6 +19,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TooManyRequestsException } from '../shared/exceptions/too-many-requests.exception';
 import { RedisService } from '../redis/redis.service';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -33,15 +34,29 @@ export class AuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private redisService: RedisService,
+    private loggerService: LoggerService,
   ) {}
 
-  public async validateUser(loginDto: LoginDto): Promise<UserResponseDto> {
+  public async validateUser(
+    req: Request,
+    loginDto: LoginDto,
+  ): Promise<UserResponseDto> {
     const user = (await this.usersService.getUserByEmail(
       loginDto.email,
       true,
     )) as UserWithPasswordResponseDto | null;
+    const ip =
+      req.ip ??
+      req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() ??
+      req.socket.remoteAddress;
 
     if (!user) {
+      await this.loggerService.log(
+        ip ?? 'unknown',
+        loginDto.email,
+        'login',
+        'Email or password is incorrect',
+      );
       throw new UnauthorizedException('Email or password is incorrect');
     }
 
@@ -52,6 +67,12 @@ export class AuthService {
     if (loginAttempt) {
       const now = new Date();
       if (loginAttempt.blockedUntil && now < loginAttempt.blockedUntil) {
+        await this.loggerService.log(
+          ip ?? 'unknown',
+          loginDto.email,
+          'login',
+          'Too many failed attempts. Please try again later',
+        );
         throw new TooManyRequestsException(
           'Too many failed attempts. Please try again later',
           loginAttempt.attemptsCount,
@@ -110,6 +131,12 @@ export class AuthService {
         });
 
         if ([5, 10, 15].includes(updateData.attemptsCount)) {
+          await this.loggerService.log(
+            ip ?? 'unknown',
+            loginDto.email,
+            'login',
+            'Too many failed attempts. Please try again later',
+          );
           throw new TooManyRequestsException(
             'Too many failed attempts. Please try again later',
             updateData.attemptsCount,
@@ -124,16 +151,33 @@ export class AuthService {
         });
       }
 
+      await this.loggerService.log(
+        ip ?? 'unknown',
+        loginDto.email,
+        'login',
+        'Email or password is incorrect',
+      );
       throw new UnauthorizedException('Email or password is incorrect');
     }
   }
 
-  public async login(req: Request, res: Response): Promise<AuthResponseDto> {
+  public async login(
+    ip: string,
+    req: Request,
+    res: Response,
+  ): Promise<AuthResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
     const { password, ...userWithoutPassword } = user;
+
+    await this.loggerService.log(
+      ip,
+      user.email,
+      'login',
+      'User login successfully',
+    );
 
     return {
       user: userWithoutPassword,
@@ -143,6 +187,7 @@ export class AuthService {
 
   public async registration(
     createUserDto: CreateUserDto,
+    ip: string,
     res: Response,
   ): Promise<AuthResponseDto> {
     const candidate = await this.usersService.getUserByEmail(
@@ -151,6 +196,12 @@ export class AuthService {
     );
 
     if (candidate) {
+      await this.loggerService.log(
+        ip,
+        createUserDto.email,
+        'registration',
+        'User with this email already exists',
+      );
       throw new ConflictException('User with this email already exists');
     }
 
@@ -166,14 +217,28 @@ export class AuthService {
     );
 
     if (!user) {
+      await this.loggerService.log(
+        ip,
+        createUserDto.email,
+        'registration',
+        'Something went wrong. Please try again later',
+      );
       throw new InternalServerErrorException(
         'Something went wrong. Please try again later',
       );
     }
 
+    await this.loggerService.log(
+      ip,
+      createUserDto.email,
+      'registration',
+      'User registered successfully',
+    );
+
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
     const record = await this.usersService.createVerificationUrl(
+      ip,
       createUserDto.email,
     );
     const url = `${this.configService.get('BASE_FRONTEND_URL')}?token=${record.token}`;
@@ -248,12 +313,20 @@ export class AuthService {
   }
 
   public async logout(
+    ip: string,
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
     const accessToken = req.headers.authorization?.split(' ')[1];
+    const user = req.user as UserResponseDto;
 
     if (!accessToken) {
+      await this.loggerService.log(
+        ip,
+        user.email,
+        'logout',
+        'Token is missing',
+      );
       throw new UnauthorizedException('Token is missing');
     }
 
@@ -266,17 +339,36 @@ export class AuthService {
       }
 
       res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+      await this.loggerService.log(
+        ip,
+        user.email,
+        'logout',
+        'Logged out successfully',
+      );
       return { message: 'Logged out successfully' };
     } catch (error) {
+      await this.loggerService.log(
+        ip,
+        user.email,
+        'logout',
+        'Token is invalid',
+      );
       throw new UnauthorizedException(`Token is invalid: ${error}`);
     }
   }
 
   public async googleLogin(
+    ip: string,
     req: Request,
     res: Response,
   ): Promise<AuthResponseDto> {
     if (!req.user) {
+      await this.loggerService.log(
+        ip,
+        'unknown',
+        'google login',
+        'Google authentication failed',
+      );
       throw new UnauthorizedException('Google authentication failed');
     }
 
@@ -290,9 +382,16 @@ export class AuthService {
       refreshToken: string;
     };
 
-    const user = await this.usersService.createOrUpdateGoogleUser(reqUser);
+    const user = await this.usersService.createOrUpdateGoogleUser(ip, reqUser);
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
+
+    await this.loggerService.log(
+      ip,
+      'unknown',
+      'google login',
+      'Google authentication successfully',
+    );
 
     return { user, accessToken };
   }

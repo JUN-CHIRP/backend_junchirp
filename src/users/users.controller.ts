@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Ip,
   Param,
   Patch,
   Post,
@@ -60,9 +61,10 @@ export class UsersController {
   @UsePipes(ValidationPipe)
   @Post('send-confirmation-email')
   public async sendConfirmationEmail(
+    @Ip() ip: string,
     @Body() body: EmailDto,
   ): Promise<MessageResponseDto> {
-    return this.usersService.sendVerificationUrl(body.email);
+    return this.usersService.sendVerificationUrl(ip, body.email);
   }
 
   @Auth()
@@ -81,9 +83,10 @@ export class UsersController {
   @UsePipes(ValidationPipe)
   @Post('confirm')
   public async confirmEmail(
+    @Ip() ip: string,
     @Body() confirmEmailDto: ConfirmEmailDto,
   ): Promise<UserResponseDto> {
-    return this.usersService.confirmEmail(confirmEmailDto);
+    return this.usersService.confirmEmail(ip, confirmEmailDto);
   }
 
   @Auth()
@@ -112,9 +115,10 @@ export class UsersController {
   @UsePipes(ValidationPipe)
   @Post('request-password-reset')
   public async sendPasswordResetUrl(
+    @Ip() ip: string,
     @Body() body: EmailDto,
   ): Promise<MessageResponseDto> {
-    return this.usersService.sendPasswordResetUrl(body.email);
+    return this.usersService.sendPasswordResetUrl(ip, body.email);
   }
 
   @ApiOperation({ summary: 'Reset password' })
@@ -131,9 +135,10 @@ export class UsersController {
   @UsePipes(ValidationPipe)
   @Post('reset-password')
   public async resetPassword(
+    @Ip() ip: string,
     @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<MessageResponseDto> {
-    return this.usersService.resetPassword(resetPasswordDto);
+    return this.usersService.resetPassword(ip, resetPasswordDto);
   }
 
   @Auth()
@@ -152,11 +157,12 @@ export class UsersController {
   @Patch('me')
   public async updateUser(
     @Req() req: Request,
+    @Ip() ip: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
-    return this.usersService.updateUser(user.id, updateUserDto);
+    return this.usersService.updateUser(user.id, ip, updateUserDto);
   }
 
   @Auth()

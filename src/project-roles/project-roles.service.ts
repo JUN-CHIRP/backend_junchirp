@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  ConflictException, ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -69,6 +69,15 @@ export class ProjectRolesService {
   }
 
   public async deleteProjectRole(id: string): Promise<void> {
+    const role = await this.prisma.projectRole.findUnique({
+      where: { id },
+      include: { roleType: true },
+    });
+
+    if (role?.roleType.roleName.toLowerCase() === 'project owner') {
+      throw new ForbiddenException('You cannot delete the project owner role');
+    }
+
     try {
       await this.prisma.projectRole.delete({
         where: { id },

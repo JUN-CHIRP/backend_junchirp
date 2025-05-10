@@ -8,6 +8,7 @@ import { RolesModule } from '../roles/roles.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { ParticipationsModule } from '../participations/participations.module';
+import { LoggerModule } from '../logger/logger.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ParticipationsModule } from '../participations/participations.module';
     CloudinaryModule,
     ProjectsModule,
     ParticipationsModule,
+    LoggerModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
