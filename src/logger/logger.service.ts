@@ -11,14 +11,14 @@ export class LoggerService {
     ip: string,
     email: string,
     eventType: string,
-    message: string,
+    details: string,
     prisma: Omit<
       PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
       '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
     > = this.prisma,
   ): Promise<void> {
     await prisma.logEvent.create({
-      data: { ip, email, eventType, message },
+      data: { ip, email, eventType, details },
     });
   }
 }
