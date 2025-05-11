@@ -68,7 +68,8 @@ export class ProjectRolesController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project role not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner / You cannot delete the project owner role',
+    description:
+      'Access denied: you are not the project owner / You cannot delete the project owner role',
   })
   @ApiHeader({
     name: 'x-csrf-token',

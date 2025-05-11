@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  BadRequestException, ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -335,6 +335,13 @@ export class ProjectsService {
     userId: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
+      const project = await this.prisma.project.findFirst({
+        where: { id: projectId, ownerId: userId },
+      });
+      if (project) {
+        throw new ForbiddenException('You cannot delete the project owner');
+      }
+
       try {
         const projectRole = await prisma.projectRole.findFirstOrThrow({
           where: {
