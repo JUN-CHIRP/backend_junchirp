@@ -225,7 +225,8 @@ export class ProjectsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'User not found in project team' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / You cannot delete the project owner',
   })
   @ApiHeader({
     name: 'x-csrf-token',
