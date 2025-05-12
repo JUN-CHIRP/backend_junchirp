@@ -64,7 +64,7 @@ export class ParticipationsController {
   @ApiNotFoundResponse({ description: 'Role not found' })
   @ApiConflictResponse({
     description:
-      'You are already in the project team / You have already been invited to this project / You have already requested participation in this project',
+      'You are already in the project team / You have already been invited to this project / You have already sent a request to this project',
   })
   @ApiHeader({
     name: 'x-csrf-token',

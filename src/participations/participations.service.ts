@@ -181,7 +181,7 @@ export class ParticipationsService {
               throw new NotFoundException('Project role not found');
             case 'P2002':
               throw new ConflictException(
-                'You have already been invited to this role',
+                'You have already sent a request to this project',
               );
             default:
               throw new InternalServerErrorException('Database error');
