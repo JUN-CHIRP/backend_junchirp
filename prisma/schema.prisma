@@ -10,6 +10,7 @@ datasource db {
 model User {
   id                    String                 @id @default(dbgenerated("gen_random_uuid()"))
   googleId              String?                @map("google_id")
+  discordId             String?                @map("discord_id")
   email                 String                 @unique
   avatarUrl             String                 @map("avatar_url")
   password              String                 @default("")
@@ -86,21 +87,24 @@ model ResetPasswordAttempt {
 }
 
 model Project {
-  id                String          @id @default(dbgenerated("gen_random_uuid()"))
-  projectName       String          @map("project_name")
-  description       String
-  status            ProjectStatus   @default(active)
-  createdAt         DateTime        @default(now()) @map("created_at")
-  slackUrl          String?         @map("slack_url")
-  logoUrl           String?         @map("logo_url")
-  participantsCount Int             @default(1) @map("participiants_count")
-  ownerId           String          @map("owner_id")
-  categoryId        String          @map("category_id")
-  boards            Board[]
-  documents         Document[]
-  roles             ProjectRole[]
-  category          ProjectCategory @relation(fields: [categoryId], references: [id])
-  owner             User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id                  String          @id @default(dbgenerated("gen_random_uuid()"))
+  projectName         String          @map("project_name")
+  description         String
+  status              ProjectStatus   @default(active)
+  createdAt           DateTime        @default(now()) @map("created_at")
+  logoUrl             String?         @map("logo_url")
+  participantsCount   Int             @default(1) @map("participiants_count")
+  ownerId             String          @map("owner_id")
+  categoryId          String          @map("category_id")
+  discordChannelId    String          @map("discord_channel_id")
+  discordAdminRoleId  String          @map("discord_admin_role_id")
+  discordMemberRoleId String          @map("discord_member_role_id")
+  discordUrl          String          @default("https://discord.gg/x2rdtS2Vbz") @map("discord_url")
+  boards              Board[]
+  documents           Document[]
+  roles               ProjectRole[]
+  category            ProjectCategory @relation(fields: [categoryId], references: [id])
+  owner               User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([status, participantsCount])
   @@index([status, categoryId])

@@ -19,6 +19,13 @@ export class UserResponseDto {
   })
   public readonly googleId: string | null;
 
+  @ApiProperty({
+    example: '113273902301932041645',
+    description: 'Discord identifier',
+    type: String,
+  })
+  public readonly discordId: string | null;
+
   @ApiProperty({ example: 'email@mail.com', description: 'Email' })
   public readonly email: string;
 
