@@ -21,7 +21,7 @@ export class TaskStatusMapper {
   public static toExpandResponse(
     status: TaskStatus & {
       tasks: (Task & {
-        user:
+        assignee:
           | (User & {
               educations: (Education & { specialization: ProjectRoleType })[];
             })

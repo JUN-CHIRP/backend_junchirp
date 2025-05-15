@@ -47,7 +47,7 @@ export class TaskStatusesService {
         include: {
           tasks: {
             include: {
-              user: {
+              assignee: {
                 include: {
                   educations: {
                     include: {
@@ -86,7 +86,7 @@ export class TaskStatusesService {
         include: {
           tasks: {
             include: {
-              user: {
+              assignee: {
                 include: {
                   educations: {
                     include: {

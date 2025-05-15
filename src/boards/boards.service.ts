@@ -48,7 +48,7 @@ export class BoardsService {
             include: {
               tasks: {
                 include: {
-                  user: {
+                  assignee: {
                     include: {
                       educations: {
                         include: { specialization: true },
@@ -82,7 +82,7 @@ export class BoardsService {
             include: {
               tasks: {
                 include: {
-                  user: {
+                  assignee: {
                     include: {
                       educations: {
                         include: { specialization: true },
@@ -121,7 +121,7 @@ export class BoardsService {
             include: {
               tasks: {
                 include: {
-                  user: {
+                  assignee: {
                     include: {
                       educations: {
                         include: { specialization: true },
@@ -215,7 +215,7 @@ export class BoardsService {
           include: {
             tasks: {
               include: {
-                user: {
+                assignee: {
                   include: {
                     educations: {
                       include: {

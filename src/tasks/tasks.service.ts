@@ -19,7 +19,7 @@ export class TasksService {
         data: createTaskDto,
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -49,7 +49,7 @@ export class TasksService {
         where: { id },
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -83,7 +83,7 @@ export class TasksService {
         data: updateTaskDto,
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -137,7 +137,7 @@ export class TasksService {
         data: updateStatusTaskDto,
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {

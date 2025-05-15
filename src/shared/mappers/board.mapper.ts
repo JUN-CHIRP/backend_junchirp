@@ -14,7 +14,7 @@ export class BoardMapper {
     board: Board & {
       columns: (TaskStatus & {
         tasks: (Task & {
-          user:
+          assignee:
             | (User & {
                 educations: (Education & { specialization: ProjectRoleType })[];
               })

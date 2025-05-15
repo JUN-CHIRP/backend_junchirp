@@ -33,8 +33,8 @@ model User {
   resetPasswordAttempts ResetPasswordAttempt[]
   hardSkills            UserHardSkill[]
   softSkills            UserSoftSkill[]
-  participationInvite   ParticipationInvite[]
-  participationRequest  ParticipationRequest[]
+  participationInvites  ParticipationInvite[]
+  participationRequests ParticipationRequest[]
 
   @@index([activeProjectsCount])
   @@map("users")
@@ -188,9 +188,9 @@ model Task {
   priority     TaskPriority
   deadline     DateTime
   taskStatusId String       @map("task_status_id")
-  userId       String?      @map("user_id")
+  assigneeId   String?      @map("assignee_id")
   taskStatus   TaskStatus   @relation(fields: [taskStatusId], references: [id], onDelete: Cascade)
-  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignee     User?        @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
 
   @@map("tasks")
 }

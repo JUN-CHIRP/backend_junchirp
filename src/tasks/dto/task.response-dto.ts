@@ -36,5 +36,5 @@ export class TaskResponseDto {
   @ApiProperty({
     type: () => UserCardResponseDto,
   })
-  public readonly user: UserCardResponseDto | null;
+  public readonly assignee: UserCardResponseDto | null;
 }
