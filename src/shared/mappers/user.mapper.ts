@@ -29,6 +29,7 @@ export class UserMapper {
     const base = {
       id: user.id,
       googleId: user.googleId,
+      discordId: user.discordId,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,

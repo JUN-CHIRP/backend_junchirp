@@ -24,13 +24,13 @@ import {
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { UserParticipationResponseDto } from './dto/user-participation.response-dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import { ProjectParticipationResponseDto } from './dto/project-participation.response-dto';
 import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('participations')
 export class ParticipationsController {
   public constructor(private participationsService: ParticipationsService) {}

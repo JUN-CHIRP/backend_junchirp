@@ -21,13 +21,13 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { ProjectRoleTypeResponseDto } from './dto/project-role-type.response-dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Owner } from '../auth/decorators/owner.decorator';
 import { ProjectRoleResponseDto } from './dto/project-role.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('project-roles')
 export class ProjectRolesController {
   public constructor(private projectRolesService: ProjectRolesService) {}

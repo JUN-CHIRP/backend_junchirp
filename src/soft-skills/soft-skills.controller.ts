@@ -13,7 +13,6 @@ import {
 import { SoftSkillsService } from './soft-skills.service';
 import { CreateSoftSkillDto } from './dto/create-soft-skill.dto';
 import { UpdateSoftSkillDto } from './dto/update-soft-skill.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -29,8 +28,9 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { SoftSkillResponseDto } from './dto/soft-skill.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('soft-skills')
 export class SoftSkillsController {
   public constructor(private softSkillsService: SoftSkillsService) {}

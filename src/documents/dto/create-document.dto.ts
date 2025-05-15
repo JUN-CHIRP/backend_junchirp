@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, Length } from 'class-validator';
+import { IsNotEmpty, IsString, IsUrl, IsUUID, Length } from 'class-validator';
 
 export class CreateDocumentDto {
   @ApiProperty({ example: 'Document name', description: 'Document name' })
@@ -13,8 +13,11 @@ export class CreateDocumentDto {
     description: 'Document url',
   })
   @IsString({ message: 'Must be a string' })
-  @Length(2, 500, { message: 'Must be between 2 and 500 characters' })
-  @IsNotEmpty({ message: 'Document name is required' })
+  @IsUrl(
+    { require_protocol: true },
+    { message: 'URL must include protocol (http/https)' },
+  )
+  @IsNotEmpty({ message: 'Document url is required' })
   public readonly url: string;
 
   @ApiProperty({

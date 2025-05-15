@@ -1,5 +1,6 @@
 import {
-  BadRequestException, ForbiddenException,
+  BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -18,6 +19,7 @@ import { ProjectRolesService } from '../project-roles/project-roles.service';
 import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 import { ParticipationsService } from '../participations/participations.service';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
+import { DiscordService } from '../discord/discord.service';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -36,6 +38,7 @@ export class ProjectsService {
     private cloudinaryService: CloudinaryService,
     private projectRolesService: ProjectRolesService,
     private participationsService: ParticipationsService,
+    private discordService: DiscordService,
   ) {}
 
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
@@ -118,14 +121,32 @@ export class ProjectsService {
 
     return this.prisma.$transaction(async (prisma) => {
       try {
+        const { channelId, adminRoleId, memberRoleId } =
+          await this.discordService.createProjectChannel(
+            createProjectDto.projectName,
+          );
+
         const project = await prisma.project.create({
           data: {
             ownerId: userId,
             projectName: createProjectDto.projectName,
             description: createProjectDto.description,
             categoryId: createProjectDto.categoryId,
+            discordChannelId: channelId,
+            discordAdminRoleId: adminRoleId,
+            discordMemberRoleId: memberRoleId,
+          },
+          include: {
+            owner: true,
           },
         });
+
+        if (project.owner.discordId) {
+          await this.discordService.addRoleToUser(
+            project.owner.discordId,
+            adminRoleId,
+          );
+        }
 
         const ownerRoleType =
           await this.projectRolesService.findOrCreateRole('Project owner');
@@ -231,7 +252,7 @@ export class ProjectsService {
         const users = await this.getProjectUsers(id);
         const userIds = users.map((user) => user.id);
 
-        await prisma.project.delete({
+        const project = await prisma.project.delete({
           where: { id },
         });
         await this.cloudinaryService.deleteProjectFolder(id);
@@ -246,6 +267,8 @@ export class ProjectsService {
             },
           });
         }
+
+        await this.discordService.deleteProjectChannel(project);
       });
     } catch (error) {
       if (
@@ -336,9 +359,9 @@ export class ProjectsService {
   ): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
       const project = await this.prisma.project.findFirst({
-        where: { id: projectId, ownerId: userId },
+        where: { id: projectId },
       });
-      if (project) {
+      if (project?.ownerId === userId) {
         throw new ForbiddenException('You cannot delete the project owner');
       }
 
@@ -352,7 +375,7 @@ export class ProjectsService {
           },
         });
 
-        await prisma.user.update({
+        const user = await prisma.user.update({
           where: { id: userId },
           data: {
             projectRoles: {
@@ -361,6 +384,13 @@ export class ProjectsService {
             activeProjectsCount: { decrement: 1 },
           },
         });
+
+        if (project && user.discordId) {
+          await this.discordService.removeRoleFromUser(
+            user.discordId,
+            project.discordMemberRoleId,
+          );
+        }
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&

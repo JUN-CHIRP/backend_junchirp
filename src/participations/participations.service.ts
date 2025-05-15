@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { ProjectParticipationMapper } from '../shared/mappers/project-participation.mapper';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { DiscordService } from '../discord/discord.service';
 
 @Injectable()
 export class ParticipationsService {
@@ -21,6 +22,7 @@ export class ParticipationsService {
     private prisma: PrismaService,
     private mailService: MailService,
     private configService: ConfigService,
+    private discordService: DiscordService,
   ) {}
 
   public async createInvite(
@@ -198,7 +200,14 @@ export class ParticipationsService {
       try {
         const invite = await prisma.participationInvite.findUniqueOrThrow({
           where: { id, userId },
-          include: { projectRole: true },
+          include: {
+            projectRole: {
+              include: {
+                project: true,
+              },
+            },
+            user: true,
+          },
         });
 
         await prisma.projectRole.update({
@@ -222,6 +231,13 @@ export class ParticipationsService {
         await prisma.participationInvite.delete({
           where: { id },
         });
+
+        if (invite.user?.discordId) {
+          await this.discordService.addRoleToUser(
+            invite.user.discordId,
+            invite.projectRole.project.discordMemberRoleId,
+          );
+        }
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&
@@ -256,7 +272,12 @@ export class ParticipationsService {
         const request = await prisma.participationRequest.findUniqueOrThrow({
           where: { id },
           include: {
-            projectRole: true,
+            projectRole: {
+              include: {
+                project: true,
+              },
+            },
+            user: true,
           },
         });
 
@@ -281,6 +302,13 @@ export class ParticipationsService {
         await prisma.participationRequest.delete({
           where: { id },
         });
+
+        if (request.user?.discordId) {
+          await this.discordService.addRoleToUser(
+            request.user.discordId,
+            request.projectRole.project.discordMemberRoleId,
+          );
+        }
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&

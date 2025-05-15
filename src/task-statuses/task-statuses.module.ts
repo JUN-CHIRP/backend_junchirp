@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TaskStatusesService } from './task-statuses.service';
 import { TaskStatusesController } from './task-statuses.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
+  imports: [UsersModule],
   controllers: [TaskStatusesController],
   providers: [TaskStatusesService],
 })

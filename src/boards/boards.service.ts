@@ -113,7 +113,7 @@ export class BoardsService {
     updateBoardDto: UpdateBoardDto,
   ): Promise<BoardResponseDto> {
     try {
-      return this.prisma.board.update({
+      return await this.prisma.board.update({
         where: { id },
         data: updateBoardDto,
         include: {

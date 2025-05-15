@@ -4,8 +4,8 @@ import {
   PROJECT_ID_KEY_KEY,
   PROJECT_ID_SOURCE_KEY,
 } from '../../shared/constants/owner-member-metadata';
-import { Auth } from './auth.decorator';
 import { MemberGuard } from '../guards/member/member.guard';
+import { User } from './user.decorator';
 
 export const Member = (
   source: 'params' | 'body' | 'query' = 'params',
@@ -24,6 +24,6 @@ export const Member = (
     SetMetadata(PROJECT_ID_SOURCE_KEY, source),
     SetMetadata(PROJECT_ID_KEY_KEY, key),
     SetMetadata(MODEL_KEY, model),
-    Auth(),
+    User(),
     UseGuards(MemberGuard),
   );

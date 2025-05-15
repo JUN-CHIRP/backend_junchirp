@@ -17,7 +17,6 @@ import {
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import { ProjectCategoryResponseDto } from './dto/project-category.response-dto';
 import {
   ApiBadRequestResponse,
@@ -44,8 +43,9 @@ import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe'
 import { Member } from '../auth/decorators/member.decorator';
 import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('projects')
 export class ProjectsController {
   public constructor(private projectsService: ProjectsService) {}

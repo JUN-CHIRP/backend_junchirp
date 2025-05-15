@@ -4,11 +4,10 @@ import { ProjectCardResponseDto } from './project-card.response-dto';
 
 export class ProjectResponseDto extends ProjectCardResponseDto {
   @ApiProperty({
-    example: 'slack-url',
-    description: 'Slack url',
-    type: String,
+    example: 'https://discord.gg/qwertyuiop',
+    description: 'Discord url',
   })
-  public readonly slackUrl: string | null;
+  public readonly discordUrl: string;
 
   @ApiProperty({
     example: 'logo-url',

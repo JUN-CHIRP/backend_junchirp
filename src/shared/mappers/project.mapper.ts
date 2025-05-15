@@ -40,7 +40,7 @@ export class ProjectMapper {
   ): ProjectResponseDto {
     return {
       ...this.toCardResponse(project),
-      slackUrl: project.slackUrl,
+      discordUrl: project.discordUrl,
       logoUrl: project.logoUrl ?? '',
       documents: project.documents,
     };

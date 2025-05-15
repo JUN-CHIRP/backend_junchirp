@@ -90,6 +90,24 @@ export class MemberGuard implements CanActivate {
             },
           },
         })),
+
+      taskStatus: async () =>
+        !!(await this.prisma.taskStatus.findFirst({
+          where: {
+            id: resourceId,
+            board: {
+              project: {
+                roles: {
+                  some: {
+                    users: {
+                      some: { id: user.id },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })),
     };
 
     const check = checkMembershipMap[model];
