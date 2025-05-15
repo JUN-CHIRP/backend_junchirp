@@ -39,6 +39,7 @@ import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe'
 import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { UsersFilterDto } from './dto/users-filter.dto';
 import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
+import { User } from '../auth/decorators/user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -165,7 +166,7 @@ export class UsersController {
     return this.usersService.updateUser(user.id, ip, updateUserDto);
   }
 
-  @Auth()
+  @User()
   @ApiOperation({
     summary: 'Get projects of current user',
   })
@@ -186,7 +187,7 @@ export class UsersController {
     );
   }
 
-  @Auth()
+  @User()
   @ApiOperation({
     summary: 'Get user projects',
   })
@@ -199,7 +200,7 @@ export class UsersController {
     return this.usersService.getUserProjects(id, query.page, query.limit);
   }
 
-  @Auth()
+  @User()
   @ApiOperation({ summary: 'Get user by id' })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -210,7 +211,7 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @Auth()
+  @User()
   @ApiOperation({
     summary: 'Get list of users with filters and pagination',
   })
@@ -223,7 +224,7 @@ export class UsersController {
     return this.usersService.getUsers(query);
   }
 
-  @Auth()
+  @User()
   @ApiOperation({
     summary: 'Get current user invites',
   })
@@ -237,7 +238,7 @@ export class UsersController {
     return this.usersService.getInvites(user.id);
   }
 
-  @Auth()
+  @User()
   @ApiOperation({
     summary: 'Get current user requests',
   })

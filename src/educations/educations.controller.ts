@@ -15,7 +15,6 @@ import {
 import { EducationsService } from './educations.service';
 import { CreateEducationDto } from './dto/create-education.dto';
 import { UpdateEducationDto } from './dto/update-education.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -31,8 +30,9 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { EducationResponseDto } from './dto/education.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('educations')
 export class EducationsController {
   public constructor(private educationsService: EducationsService) {}

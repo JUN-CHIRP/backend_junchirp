@@ -13,7 +13,6 @@ import {
 import { HardSkillsService } from './hard-skills.service';
 import { CreateHardSkillDto } from './dto/create-hard-skill.dto';
 import { UpdateHardSkillDto } from './dto/update-hard-skill.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -29,8 +28,9 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { HardSkillResponseDto } from './dto/hard-skill.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
-@Auth()
+@User()
 @Controller('hard-skills')
 export class HardSkillsController {
   public constructor(private hardSkillsService: HardSkillsService) {}
