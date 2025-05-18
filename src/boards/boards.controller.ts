@@ -119,8 +119,10 @@ export class BoardsController {
   @ApiOkResponse({ type: BoardResponseDto })
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiBadRequestResponse({
-    description:
-      'Column with id does not belong to the board / Columns list must match existing columns exactly',
+    description: `Column with id does not belong to the board / 
+                  Columns list must match existing columns exactly / 
+                  Indices must not be repeated / 
+                  Indices must be between 1 and max`,
   })
   @ApiForbiddenResponse({
     description: 'Access denied: you are not the project owner',

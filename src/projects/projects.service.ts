@@ -1,8 +1,6 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -16,10 +14,10 @@ import { Prisma, ProjectStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { ProjectRolesService } from '../project-roles/project-roles.service';
-import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 import { ParticipationsService } from '../participations/participations.service';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { DiscordService } from '../discord/discord.service';
+import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -74,11 +72,7 @@ export class ProjectsService {
       ...(userId && {
         roles: {
           some: {
-            users: {
-              some: {
-                id: userId,
-              },
-            },
+            userId,
           },
         },
       }),
@@ -89,7 +83,17 @@ export class ProjectsService {
         where,
         skip,
         take: limit,
-        include: { category: true, roles: { include: { roleType: true } } },
+        include: {
+          category: true,
+          roles: {
+            where: {
+              userId: null,
+            },
+            include: {
+              roleType: true,
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.project.count({ where }),
@@ -106,7 +110,6 @@ export class ProjectsService {
   public async createProject(
     userId: string,
     createProjectDto: CreateProjectDto,
-    file: Express.Multer.File,
   ): Promise<ProjectResponseDto> {
     const activeProjects = await this.getProjects({
       userId,
@@ -135,9 +138,31 @@ export class ProjectsService {
             discordChannelId: channelId,
             discordAdminRoleId: adminRoleId,
             discordMemberRoleId: memberRoleId,
+            roles: {
+              create: createProjectDto.rolesIds.map((roleTypeId) => ({
+                roleType: {
+                  connect: { id: roleTypeId },
+                },
+              })),
+            },
           },
           include: {
+            category: true,
+            roles: {
+              include: {
+                roleType: true,
+                user: {
+                  include: {
+                    educations: {
+                      include: { specialization: true },
+                    },
+                  },
+                },
+              },
+            },
+            documents: true,
             owner: true,
+            boards: true,
           },
         });
 
@@ -167,29 +192,13 @@ export class ProjectsService {
           },
         });
 
-        const logoUrl = await this.cloudinaryService.uploadProjectLogo(
-          file,
-          project.id,
-        );
-
-        const updatedProject = await prisma.project.update({
-          where: { id: project.id },
-          data: {
-            logoUrl,
-          },
-          include: {
-            category: true,
-            roles: { include: { roleType: true } },
-            documents: true,
-          },
-        });
-
-        return ProjectMapper.toFullResponse(updatedProject);
+        return ProjectMapper.toFullResponse(project);
       } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-          throw new InternalServerErrorException(
-            `Database error: ${error.code} ${error.message}`,
-          );
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2003'
+        ) {
+          throw new BadRequestException('Some role type IDs are invalid');
         }
         throw error;
       }
@@ -202,8 +211,21 @@ export class ProjectsService {
         where: { id },
         include: {
           category: true,
-          roles: { include: { roleType: true } },
+          roles: {
+            include: {
+              roleType: true,
+              user: {
+                include: {
+                  educations: {
+                    include: { specialization: true },
+                  },
+                },
+              },
+            },
+          },
           documents: true,
+          owner: true,
+          boards: true,
         },
       });
 
@@ -221,16 +243,29 @@ export class ProjectsService {
 
   public async updateProject(
     id: string,
-    updateProjectDto: UpdateProjectDto,
+    dto: UpdateProjectDto | UpdateProjectStatusDto,
   ): Promise<ProjectResponseDto> {
     try {
       const updatedProject = await this.prisma.project.update({
         where: { id },
-        data: updateProjectDto,
+        data: dto,
         include: {
           category: true,
-          roles: { include: { roleType: true } },
+          roles: {
+            include: {
+              roleType: true,
+              user: {
+                include: {
+                  educations: {
+                    include: { specialization: true },
+                  },
+                },
+              },
+            },
+          },
           documents: true,
+          owner: true,
+          boards: true,
         },
       });
 
@@ -249,18 +284,25 @@ export class ProjectsService {
   public async deleteProject(id: string): Promise<void> {
     try {
       await this.prisma.$transaction(async (prisma) => {
-        const users = await this.getProjectUsers(id);
-        const userIds = users.map((user) => user.id);
-
         const project = await prisma.project.delete({
           where: { id },
+          include: {
+            roles: {
+              include: {
+                user: true,
+              },
+            },
+          },
         });
-        await this.cloudinaryService.deleteProjectFolder(id);
 
-        if (userIds.length) {
+        const usersIds = project.roles
+          .filter((role) => role.user)
+          .map((user) => user.id);
+
+        if (usersIds.length) {
           await prisma.user.updateMany({
             where: {
-              id: { in: userIds },
+              id: { in: usersIds },
             },
             data: {
               activeProjectsCount: { decrement: 1 },
@@ -268,6 +310,7 @@ export class ProjectsService {
           });
         }
 
+        await this.cloudinaryService.deleteProjectFolder(id);
         await this.discordService.deleteProjectChannel(project);
       });
     } catch (error) {
@@ -292,8 +335,21 @@ export class ProjectsService {
         data: { logoUrl },
         include: {
           category: true,
-          roles: { include: { roleType: true } },
+          roles: {
+            include: {
+              roleType: true,
+              user: {
+                include: {
+                  educations: {
+                    include: { specialization: true },
+                  },
+                },
+              },
+            },
+          },
           documents: true,
+          owner: true,
+          boards: true,
         },
       });
 
@@ -309,98 +365,43 @@ export class ProjectsService {
     }
   }
 
-  public async getProjectUsers(
-    projectId: string,
-  ): Promise<UserCardResponseDto[]> {
-    const projectRoles = await this.prisma.projectRole.findMany({
-      where: { projectId },
-      include: {
-        roleType: true,
-        users: {
-          include: {
-            educations: {
-              include: { specialization: true },
+  public async deleteProjectLogo(id: string): Promise<ProjectResponseDto> {
+    try {
+      const updatedProject = await this.prisma.project.update({
+        where: { id },
+        data: { logoUrl: null },
+        include: {
+          category: true,
+          roles: {
+            include: {
+              roleType: true,
+              user: {
+                include: {
+                  educations: {
+                    include: { specialization: true },
+                  },
+                },
+              },
             },
           },
+          documents: true,
+          owner: true,
+          boards: true,
         },
-      },
-    });
-
-    const usersWithRoles = projectRoles.flatMap((role) =>
-      role.users.map((user) => ({
-        user,
-        specializationId: role.roleType.id,
-      })),
-    );
-
-    if (!usersWithRoles.length) {
-      return [];
-    }
-
-    return usersWithRoles.map(({ user, specializationId }) => {
-      const matchingEducation = user.educations.find(
-        (edu) => edu.specializationId === specializationId,
-      );
-
-      return {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatarUrl: user.avatarUrl,
-        educations: matchingEducation ? [matchingEducation] : [],
-        activeProjectsCount: user.activeProjectsCount,
-      };
-    });
-  }
-
-  public async removeUserFromProject(
-    projectId: string,
-    userId: string,
-  ): Promise<void> {
-    await this.prisma.$transaction(async (prisma) => {
-      const project = await this.prisma.project.findFirst({
-        where: { id: projectId },
       });
-      if (project?.ownerId === userId) {
-        throw new ForbiddenException('You cannot delete the project owner');
+
+      await this.cloudinaryService.deleteProjectLogo(id);
+
+      return ProjectMapper.toFullResponse(updatedProject);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Project not found');
       }
-
-      try {
-        const projectRole = await prisma.projectRole.findFirstOrThrow({
-          where: {
-            projectId,
-            users: {
-              some: { id: userId },
-            },
-          },
-        });
-
-        const user = await prisma.user.update({
-          where: { id: userId },
-          data: {
-            projectRoles: {
-              disconnect: { id: projectRole.id },
-            },
-            activeProjectsCount: { decrement: 1 },
-          },
-        });
-
-        if (project && user.discordId) {
-          await this.discordService.removeRoleFromUser(
-            user.discordId,
-            project.discordMemberRoleId,
-          );
-        }
-      } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === 'P2025'
-        ) {
-          throw new NotFoundException('User not found in project team');
-        }
-        throw error;
-      }
-    });
+      throw error;
+    }
   }
 
   public async getInvites(

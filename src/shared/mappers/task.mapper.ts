@@ -32,6 +32,7 @@ export class TaskMapper {
       deadline: task.deadline,
       priority: task.priority,
       assignee: user,
+      taskStatusId: task.taskStatusId,
     };
   }
 

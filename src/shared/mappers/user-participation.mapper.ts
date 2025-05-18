@@ -9,7 +9,6 @@ export class UserParticipationMapper {
     participation: Participation & {
       user: User & {
         educations: (Education & { specialization: ProjectRoleType })[];
-        activeProjectsCount: number;
       };
       projectRole: ProjectRole & { roleType: ProjectRoleType };
     },

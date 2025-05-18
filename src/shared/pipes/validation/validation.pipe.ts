@@ -11,7 +11,9 @@ import { validate, ValidationError } from 'class-validator';
 @Injectable()
 export class ValidationPipe implements PipeTransform {
   public async transform<T>(value: T, metadata: ArgumentMetadata): Promise<T> {
-    const object = plainToInstance(metadata.metatype as Type<object>, value);
+    const object = plainToInstance(metadata.metatype as Type<object>, value, {
+      enableImplicitConversion: true,
+    });
     const errors = await validate(object);
     if (errors.length) {
       const messages = errors.map((error: ValidationError) => {

@@ -15,4 +15,10 @@ export class TaskStatusResponseDto {
     description: 'Column index on the board',
   })
   public readonly columnIndex: number;
+
+  @ApiProperty({
+    example: '6446ff53-d993-46b3-a837-25d55fac1392',
+    description: 'Board ID',
+  })
+  public readonly boardId: string;
 }

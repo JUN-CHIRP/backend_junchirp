@@ -1,14 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDateString,
+  IsDate,
   IsIn,
   IsNotEmpty,
   IsString,
   IsUUID,
   Length,
-  Validate,
 } from 'class-validator';
 import { TaskPriority } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { IsFutureDate } from '../../shared/validators/is-future-date.validator';
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Task name', description: 'Task name' })
@@ -37,15 +38,14 @@ export class CreateTaskDto {
   public readonly priority: TaskPriority;
 
   @ApiProperty({
-    example: '2025-04-11 11:51:05.224',
+    example: '2025-04-11T11:51:05.224',
     description: 'Task deadline',
   })
-  @IsDateString({}, { message: 'Must be a valid date string' })
-  @Validate((value: string) => new Date(value) > new Date(), {
-    message: 'Date must be in the future',
-  })
+  @IsDate({ message: 'Must be a valid date' })
+  @IsFutureDate()
   @IsNotEmpty({ message: 'Task deadline is required' })
-  public readonly deadline: string;
+  @Type(() => Date)
+  public readonly deadline: Date;
 
   @ApiProperty({
     example: 'e960a0fb-891a-4f02-9f39-39ac3bb08621',

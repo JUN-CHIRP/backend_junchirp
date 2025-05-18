@@ -31,6 +31,7 @@ export class CloudinaryService {
             resource_type: 'image',
             folder: `projects/${projectId}/logo`,
             public_id: `${projectId}_logo`,
+            invalidate: true,
           },
           (error, result) => {
             if (result) {
@@ -60,6 +61,18 @@ export class CloudinaryService {
     } catch (error) {
       throw new InternalServerErrorException(
         `Error deleting project folder: ${error.message}`,
+      );
+    }
+  }
+
+  public async deleteProjectLogo(projectId: string): Promise<void> {
+    try {
+      await cloudinary.uploader.destroy(`${projectId}_logo`, {
+        resource_type: 'image',
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error deleting project logo: ${error.message}`,
       );
     }
   }

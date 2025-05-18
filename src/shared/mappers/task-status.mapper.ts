@@ -15,6 +15,7 @@ export class TaskStatusMapper {
       id: status.id,
       statusName: status.statusName,
       columnIndex: status.columnIndex,
+      boardId: status.boardId,
     };
   }
 
@@ -33,6 +34,7 @@ export class TaskStatusMapper {
       id: status.id,
       statusName: status.statusName,
       columnIndex: status.columnIndex,
+      boardId: status.boardId,
       tasks: status.tasks.map((task) => TaskMapper.toBaseResponse(task)),
     };
   }

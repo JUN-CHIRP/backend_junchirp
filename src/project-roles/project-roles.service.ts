@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -12,10 +11,15 @@ import { ProjectRoleResponseDto } from './dto/project-role.response-dto';
 import { ProjectRoleMapper } from '../shared/mappers/project-role.mapper';
 import { CreateProjectRoleDto } from './dto/create-project-role.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ProjectRoleWithUserResponseDto } from './dto/project-role-with-user.response-dto';
+import { DiscordService } from '../discord/discord.service';
 
 @Injectable()
 export class ProjectRolesService {
-  public constructor(private prisma: PrismaService) {}
+  public constructor(
+    private prisma: PrismaService,
+    private discordService: DiscordService,
+  ) {}
 
   public async getProjectRoleTypes(): Promise<ProjectRoleTypeResponseDto[]> {
     return this.prisma.projectRoleType.findMany({
@@ -58,8 +62,6 @@ export class ProjectRolesService {
         switch (error.code) {
           case 'P2025':
             throw new NotFoundException('Project or role type not found');
-          case 'P2002':
-            throw new ConflictException('Role already exists for this project');
           default:
             throw new InternalServerErrorException('Database error');
         }
@@ -92,5 +94,77 @@ export class ProjectRolesService {
       }
       throw error;
     }
+  }
+
+  public async removeUserFromProject(
+    roleId: string,
+    userId: string,
+  ): Promise<ProjectRoleWithUserResponseDto> {
+    return this.prisma.$transaction(async (prisma) => {
+      const role = await prisma.projectRole.findFirst({
+        where: {
+          id: roleId,
+          userId,
+        },
+        include: {
+          user: true,
+          roleType: true,
+          project: true,
+        },
+      });
+
+      if (!role) {
+        throw new NotFoundException('User is not assigned to this role');
+      }
+
+      if (role.project.ownerId === userId) {
+        throw new ForbiddenException('You cannot remove the project owner');
+      }
+
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          projectRoles: {
+            disconnect: { id: role.id },
+          },
+          activeProjectsCount: {
+            decrement: 1,
+          },
+        },
+      });
+
+      if (user.discordId && role.project.discordMemberRoleId) {
+        await this.discordService.removeRoleFromUser(
+          user.discordId,
+          role.project.discordMemberRoleId,
+        );
+      }
+
+      try {
+        const updatedRole = await prisma.projectRole.findUniqueOrThrow({
+          where: { id: role.id },
+          include: {
+            roleType: true,
+            user: {
+              include: {
+                educations: {
+                  include: { specialization: true },
+                },
+              },
+            },
+          },
+        });
+
+        return ProjectRoleMapper.toUserResponse(updatedRole);
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Role not found');
+        }
+        throw error;
+      }
+    });
   }
 }

@@ -61,7 +61,7 @@ export class BoardsService {
           },
         },
       });
-      return BoardMapper.toResponse(board);
+      return BoardMapper.toExpandResponse(board);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -96,7 +96,7 @@ export class BoardsService {
         },
       });
 
-      return BoardMapper.toResponse(board);
+      return BoardMapper.toExpandResponse(board);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
@@ -182,12 +182,24 @@ export class BoardsService {
     const existingColumns = await this.prisma.taskStatus.findMany({
       where: { boardId },
     });
-
     const existingIdsSet = new Set(existingColumns.map((col) => col.id));
 
-    if (existingColumns.length !== existingIdsSet.size) {
+    if (updateColumnsOrderDto.columns.length !== existingIdsSet.size) {
       throw new BadRequestException(
         'Columns list must match existing columns exactly',
+      );
+    }
+
+    const indices = updateColumnsOrderDto.columns.map((col) => col.columnIndex);
+    const unique = new Set(indices);
+
+    if (unique.size !== indices.length) {
+      throw new BadRequestException('Indices must not be repeated');
+    }
+
+    if (unique.size === Math.max(...indices)) {
+      throw new BadRequestException(
+        `Indices must be between 1 and ${unique.size}`,
       );
     }
 
@@ -236,6 +248,6 @@ export class BoardsService {
       throw new InternalServerErrorException('Board not found after update');
     }
 
-    return BoardMapper.toResponse(updatedBoard);
+    return BoardMapper.toExpandResponse(updatedBoard);
   }
 }

@@ -16,7 +16,10 @@ export class TasksService {
   ): Promise<TaskWithStatusResponseDto> {
     try {
       const task = await this.prisma.task.create({
-        data: createTaskDto,
+        data: {
+          ...createTaskDto,
+          deadline: new Date(createTaskDto.deadline),
+        },
         include: {
           taskStatus: true,
           assignee: {

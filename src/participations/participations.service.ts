@@ -33,7 +33,7 @@ export class ParticipationsService {
         prisma.projectRole.findFirst({
           where: {
             projectId: createInviteDto.projectId,
-            users: { some: { id: createInviteDto.userId } },
+            userId: createInviteDto.userId,
           },
         }),
         prisma.participationRequest.findFirst({
@@ -113,11 +113,7 @@ export class ParticipationsService {
         prisma.projectRole.findFirst({
           where: {
             projectId: createRequestDto.projectId,
-            users: {
-              some: {
-                id: userId,
-              },
-            },
+            userId,
           },
         }),
         prisma.participationInvite.findFirst({
@@ -213,7 +209,7 @@ export class ParticipationsService {
         await prisma.projectRole.update({
           where: { id: invite.projectRoleId },
           data: {
-            users: {
+            user: {
               connect: { id: invite.userId },
             },
           },
@@ -284,7 +280,7 @@ export class ParticipationsService {
         await prisma.projectRole.update({
           where: { id: request.projectRoleId },
           data: {
-            users: {
+            user: {
               connect: { id: request.userId },
             },
           },
