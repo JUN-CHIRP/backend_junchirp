@@ -117,28 +117,53 @@ export class DiscordService implements OnModuleInit {
   }
 
   public async deleteProjectChannel(project: Project): Promise<void> {
-    const channel = await this.guild.channels.fetch(project.discordChannelId);
+    if (!this.guild.client.readyAt) {
+      await new Promise((resolve) => {
+        this.guild.client.once('ready', resolve);
+      });
+    }
+
+    const retryAsync = async <T>(
+      fn: () => Promise<T>,
+      retries = 3,
+      delayMs = 1000,
+    ): Promise<T | null> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const result = await fn();
+          if (result) {
+            return result;
+          }
+        } catch {
+          // ignore error
+        }
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+      }
+      return null;
+    };
+
+    const channel = await retryAsync(() =>
+      this.guild.channels.fetch(project.discordChannelId),
+    );
     if (!channel) {
       throw new Error('Channel not found');
     }
     await channel.delete();
 
-    try {
-      const adminRole = await this.guild.roles.fetch(
-        project.discordAdminRoleId,
-      );
-      if (adminRole) {
-        await adminRole.delete();
-      }
+    const adminRole = await retryAsync(() =>
+      this.guild.roles.fetch(project.discordAdminRoleId),
+    );
+    if (adminRole) {
+      await adminRole.delete();
+    }
 
-      const memberRole = await this.guild.roles.fetch(
-        project.discordMemberRoleId,
-      );
-      if (memberRole) {
-        await memberRole.delete();
-      }
-    } catch (error) {
-      throw new Error(`Error deleting roles: ${error}`);
+    const memberRole = await retryAsync(() =>
+      this.guild.roles.fetch(project.discordMemberRoleId),
+    );
+    if (memberRole) {
+      await memberRole.delete();
     }
   }
 }

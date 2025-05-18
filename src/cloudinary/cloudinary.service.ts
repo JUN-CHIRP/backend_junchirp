@@ -53,11 +53,25 @@ export class CloudinaryService {
   }
 
   public async deleteProjectFolder(projectId: string): Promise<void> {
+    const folderPrefix = `projects/${projectId}`;
+
     try {
-      await cloudinary.api.delete_resources_by_prefix(`projects/${projectId}`, {
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: folderPrefix,
+        resource_type: 'image',
+        max_results: 1,
+      });
+
+      if (result.resources.length === 0) {
+        return;
+      }
+
+      await cloudinary.api.delete_resources_by_prefix(folderPrefix, {
         resource_type: 'image',
       });
-      await cloudinary.api.delete_folder(`projects/${projectId}`);
+
+      await cloudinary.api.delete_folder(folderPrefix);
     } catch (error) {
       throw new InternalServerErrorException(
         `Error deleting project folder: ${error.message}`,
@@ -67,6 +81,17 @@ export class CloudinaryService {
 
   public async deleteProjectLogo(projectId: string): Promise<void> {
     try {
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: `projects/${projectId}/logo`,
+        resource_type: 'image',
+        max_results: 1,
+      });
+
+      if (result.resources.length === 0) {
+        return;
+      }
+
       await cloudinary.uploader.destroy(`${projectId}_logo`, {
         resource_type: 'image',
       });
