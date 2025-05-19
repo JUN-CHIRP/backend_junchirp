@@ -11,7 +11,6 @@ import {
 import { ProjectRolesService } from './project-roles.service';
 import { CreateProjectRoleDto } from './dto/create-project-role.dto';
 import {
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
@@ -26,6 +25,7 @@ import { Owner } from '../auth/decorators/owner.decorator';
 import { ProjectRoleResponseDto } from './dto/project-role.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { User } from '../auth/decorators/user.decorator';
+import { ProjectRoleWithUserResponseDto } from './dto/project-role-with-user.response-dto';
 
 @User()
 @Controller('project-roles')
@@ -47,7 +47,6 @@ export class ProjectRolesController {
   @ApiNotFoundResponse({
     description: 'Project or role type not found',
   })
-  @ApiConflictResponse({ description: 'Role already exists for this project' })
   @ApiForbiddenResponse({
     description: 'Access denied: you are not the project owner',
   })
@@ -82,5 +81,28 @@ export class ProjectRolesController {
     @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
     return this.projectRolesService.deleteProjectRole(id);
+  }
+
+  @Owner('params', 'roleId', 'projectRole')
+  @ApiOperation({ summary: 'Remove user from project team' })
+  @ApiOkResponse({ type: ProjectRoleWithUserResponseDto })
+  @ApiNotFoundResponse({
+    description: 'User is not assigned to this role / Role not found',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not the project owner / You cannot delete the project owner',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @Delete(':roleId/users/:userId')
+  public async removeUserFromProject(
+    @Param('roleId', ParseUUIDv4Pipe) projectId: string,
+    @Param('userId', ParseUUIDv4Pipe) userId: string,
+  ): Promise<ProjectRoleWithUserResponseDto> {
+    return this.projectRolesService.removeUserFromProject(projectId, userId);
   }
 }

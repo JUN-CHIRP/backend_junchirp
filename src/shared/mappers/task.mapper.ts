@@ -14,7 +14,7 @@ import { TaskStatusMapper } from './task-status.mapper';
 export class TaskMapper {
   public static toBaseResponse(
     task: Task & {
-      user:
+      assignee:
         | (User & {
             educations: (Education & { specialization: ProjectRoleType })[];
           })
@@ -22,8 +22,8 @@ export class TaskMapper {
     },
   ): TaskResponseDto {
     let user: UserCardResponseDto | null = null;
-    if (task.user) {
-      user = UserMapper.toCardResponse(task.user);
+    if (task.assignee) {
+      user = UserMapper.toCardResponse(task.assignee);
     }
     return {
       id: task.id,
@@ -31,13 +31,14 @@ export class TaskMapper {
       description: task.description,
       deadline: task.deadline,
       priority: task.priority,
-      user,
+      assignee: user,
+      taskStatusId: task.taskStatusId,
     };
   }
 
   public static toExpandResponse(
     task: Task & {
-      user:
+      assignee:
         | (User & {
             educations: (Education & { specialization: ProjectRoleType })[];
           })
@@ -46,8 +47,8 @@ export class TaskMapper {
     },
   ): TaskWithStatusResponseDto {
     let user: UserCardResponseDto | null = null;
-    if (task.user) {
-      user = UserMapper.toCardResponse(task.user);
+    if (task.assignee) {
+      user = UserMapper.toCardResponse(task.assignee);
     }
     return {
       id: task.id,
@@ -55,7 +56,7 @@ export class TaskMapper {
       description: task.description,
       deadline: task.deadline,
       priority: task.priority,
-      user,
+      assignee: user,
       taskStatus: TaskStatusMapper.toBaseResponse(task.taskStatus),
     };
   }

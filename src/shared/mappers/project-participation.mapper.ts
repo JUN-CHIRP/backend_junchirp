@@ -23,7 +23,7 @@ export class ProjectParticipationMapper {
     return {
       id: participation.id,
       userId: participation.userId,
-      projectRole: ProjectRoleMapper.toExpandResponse(
+      projectRole: ProjectRoleMapper.toProjectResponse(
         participation.projectRole,
       ),
     };

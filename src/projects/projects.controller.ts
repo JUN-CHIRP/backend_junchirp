@@ -41,9 +41,9 @@ import { ParseImageFilePipe } from '../shared/pipes/parse-image-file/parse-image
 import { Owner } from '../auth/decorators/owner.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { Member } from '../auth/decorators/member.decorator';
-import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { User } from '../auth/decorators/user.decorator';
+import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 @User()
 @Controller('projects')
@@ -74,48 +74,19 @@ export class ProjectsController {
   @ApiBadRequestResponse({
     description: 'You have reached the limit of active projects',
   })
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        projectName: {
-          type: 'string',
-          description: 'Project name',
-          example: 'Project name',
-        },
-        description: {
-          type: 'string',
-          description: 'Project description',
-          example: 'Project description',
-        },
-        categoryId: {
-          type: 'string',
-          description: 'Category ID',
-          example: 'e960a0fb-891a-4f02-9f39-39ac3bb08621',
-        },
-      },
-    },
-  })
   @Post('')
   public async createProject(
     @Req() req: Request,
     @Body(ValidationPipe) createProjectDto: CreateProjectDto,
-    @UploadedFile(ParseImageFilePipe) file: Express.Multer.File,
   ): Promise<ProjectResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
-    return this.projectsService.createProject(user.id, createProjectDto, file);
+    return this.projectsService.createProject(user.id, createProjectDto);
   }
 
   @Owner()
@@ -136,6 +107,26 @@ export class ProjectsController {
     @Body(ValidationPipe) updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectResponseDto> {
     return this.projectsService.updateProject(id, updateProjectDto);
+  }
+
+  @Owner()
+  @ApiOperation({ summary: 'Update project status' })
+  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: you are not the project owner',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @Put(':id/status')
+  public async updateProjectStatus(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Body(ValidationPipe) updateProjectStatusDto: UpdateProjectStatusDto,
+  ): Promise<ProjectResponseDto> {
+    return this.projectsService.updateProject(id, updateProjectStatusDto);
   }
 
   @Member()
@@ -174,7 +165,7 @@ export class ProjectsController {
 
   @Owner()
   @ApiOperation({ summary: 'Update project logo' })
-  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -205,41 +196,23 @@ export class ProjectsController {
     return this.projectsService.updateProjectLogo(id, file);
   }
 
-  @Member()
-  @ApiOperation({
-    summary: 'Get project team',
-  })
-  @ApiOkResponse({ type: [UserCardResponseDto] })
+  @Owner()
+  @ApiOperation({ summary: 'Delete project logo' })
+  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not a participant of this project',
-  })
-  @Get(':id/users')
-  public async getProjectUsers(
-    @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<UserCardResponseDto[]> {
-    return this.projectsService.getProjectUsers(id);
-  }
-
-  @Owner('params', 'projectId')
-  @ApiOperation({ summary: 'Remove user from project team' })
-  @ApiNoContentResponse()
-  @ApiNotFoundResponse({ description: 'User not found in project team' })
-  @ApiForbiddenResponse({
-    description:
-      'Access denied: you are not the project owner / You cannot delete the project owner',
+    description: 'Access denied: you are not the project owner',
   })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':projectId/users/:userId')
-  public async removeUserFromProject(
-    @Param('projectId', ParseUUIDv4Pipe) projectId: string,
-    @Param('userId', ParseUUIDv4Pipe) userId: string,
-  ): Promise<void> {
-    return this.projectsService.removeUserFromProject(projectId, userId);
+  @Delete(':id/logo')
+  public async deleteProjectLogo(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+  ): Promise<ProjectResponseDto> {
+    return this.projectsService.deleteProjectLogo(id);
   }
 
   @Member()

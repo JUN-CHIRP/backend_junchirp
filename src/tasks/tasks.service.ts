@@ -16,10 +16,13 @@ export class TasksService {
   ): Promise<TaskWithStatusResponseDto> {
     try {
       const task = await this.prisma.task.create({
-        data: createTaskDto,
+        data: {
+          ...createTaskDto,
+          deadline: new Date(createTaskDto.deadline),
+        },
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -49,7 +52,7 @@ export class TasksService {
         where: { id },
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -83,7 +86,7 @@ export class TasksService {
         data: updateTaskDto,
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {
@@ -137,7 +140,7 @@ export class TasksService {
         data: updateStatusTaskDto,
         include: {
           taskStatus: true,
-          user: {
+          assignee: {
             include: {
               educations: {
                 include: {

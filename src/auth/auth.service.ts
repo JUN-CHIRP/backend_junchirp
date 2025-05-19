@@ -20,6 +20,7 @@ import { TooManyRequestsException } from '../shared/exceptions/too-many-requests
 import { RedisService } from '../redis/redis.service';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { LoggerService } from '../logger/logger.service';
+import { v4 as uuidV4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -394,5 +395,33 @@ export class AuthService {
     );
 
     return { user, accessToken };
+  }
+
+  public async redirectToDiscord(req: Request, res: Response): Promise<void> {
+    const currentUserId = (req.user as UserResponseDto).id;
+    const state = uuidV4();
+
+    await this.redisService.set(state, currentUserId, 300);
+
+    const redirectUrl = `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(
+      this.configService.get<string>('DISCORD_CALLBACK_URL') as string,
+    )}&response_type=code&scope=identify&state=${state}`;
+
+    res.redirect(redirectUrl);
+  }
+
+  public async handleDiscordCallback(
+    req: Request,
+    state: string,
+  ): Promise<UserResponseDto> {
+    const userId = await this.redisService.get(state);
+
+    if (!userId) {
+      throw new UnauthorizedException('Invalid or expired state');
+    }
+
+    const { discordId } = req.user as { discordId: string };
+    await this.redisService.del(state);
+    return this.usersService.linkDiscord(userId, discordId);
   }
 }

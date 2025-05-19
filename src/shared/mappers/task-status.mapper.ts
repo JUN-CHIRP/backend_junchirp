@@ -15,13 +15,14 @@ export class TaskStatusMapper {
       id: status.id,
       statusName: status.statusName,
       columnIndex: status.columnIndex,
+      boardId: status.boardId,
     };
   }
 
   public static toExpandResponse(
     status: TaskStatus & {
       tasks: (Task & {
-        user:
+        assignee:
           | (User & {
               educations: (Education & { specialization: ProjectRoleType })[];
             })
@@ -33,6 +34,7 @@ export class TaskStatusMapper {
       id: status.id,
       statusName: status.statusName,
       columnIndex: status.columnIndex,
+      boardId: status.boardId,
       tasks: status.tasks.map((task) => TaskMapper.toBaseResponse(task)),
     };
   }

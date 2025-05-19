@@ -47,9 +47,7 @@ export class MemberGuard implements CanActivate {
             id: resourceId,
             roles: {
               some: {
-                users: {
-                  some: { id: user.id },
-                },
+                userId: user.id,
               },
             },
           },
@@ -62,9 +60,7 @@ export class MemberGuard implements CanActivate {
             project: {
               roles: {
                 some: {
-                  users: {
-                    some: { id: user.id },
-                  },
+                  userId: user.id,
                 },
               },
             },
@@ -80,9 +76,7 @@ export class MemberGuard implements CanActivate {
                 project: {
                   roles: {
                     some: {
-                      users: {
-                        some: { id: user.id },
-                      },
+                      userId: user.id,
                     },
                   },
                 },
@@ -99,9 +93,7 @@ export class MemberGuard implements CanActivate {
               project: {
                 roles: {
                   some: {
-                    users: {
-                      some: { id: user.id },
-                    },
+                    userId: user.id,
                   },
                 },
               },

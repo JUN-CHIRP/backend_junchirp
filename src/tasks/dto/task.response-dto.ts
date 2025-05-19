@@ -36,5 +36,11 @@ export class TaskResponseDto {
   @ApiProperty({
     type: () => UserCardResponseDto,
   })
-  public readonly user: UserCardResponseDto | null;
+  public readonly assignee: UserCardResponseDto | null;
+
+  @ApiProperty({
+    example: '6446ff53-d993-46b3-a837-25d55fac1392',
+    description: 'Column (Task status) ID',
+  })
+  public readonly taskStatusId: string;
 }

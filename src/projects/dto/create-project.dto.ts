@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, Length } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsUUID, Length } from 'class-validator';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'Project name', description: 'Project name' })
@@ -24,4 +24,13 @@ export class CreateProjectDto {
   @IsUUID(4, { message: 'Must be a string in UUIDv4 format' })
   @IsNotEmpty({ message: 'Category ID is required' })
   public readonly categoryId: string;
+
+  @ApiProperty({
+    example: ['e960a0fb-891a-4f02-9f39-39ac3bb08621'],
+    description: 'Role types IDs',
+  })
+  @IsArray({ message: 'Must be an array of IDs' })
+  @IsUUID(4, { message: 'Must be a string in UUIDv4 format', each: true })
+  @IsNotEmpty({ message: 'Role type ID is required', each: true })
+  public readonly rolesIds: string[];
 }
