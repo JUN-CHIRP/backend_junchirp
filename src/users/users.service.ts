@@ -609,4 +609,37 @@ export class UsersService {
   ): Promise<ProjectParticipationResponseDto[]> {
     return this.participationsService.getRequestsWithProjects(userId);
   }
+
+  public async linkDiscord(
+    id: string,
+    discordId: string,
+  ): Promise<UserResponseDto> {
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: { discordId },
+        include: {
+          role: true,
+          educations: {
+            include: {
+              specialization: true,
+            },
+          },
+          socials: true,
+          softSkills: true,
+          hardSkills: true,
+        },
+      });
+
+      return UserMapper.toFullResponse(updatedUser, false);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
+    }
+  }
 }

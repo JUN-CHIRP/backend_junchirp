@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Ip,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -34,6 +35,9 @@ import { TokenResponseDto } from './dto/token.response-dto';
 import { Auth } from './decorators/auth.decorator';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
+import { Discord } from './decorators/discord.decorator';
+import { User } from './decorators/user.decorator';
+import { UserResponseDto } from '../users/dto/user.response-dto';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -135,5 +139,28 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     return this.authService.googleLogin(ip, req, res);
+  }
+
+  @User()
+  @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
+  @ApiResponse({ status: HttpStatus.FOUND })
+  @HttpCode(HttpStatus.FOUND)
+  @Get('discord')
+  public async redirectToDiscord(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    return this.authService.redirectToDiscord(req, res);
+  }
+
+  @Discord()
+  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiOkResponse({ type: UserResponseDto })
+  @Get('discord/callback')
+  public async handleDiscordCallback(
+    @Req() req: Request,
+    @Query('state') state: string,
+  ): Promise<UserResponseDto> {
+    return this.authService.handleDiscordCallback(req, state);
   }
 }
