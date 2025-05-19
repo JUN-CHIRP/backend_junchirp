@@ -165,7 +165,7 @@ export class ProjectsController {
 
   @Owner()
   @ApiOperation({ summary: 'Update project logo' })
-  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -198,7 +198,7 @@ export class ProjectsController {
 
   @Owner()
   @ApiOperation({ summary: 'Delete project logo' })
-  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
     description: 'Access denied: you are not the project owner',

@@ -122,13 +122,13 @@ export class ProjectsService {
       );
     }
 
-    return this.prisma.$transaction(async (prisma) => {
-      try {
-        const { channelId, adminRoleId, memberRoleId } =
-          await this.discordService.createProjectChannel(
-            createProjectDto.projectName,
-          );
+    const { channelId, adminRoleId, memberRoleId } =
+      await this.discordService.createProjectChannel(
+        createProjectDto.projectName,
+      );
 
+    const newProject = await this.prisma.$transaction(async (prisma) => {
+      try {
         const project = await prisma.project.create({
           data: {
             ownerId: userId,
@@ -166,13 +166,6 @@ export class ProjectsService {
           },
         });
 
-        if (project.owner.discordId) {
-          await this.discordService.addRoleToUser(
-            project.owner.discordId,
-            adminRoleId,
-          );
-        }
-
         const ownerRoleType =
           await this.projectRolesService.findOrCreateRole('Project owner');
         const ownerRole = await prisma.projectRole.create({
@@ -192,7 +185,7 @@ export class ProjectsService {
           },
         });
 
-        return ProjectMapper.toFullResponse(project);
+        return project;
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&
@@ -203,6 +196,15 @@ export class ProjectsService {
         throw error;
       }
     });
+
+    if (newProject.owner.discordId) {
+      await this.discordService.addRoleToUser(
+        newProject.owner.discordId,
+        adminRoleId,
+      );
+    }
+
+    return ProjectMapper.toFullResponse(newProject);
   }
 
   public async getProjectById(id: string): Promise<ProjectResponseDto> {
