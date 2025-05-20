@@ -1,6 +1,6 @@
 import {
-  BadRequestException,
-  Injectable,
+  BadRequestException, ConflictException,
+  Injectable, InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -187,11 +187,18 @@ export class ProjectsService {
 
         return project;
       } catch (error) {
+        await this.discordService.deleteProjectChannel(
+          channelId,
+          adminRoleId,
+          memberRoleId,
+        );
         if (
           error instanceof PrismaClientKnownRequestError &&
           error.code === 'P2003'
         ) {
-          throw new BadRequestException('Some role type IDs are invalid');
+          throw new BadRequestException(
+            'Some role type IDs or category ID are invalid',
+          );
         }
         throw error;
       }
@@ -273,13 +280,18 @@ export class ProjectsService {
 
       return ProjectMapper.toFullResponse(updatedProject);
     } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Project not found');
+      if (error instanceof PrismaClientKnownRequestError) {
+        switch (error.code) {
+          case 'P2003':
+            throw new BadRequestException('Project category ID not found');
+          case 'P2025':
+            throw new NotFoundException('Project not found');
+          default:
+            throw new InternalServerErrorException('Database error');
+        }
+      } else {
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -313,7 +325,11 @@ export class ProjectsService {
         }
 
         await this.cloudinaryService.deleteProjectFolder(id);
-        await this.discordService.deleteProjectChannel(project);
+        await this.discordService.deleteProjectChannel(
+          project.discordChannelId,
+          project.discordAdminRoleId,
+          project.discordMemberRoleId,
+        );
       });
     } catch (error) {
       if (

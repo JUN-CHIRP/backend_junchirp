@@ -122,7 +122,7 @@ export class TasksController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @Put(':id')
+  @Put(':id/status')
   public async updateTaskStatus(
     @Param('id', ParseUUIDv4Pipe) id: string,
     @Body(ValidationPipe) updateStatusTaskDto: UpdateStatusTaskDto,

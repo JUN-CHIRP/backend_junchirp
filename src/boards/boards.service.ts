@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { BoardResponseDto } from './dto/board.response-dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BoardMapper } from '../shared/mappers/board.mapper';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { UpdateColumnsOrderDto } from './dto/update-columns-order.dto';
+import { BoardWithColumnsResponseDto } from './dto/board-with-columns.response-dto';
 
 @Injectable()
 export class BoardsService {
@@ -19,7 +19,7 @@ export class BoardsService {
 
   public async addBoard(
     createBoardDto: CreateBoardDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     const existingBoards = await this.prisma.board.count({
       where: { projectId: createBoardDto.projectId },
     });
@@ -73,7 +73,7 @@ export class BoardsService {
     }
   }
 
-  public async getBoardById(id: string): Promise<BoardResponseDto> {
+  public async getBoardById(id: string): Promise<BoardWithColumnsResponseDto> {
     try {
       const board = await this.prisma.board.findUniqueOrThrow({
         where: { id },
@@ -111,9 +111,9 @@ export class BoardsService {
   public async updateBoard(
     id: string,
     updateBoardDto: UpdateBoardDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     try {
-      return await this.prisma.board.update({
+      const board = await this.prisma.board.update({
         where: { id },
         data: updateBoardDto,
         include: {
@@ -134,6 +134,8 @@ export class BoardsService {
           },
         },
       });
+
+      return BoardMapper.toExpandResponse(board);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {
@@ -169,7 +171,7 @@ export class BoardsService {
   public async updateColumnsOrder(
     boardId: string,
     updateColumnsOrderDto: UpdateColumnsOrderDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
       select: { id: true },
@@ -197,7 +199,7 @@ export class BoardsService {
       throw new BadRequestException('Indices must not be repeated');
     }
 
-    if (unique.size === Math.max(...indices)) {
+    if (unique.size !== Math.max(...indices)) {
       throw new BadRequestException(
         `Indices must be between 1 and ${unique.size}`,
       );

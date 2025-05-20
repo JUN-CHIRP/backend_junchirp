@@ -105,7 +105,7 @@ export class OwnerGuard implements CanActivate {
     if (!isOwner) {
       const exists = await this.resourceExists(model, resourceId);
       if (!exists) {
-        throw new NotFoundException(`Resource not found`);
+        throw new NotFoundException('Resource not found');
       }
 
       throw new ForbiddenException(

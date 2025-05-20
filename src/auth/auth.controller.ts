@@ -154,7 +154,7 @@ export class AuthController {
   }
 
   @Discord()
-  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
   @ApiOkResponse({ type: UserResponseDto })
   @Get('discord/callback')
   public async handleDiscordCallback(

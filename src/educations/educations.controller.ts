@@ -49,7 +49,8 @@ export class EducationsController {
   @ApiOperation({ summary: 'Add education' })
   @ApiCreatedResponse({ type: EducationResponseDto })
   @ApiBadRequestResponse({
-    description: 'You can only add up to 5 educations',
+    description:
+      'You can only add up to 5 educations / Specialization not found',
   })
   @ApiConflictResponse({ description: 'Education is already in list' })
   @ApiHeader({

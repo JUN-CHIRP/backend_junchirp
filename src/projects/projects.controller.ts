@@ -72,7 +72,8 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Create project' })
   @ApiCreatedResponse({ type: ProjectResponseDto })
   @ApiBadRequestResponse({
-    description: 'You have reached the limit of active projects',
+    description:
+      'You have reached the limit of active projects / Some role type IDs or category ID are invalid',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -96,6 +97,7 @@ export class ProjectsController {
   @ApiForbiddenResponse({
     description: 'Access denied: you are not the project owner',
   })
+  @ApiBadRequestResponse({ description: 'Project category ID not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

@@ -116,7 +116,11 @@ export class DiscordService implements OnModuleInit {
     await member.roles.remove(roleId);
   }
 
-  public async deleteProjectChannel(project: Project): Promise<void> {
+  public async deleteProjectChannel(
+    discordChannelId: string,
+    discordAdminRoleId: string,
+    discordMemberRoleId: string,
+  ): Promise<void> {
     if (!this.guild.client.readyAt) {
       await new Promise((resolve) => {
         this.guild.client.once('ready', resolve);
@@ -145,7 +149,7 @@ export class DiscordService implements OnModuleInit {
     };
 
     const channel = await retryAsync(() =>
-      this.guild.channels.fetch(project.discordChannelId),
+      this.guild.channels.fetch(discordChannelId),
     );
     if (!channel) {
       throw new Error('Channel not found');
@@ -153,14 +157,14 @@ export class DiscordService implements OnModuleInit {
     await channel.delete();
 
     const adminRole = await retryAsync(() =>
-      this.guild.roles.fetch(project.discordAdminRoleId),
+      this.guild.roles.fetch(discordAdminRoleId),
     );
     if (adminRole) {
       await adminRole.delete();
     }
 
     const memberRole = await retryAsync(() =>
-      this.guild.roles.fetch(project.discordMemberRoleId),
+      this.guild.roles.fetch(discordMemberRoleId),
     );
     if (memberRole) {
       await memberRole.delete();

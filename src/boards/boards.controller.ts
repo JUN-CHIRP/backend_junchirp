@@ -25,12 +25,12 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { BoardResponseDto } from './dto/board.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Owner } from '../auth/decorators/owner.decorator';
 import { Member } from '../auth/decorators/member.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { UpdateColumnsOrderDto } from './dto/update-columns-order.dto';
+import { BoardWithColumnsResponseDto } from './dto/board-with-columns.response-dto';
 
 @Controller('boards')
 export class BoardsController {
@@ -38,7 +38,7 @@ export class BoardsController {
 
   @Owner('body', 'projectId', 'project')
   @ApiOperation({ summary: 'Add board' })
-  @ApiCreatedResponse({ type: BoardResponseDto })
+  @ApiCreatedResponse({ type: BoardWithColumnsResponseDto })
   @ApiBadRequestResponse({
     description: 'You can only add up to 5 boards in the project',
   })
@@ -55,13 +55,13 @@ export class BoardsController {
   @Post('')
   public async addBoard(
     @Body() createBoardDto: CreateBoardDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     return this.boardsService.addBoard(createBoardDto);
   }
 
   @Member('params', 'id', 'board')
   @ApiOperation({ summary: 'Get board by id' })
-  @ApiOkResponse({ type: BoardResponseDto })
+  @ApiOkResponse({ type: BoardWithColumnsResponseDto })
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiForbiddenResponse({
     description: 'Access denied: you are not a participant of this project',
@@ -69,13 +69,13 @@ export class BoardsController {
   @Get(':id')
   public async getBoardById(
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     return this.boardsService.getBoardById(id);
   }
 
   @Owner('params', 'id', 'board')
   @ApiOperation({ summary: 'Update board name' })
-  @ApiOkResponse({ type: BoardResponseDto })
+  @ApiOkResponse({ type: BoardWithColumnsResponseDto })
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiConflictResponse({ description: 'Board with this name already exists' })
   @ApiForbiddenResponse({
@@ -90,7 +90,7 @@ export class BoardsController {
   public async updateBoard(
     @Param('id', ParseUUIDv4Pipe) id: string,
     @Body(ValidationPipe) updateBoardDto: UpdateBoardDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     return this.boardsService.updateBoard(id, updateBoardDto);
   }
 
@@ -116,7 +116,7 @@ export class BoardsController {
 
   @Owner('params', 'id', 'board')
   @ApiOperation({ summary: 'Update board columns order' })
-  @ApiOkResponse({ type: BoardResponseDto })
+  @ApiOkResponse({ type: BoardWithColumnsResponseDto })
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiBadRequestResponse({
     description: `Column with id does not belong to the board / 
@@ -136,7 +136,7 @@ export class BoardsController {
   public async updateColumnsOrder(
     @Param('id', ParseUUIDv4Pipe) id: string,
     @Body(ValidationPipe) updateColumnsOrderDto: UpdateColumnsOrderDto,
-  ): Promise<BoardResponseDto> {
+  ): Promise<BoardWithColumnsResponseDto> {
     return this.boardsService.updateColumnsOrder(id, updateColumnsOrderDto);
   }
 }
