@@ -23,11 +23,19 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { DocumentResponseDto } from './dto/document.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
+@User('discord')
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@ApiForbiddenResponse({
+  description:
+    'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+})
 @Controller('documents')
 export class DocumentsController {
   public constructor(private documentsService: DocumentsService) {}
@@ -39,9 +47,6 @@ export class DocumentsController {
     description: 'Maximum number of documents per project is 20',
   })
   @ApiConflictResponse({ description: 'Duplicate document url' })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
-  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -60,9 +65,6 @@ export class DocumentsController {
   @ApiOkResponse({ type: DocumentResponseDto })
   @ApiNotFoundResponse({ description: 'Document not found' })
   @ApiConflictResponse({ description: 'Duplicate document url' })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
-  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -80,9 +82,6 @@ export class DocumentsController {
   @ApiOperation({ summary: 'Delete document' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Document not found' })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
-  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

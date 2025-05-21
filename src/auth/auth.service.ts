@@ -21,6 +21,7 @@ import { RedisService } from '../redis/redis.service';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { LoggerService } from '../logger/logger.service';
 import { v4 as uuidV4 } from 'uuid';
+import { DiscordService } from '../discord/discord.service';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,7 @@ export class AuthService {
     private prisma: PrismaService,
     private redisService: RedisService,
     private loggerService: LoggerService,
+    private discordService: DiscordService,
   ) {}
 
   public async validateUser(
@@ -420,7 +422,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired state');
     }
 
-    const { discordId } = req.user as { discordId: string };
+    const { discordId, accessToken } = req.user as {
+      discordId: string;
+      accessToken: string;
+    };
+
+    await this.discordService.addToGuild(discordId, accessToken);
     await this.redisService.del(state);
     return this.usersService.linkDiscord(userId, discordId);
   }

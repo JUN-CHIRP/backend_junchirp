@@ -24,6 +24,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { Owner } from '../auth/decorators/owner.decorator';
@@ -31,7 +32,10 @@ import { Member } from '../auth/decorators/member.decorator';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { UpdateColumnsOrderDto } from './dto/update-columns-order.dto';
 import { BoardWithColumnsResponseDto } from './dto/board-with-columns.response-dto';
+import { User } from '../auth/decorators/user.decorator';
 
+@User('discord')
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @Controller('boards')
 export class BoardsController {
   public constructor(private boardsService: BoardsService) {}
@@ -44,7 +48,8 @@ export class BoardsController {
   })
   @ApiConflictResponse({ description: 'Board with this name already exists' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -64,7 +69,8 @@ export class BoardsController {
   @ApiOkResponse({ type: BoardWithColumnsResponseDto })
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not a participant of this project',
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @Get(':id')
   public async getBoardById(
@@ -79,7 +85,8 @@ export class BoardsController {
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiConflictResponse({ description: 'Board with this name already exists' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -99,7 +106,8 @@ export class BoardsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -125,7 +133,8 @@ export class BoardsController {
                   Indices must be between 1 and max`,
   })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',

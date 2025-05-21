@@ -12,7 +12,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
         'DISCORD_CLIENT_SECRET',
       ) as string,
       callbackURL: configService.get<string>('DISCORD_CALLBACK_URL') as string,
-      scope: ['identify'],
+      scope: ['identify', 'guilds.join'],
     });
   }
 

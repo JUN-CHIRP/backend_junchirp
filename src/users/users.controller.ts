@@ -17,6 +17,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -75,6 +76,7 @@ export class UsersController {
   @ApiBadRequestResponse({
     description: 'Invalid or expired verification token',
   })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -94,6 +96,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user' })
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @Get('me')
   public async getCurrentUser(@Req() req: Request): Promise<UserResponseDto> {
     const user: UserWithPasswordResponseDto =
@@ -149,6 +152,7 @@ export class UsersController {
   @ApiOkResponse({ type: UserResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiConflictResponse({ description: 'Email is already in use' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -171,6 +175,8 @@ export class UsersController {
     summary: 'Get projects of current user',
   })
   @ApiOkResponse({ type: ProjectsListResponseDto })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UsePipes(ValidationPipe)
   @Get('me/projects')
   public async getMyProjects(
@@ -192,6 +198,8 @@ export class UsersController {
     summary: 'Get user projects',
   })
   @ApiOkResponse({ type: ProjectsListResponseDto })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @Get(':id/projects')
   public async getUserProjects(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -203,7 +211,9 @@ export class UsersController {
   @User()
   @ApiOperation({ summary: 'Get user by id' })
   @ApiOkResponse({ type: UserResponseDto })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
   @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @Get(':id')
   public async getUserById(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -216,6 +226,8 @@ export class UsersController {
     summary: 'Get list of users with filters and pagination',
   })
   @ApiOkResponse({ type: UsersListResponseDto })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UsePipes(ValidationPipe)
   @Get('')
   public async getUsers(
@@ -229,6 +241,8 @@ export class UsersController {
     summary: 'Get current user invites',
   })
   @ApiOkResponse({ type: [ProjectParticipationResponseDto] })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @Get('me/invites')
   public async getInvites(
     @Req() req: Request,
@@ -243,6 +257,8 @@ export class UsersController {
     summary: 'Get current user requests',
   })
   @ApiOkResponse({ type: [ProjectParticipationResponseDto] })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @Get('me/requests')
   public async getRequests(
     @Req() req: Request,

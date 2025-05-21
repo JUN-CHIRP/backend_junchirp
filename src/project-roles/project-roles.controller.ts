@@ -18,6 +18,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ProjectRoleTypeResponseDto } from './dto/project-role-type.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
@@ -28,6 +29,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { ProjectRoleWithUserResponseDto } from './dto/project-role-with-user.response-dto';
 
 @User()
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @Controller('project-roles')
 export class ProjectRolesController {
   public constructor(private projectRolesService: ProjectRolesService) {}
@@ -36,6 +38,9 @@ export class ProjectRolesController {
     summary: 'Get array of all project roles available on the platform',
   })
   @ApiOkResponse({ type: [ProjectRoleTypeResponseDto] })
+  @ApiForbiddenResponse({
+    description: 'Access denied: email not confirmed',
+  })
   @Get('list')
   public async getProjectRoleTypes(): Promise<ProjectRoleTypeResponseDto[]> {
     return this.projectRolesService.getProjectRoleTypes();
@@ -48,7 +53,8 @@ export class ProjectRolesController {
     description: 'Project or role type not found',
   })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -67,8 +73,10 @@ export class ProjectRolesController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project role not found' })
   @ApiForbiddenResponse({
-    description:
-      'Access denied: you are not the project owner / You cannot delete the project owner role',
+    description: `Access denied: you are not the project owner /
+                  Access denied: email not confirmed /
+                  Access denied: discord not confirmed /
+                  You cannot delete the project owner role`,
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -90,8 +98,10 @@ export class ProjectRolesController {
     description: 'User is not assigned to this role / Role not found',
   })
   @ApiForbiddenResponse({
-    description:
-      'Access denied: you are not the project owner / You cannot delete the project owner',
+    description: `Access denied: you are not the project owner / 
+                  Access denied: email not confirmed / 
+                  Access denied: discord not confirmed / 
+                  You cannot remove the project owner`,
   })
   @ApiHeader({
     name: 'x-csrf-token',

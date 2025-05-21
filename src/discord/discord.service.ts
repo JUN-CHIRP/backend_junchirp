@@ -1,24 +1,37 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Client, GatewayIntentBits, Guild, ChannelType } from 'discord.js';
-import { Project } from '@prisma/client';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
   private client: Client;
 
+  private guildId: string = this.configService.get<string>(
+    'DISCORD_GUILD_ID',
+  ) as string;
+
   private guild: Guild;
+
+  private botToken: string = this.configService.get<string>(
+    'DISCORD_BOT_TOKEN',
+  ) as string;
+
+  public constructor(private configService: ConfigService) {}
 
   public async onModuleInit(): Promise<void> {
     this.client = new Client({
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
     });
 
-    await this.client.login(process.env.DISCORD_BOT_TOKEN);
+    await this.client.login(this.botToken);
 
     this.client.once('ready', async () => {
-      this.guild = await this.client.guilds.fetch(
-        process.env.DISCORD_GUILD_ID as string,
-      );
+      this.guild = await this.client.guilds.fetch(this.guildId);
       await this.guild.roles.fetch();
       await this.guild.channels.fetch();
     });
@@ -168,6 +181,30 @@ export class DiscordService implements OnModuleInit {
     );
     if (memberRole) {
       await memberRole.delete();
+    }
+  }
+
+  public async addToGuild(
+    discordId: string,
+    accessToken: string,
+  ): Promise<void> {
+    try {
+      const url = `https://discord.com/api/v10/guilds/${this.guildId}/members/${discordId}`;
+
+      await axios.put(
+        url,
+        {
+          access_token: accessToken,
+        },
+        {
+          headers: {
+            Authorization: `Bot ${this.botToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
   }
 }

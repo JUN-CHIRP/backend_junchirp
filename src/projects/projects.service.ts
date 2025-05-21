@@ -1,6 +1,7 @@
 import {
-  BadRequestException, ConflictException,
-  Injectable, InternalServerErrorException,
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';

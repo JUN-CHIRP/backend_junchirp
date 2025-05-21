@@ -100,14 +100,13 @@ export class OwnerGuard implements CanActivate {
       throw new BadRequestException(`Unsupported model: ${model}`);
     }
 
+    const exists = await this.resourceExists(model, resourceId);
+    if (!exists) {
+      throw new NotFoundException('Resource not found');
+    }
+
     const isOwner = await check();
-
     if (!isOwner) {
-      const exists = await this.resourceExists(model, resourceId);
-      if (!exists) {
-        throw new NotFoundException('Resource not found');
-      }
-
       throw new ForbiddenException(
         'Access denied: you are not the project owner',
       );

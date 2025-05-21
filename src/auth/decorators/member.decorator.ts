@@ -24,6 +24,6 @@ export const Member = (
     SetMetadata(PROJECT_ID_SOURCE_KEY, source),
     SetMetadata(PROJECT_ID_KEY_KEY, key),
     SetMetadata(MODEL_KEY, model),
-    User(),
+    User('discord'),
     UseGuards(MemberGuard),
   );

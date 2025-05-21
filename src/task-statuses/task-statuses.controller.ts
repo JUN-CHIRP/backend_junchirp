@@ -23,11 +23,19 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { TaskStatusResponseDto } from './dto/task-status.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
+import { User } from '../auth/decorators/user.decorator';
 
+@User('discord')
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@ApiForbiddenResponse({
+  description:
+    'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+})
 @Controller('task-statuses')
 export class TaskStatusesController {
   public constructor(private taskStatusesService: TaskStatusesService) {}
@@ -38,11 +46,9 @@ export class TaskStatusesController {
   @ApiBadRequestResponse({
     description: 'You can only add up to 5 columns on the board',
   })
+  @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiConflictResponse({
     description: 'Column name must be unique on the board',
-  })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -64,9 +70,6 @@ export class TaskStatusesController {
   @ApiConflictResponse({
     description: 'Column name must be unique on the board',
   })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
-  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -84,9 +87,6 @@ export class TaskStatusesController {
   @ApiOperation({ summary: 'Delete status' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Column not found' })
-  @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
-  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
