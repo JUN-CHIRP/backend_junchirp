@@ -10,12 +10,14 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { RedisModule } from '../redis/redis.module';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { LoggerModule } from '../logger/logger.module';
+import { DiscordStrategy } from './strategies/discord.strategy';
+import { DiscordModule } from '../discord/discord.module';
 
 @Module({
   imports: [
     MailModule,
     UsersModule,
-    ConfigModule,
+    DiscordModule,
     RedisModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -29,6 +31,12 @@ import { LoggerModule } from '../logger/logger.module';
     LoggerModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    GoogleStrategy,
+    DiscordStrategy,
+  ],
 })
 export class AuthModule {}

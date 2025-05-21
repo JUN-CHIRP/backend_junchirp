@@ -7,6 +7,7 @@ export class PaginationDto {
     description: 'Page number',
     default: 1,
     required: false,
+    type: Number,
   })
   @IsOptional()
   @IsInt({ message: 'Must be an integer number' })
@@ -18,9 +19,10 @@ export class PaginationDto {
     description: 'Number of elements per page',
     default: 20,
     required: false,
+    type: Number,
   })
   @IsOptional()
   @IsInt({ message: 'Must be an integer number' })
   @Min(10, { message: 'Minimum allowable value is 10' })
-  public readonly limit?: number = 10;
+  public readonly limit?: number = 20;
 }

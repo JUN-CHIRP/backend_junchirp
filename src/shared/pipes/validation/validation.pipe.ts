@@ -23,6 +23,6 @@ export class ValidationPipe implements PipeTransform {
       });
       throw new BadRequestException(messages, 'Validation Error');
     }
-    return value;
+    return object as T;
   }
 }

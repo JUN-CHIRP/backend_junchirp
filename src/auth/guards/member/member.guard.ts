@@ -107,14 +107,13 @@ export class MemberGuard implements CanActivate {
       throw new BadRequestException(`Unsupported model: ${model}`);
     }
 
+    const exists = await this.resourceExists(model, resourceId);
+    if (!exists) {
+      throw new NotFoundException(`Resource not found`);
+    }
+
     const isParticipant = await check();
-
     if (!isParticipant) {
-      const exists = await this.resourceExists(model, resourceId);
-      if (!exists) {
-        throw new NotFoundException(`Resource not found`);
-      }
-
       throw new ForbiddenException(
         'Access denied: you are not a participant of this project',
       );
@@ -128,6 +127,7 @@ export class MemberGuard implements CanActivate {
       project: () => this.prisma.project.findUnique({ where: { id } }),
       board: () => this.prisma.board.findUnique({ where: { id } }),
       task: () => this.prisma.task.findUnique({ where: { id } }),
+      taskStatus: () => this.prisma.taskStatus.findUnique({ where: { id } }),
     };
 
     const finder = findMap[model];

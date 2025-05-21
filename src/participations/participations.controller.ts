@@ -21,6 +21,7 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { UserParticipationResponseDto } from './dto/user-participation.response-dto';
@@ -30,7 +31,8 @@ import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.res
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { User } from '../auth/decorators/user.decorator';
 
-@User()
+@User('discord')
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @Controller('participations')
 export class ParticipationsController {
   public constructor(private participationsService: ParticipationsService) {}
@@ -44,7 +46,8 @@ export class ParticipationsController {
       'User is already in the project team / User has already been invited to this project / User has already requested participation in this project',
   })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -66,6 +69,10 @@ export class ParticipationsController {
     description:
       'You are already in the project team / You have already been invited to this project / You have already sent a request to this project',
   })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: email not confirmed / Access denied: discord not confirmed',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -85,6 +92,10 @@ export class ParticipationsController {
   @ApiOperation({ summary: 'Accept invite (user)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: email not confirmed / Access denied: discord not confirmed',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -104,6 +115,10 @@ export class ParticipationsController {
   @ApiOperation({ summary: 'Reject invite (user)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: email not confirmed / Access denied: discord not confirmed',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -125,7 +140,8 @@ export class ParticipationsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -145,7 +161,8 @@ export class ParticipationsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -163,6 +180,10 @@ export class ParticipationsController {
   @ApiOperation({ summary: 'Cancel request (user)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: email not confirmed / Access denied: discord not confirmed',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -184,7 +205,8 @@ export class ParticipationsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',

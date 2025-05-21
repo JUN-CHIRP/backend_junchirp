@@ -71,13 +71,18 @@ export class EducationsService {
 
         return EducationMapper.toResponse(education);
       } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        ) {
-          throw new ConflictException('Education is already in list');
+        if (error instanceof PrismaClientKnownRequestError) {
+          switch (error.code) {
+            case 'P2003':
+              throw new BadRequestException('Specialization not found');
+            case 'P2002':
+              throw new ConflictException('Education is already in list');
+            default:
+              throw new InternalServerErrorException('Database error');
+          }
+        } else {
+          throw error;
         }
-        throw error;
       }
     });
   }

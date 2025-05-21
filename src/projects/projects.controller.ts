@@ -29,6 +29,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ProjectsListResponseDto } from './dto/projects-list.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
@@ -46,12 +47,14 @@ import { User } from '../auth/decorators/user.decorator';
 import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 @User()
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @Controller('projects')
 export class ProjectsController {
   public constructor(private projectsService: ProjectsService) {}
 
   @ApiOperation({ summary: 'Get array of project categories' })
   @ApiOkResponse({ type: [ProjectCategoryResponseDto] })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
   @Get('categories')
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
     return this.projectsService.getCategories();
@@ -61,6 +64,7 @@ export class ProjectsController {
     summary: 'Get list of projects with filters and pagination',
   })
   @ApiOkResponse({ type: ProjectsListResponseDto })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
   @UsePipes(ValidationPipe)
   @Get('')
   public async getProjects(
@@ -69,10 +73,16 @@ export class ProjectsController {
     return this.projectsService.getProjects(query);
   }
 
+  @User('discord')
   @ApiOperation({ summary: 'Create project' })
   @ApiCreatedResponse({ type: ProjectResponseDto })
   @ApiBadRequestResponse({
-    description: 'You have reached the limit of active projects',
+    description:
+      'You have reached the limit of active projects / Some role type IDs or category ID are invalid',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -94,8 +104,10 @@ export class ProjectsController {
   @ApiCreatedResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
+  @ApiBadRequestResponse({ description: 'Project category ID not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -114,7 +126,8 @@ export class ProjectsController {
   @ApiCreatedResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -134,7 +147,8 @@ export class ProjectsController {
   @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not a participant of this project',
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @Get(':id')
   public async getProjectById(
@@ -148,7 +162,8 @@ export class ProjectsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -170,7 +185,8 @@ export class ProjectsController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -201,7 +217,8 @@ export class ProjectsController {
   @ApiOkResponse({ type: ProjectResponseDto })
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not the project owner',
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -221,7 +238,8 @@ export class ProjectsController {
   })
   @ApiOkResponse({ type: [UserParticipationResponseDto] })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not a participant of this project',
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @Get(':id/invites')
   public async getInvites(
@@ -236,7 +254,8 @@ export class ProjectsController {
   })
   @ApiOkResponse({ type: [UserParticipationResponseDto] })
   @ApiForbiddenResponse({
-    description: 'Access denied: you are not a participant of this project',
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
   })
   @Get(':id/requests')
   public async getRequests(

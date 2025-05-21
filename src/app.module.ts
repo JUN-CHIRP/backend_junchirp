@@ -26,6 +26,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { SupportModule } from './support/support.module';
 import { LoggerModule } from './logger/logger.module';
 import { DiscordModule } from './discord/discord.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -64,6 +65,12 @@ import { DiscordModule } from './discord/discord.module';
     SupportModule,
     LoggerModule,
     DiscordModule,
+    HttpModule.registerAsync({
+      useFactory: () => ({
+        timeout: 5000,
+        maxRedirects: 5,
+      }),
+    }),
   ],
   providers: [
     CronTasksService,

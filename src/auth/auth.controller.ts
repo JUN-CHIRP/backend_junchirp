@@ -16,6 +16,7 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiHeader,
   ApiOkResponse,
   ApiOperation,
@@ -144,6 +145,8 @@ export class AuthController {
   @User()
   @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
   @ApiResponse({ status: HttpStatus.FOUND })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @HttpCode(HttpStatus.FOUND)
   @Get('discord')
   public async redirectToDiscord(
@@ -154,7 +157,7 @@ export class AuthController {
   }
 
   @Discord()
-  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
   @ApiOkResponse({ type: UserResponseDto })
   @Get('discord/callback')
   public async handleDiscordCallback(
