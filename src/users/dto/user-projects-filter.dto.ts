@@ -8,7 +8,6 @@ export class UserProjectsFilterDto extends PaginationDto {
     example: 'active',
     description: 'Project status',
     required: false,
-    enum: ProjectStatus,
   })
   @IsOptional()
   @IsIn(['active', 'done'], { message: 'Value must be "active" or "done"' })
