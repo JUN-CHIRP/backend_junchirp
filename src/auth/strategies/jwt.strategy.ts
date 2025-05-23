@@ -15,7 +15,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly redisService: RedisService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request): string | null => req.cookies?.['accessToken'],
+      ]),
       secretOrKey: configService.get<string>('JWT_SECRET') as string,
       passReqToCallback: true,
     });
@@ -25,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     req: Request,
     { id }: { id: string },
   ): Promise<UserResponseDto> {
-    const accessToken = req.headers.authorization?.split(' ')[1] as string;
+    const accessToken = req.cookies?.['accessToken'];
     const isBlacklisted = await this.redisService.isBlacklisted(accessToken);
     if (isBlacklisted) {
       throw new UnauthorizedException('Token is invalid');

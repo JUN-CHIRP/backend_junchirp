@@ -11,7 +11,6 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { UserResponseDto } from '../users/dto/user.response-dto';
-import { AuthResponseDto } from './dto/auth.response-dto';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { MailService } from '../mail/mail.service';
@@ -28,6 +27,8 @@ export class AuthService {
   private EXPIRE_DAY_REFRESH_TOKEN = 7;
 
   private REFRESH_TOKEN_NAME = 'refreshToken';
+
+  private ACCESS_TOKEN_NAME = 'accessToken';
 
   public constructor(
     private usersService: UsersService,
@@ -168,11 +169,12 @@ export class AuthService {
     ip: string,
     req: Request,
     res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
+    this.addAccessTokenToResponse(res, accessToken);
     const { password, ...userWithoutPassword } = user;
 
     await this.loggerService.log(
@@ -182,17 +184,14 @@ export class AuthService {
       'User login successfully',
     );
 
-    return {
-      user: userWithoutPassword,
-      accessToken,
-    };
+    return userWithoutPassword;
   }
 
   public async registration(
     createUserDto: CreateUserDto,
     ip: string,
     res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     const candidate = await this.usersService.getUserByEmail(
       createUserDto.email,
       false,
@@ -240,6 +239,7 @@ export class AuthService {
 
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
+    this.addAccessTokenToResponse(res, accessToken);
     const record = await this.usersService.createVerificationUrl(
       ip,
       createUserDto.email,
@@ -252,13 +252,14 @@ export class AuthService {
         console.error('Error sending verification url:', err);
       });
 
-    return { user, accessToken };
+    return user;
   }
 
   public createAccessToken(userId: string): string {
     const data = { id: userId };
 
     return this.jwtService.sign(data, {
+      secret: this.configService.get('JWT_SECRET'),
       expiresIn: this.configService.get('EXPIRE_TIME_ACCESS_TOKEN'),
     });
   }
@@ -267,6 +268,7 @@ export class AuthService {
     const data = { id: userId };
 
     return this.jwtService.sign(data, {
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get('EXPIRE_TIME_REFRESH_TOKEN'),
     });
   }
@@ -296,23 +298,35 @@ export class AuthService {
     });
   }
 
+  public addAccessTokenToResponse(res: Response, accessToken: string): void {
+    const expiresIn = new Date();
+    expiresIn.setMinutes(expiresIn.getMinutes() + 15);
+
+    res.cookie(this.ACCESS_TOKEN_NAME, accessToken, {
+      httpOnly: true,
+      expires: expiresIn,
+      secure: true,
+      sameSite: 'none',
+    });
+  }
+
   public validateRefreshToken(refreshToken: string): string {
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
-      return payload.userId;
+      return payload.id;
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
-  public regenerateAccessToken(req: Request): { accessToken: string } {
+  public regenerateAccessToken(req: Request, res: Response): void {
     const refreshToken = req.cookies['refreshToken'];
     const userId = this.validateRefreshToken(refreshToken);
     const newAccessToken = this.createAccessToken(userId);
-    return { accessToken: newAccessToken };
+    this.addAccessTokenToResponse(res, newAccessToken);
   }
 
   public async logout(
@@ -320,9 +334,9 @@ export class AuthService {
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
-    const accessToken = req.headers.authorization?.split(' ')[1];
+    const accessToken = req.cookies['accessToken'];
     const user = req.user as UserResponseDto;
-
+    console.log(accessToken);
     if (!accessToken) {
       await this.loggerService.log(
         ip,
@@ -342,6 +356,8 @@ export class AuthService {
       }
 
       res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+      res.clearCookie('accessToken', { httpOnly: true, secure: true });
+
       await this.loggerService.log(
         ip,
         user.email,
@@ -364,7 +380,7 @@ export class AuthService {
     ip: string,
     req: Request,
     res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     if (!req.user) {
       await this.loggerService.log(
         ip,
@@ -388,6 +404,7 @@ export class AuthService {
     const user = await this.usersService.createOrUpdateGoogleUser(ip, reqUser);
     const { accessToken, refreshToken } = this.createTokens(user.id);
     this.addRefreshTokenToResponse(res, refreshToken);
+    this.addAccessTokenToResponse(res, accessToken);
 
     await this.loggerService.log(
       ip,
@@ -396,7 +413,7 @@ export class AuthService {
       'Google authentication successfully',
     );
 
-    return { user, accessToken };
+    return user;
   }
 
   public async redirectToDiscord(req: Request, res: Response): Promise<void> {

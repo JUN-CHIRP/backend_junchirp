@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { doubleCsrf, DoubleCsrfUtilities } from 'csrf-csrf';
-import { CsrfTokenResponseDto } from './dto/csrf-token.response-dto';
 import { NextFunction, Request, Response } from 'express';
 
 @Injectable()
@@ -31,7 +30,7 @@ export class CsrfService {
     return this.csrf.doubleCsrfProtection(req, res, next);
   }
 
-  public generateToken(req: Request, res: Response): CsrfTokenResponseDto {
-    return { csrfToken: this.csrf.generateToken(req, res) };
+  public generateToken(req: Request, res: Response): void {
+    this.csrf.generateToken(req, res);
   }
 }

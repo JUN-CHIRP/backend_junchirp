@@ -18,6 +18,7 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
@@ -30,9 +31,7 @@ import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { AuthResponseDto } from './dto/auth.response-dto';
 import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
-import { TokenResponseDto } from './dto/token.response-dto';
 import { Auth } from './decorators/auth.decorator';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
@@ -46,7 +45,7 @@ export class AuthController {
   public constructor(private authService: AuthService) {}
 
   @ApiOperation({ summary: 'Login' })
-  @ApiOkResponse({ type: AuthResponseDto })
+  @ApiOkResponse({ type: UserResponseDto })
   @ApiUnauthorizedResponse({ description: 'Email or password is incorrect' })
   @ApiTooManyRequestsResponse({
     description: 'Too many failed attempts. Please try again later',
@@ -64,12 +63,12 @@ export class AuthController {
     @Ip() ip: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     return this.authService.login(ip, req, res);
   }
 
   @ApiOperation({ summary: 'Registration' })
-  @ApiCreatedResponse({ type: AuthResponseDto })
+  @ApiCreatedResponse({ type: UserResponseDto })
   @ApiConflictResponse({ description: 'User with this email already exists' })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -82,12 +81,12 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Ip() ip: string,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     return this.authService.registration(createUserDto, ip, res);
   }
 
   @ApiOperation({ summary: 'Refresh token' })
-  @ApiOkResponse({ type: TokenResponseDto })
+  @ApiNoContentResponse()
   @ApiUnauthorizedResponse({ description: 'Invalid or expired refresh token' })
   @HttpCode(HttpStatus.OK)
   @ApiHeader({
@@ -95,11 +94,13 @@ export class AuthController {
     description: 'CSRF token for the request',
     required: true,
   })
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post('refresh-token')
   public async refreshToken(
     @Req() req: Request,
-  ): Promise<{ accessToken: string }> {
-    return this.authService.regenerateAccessToken(req);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    return this.authService.regenerateAccessToken(req, res);
   }
 
   @Auth()
@@ -130,7 +131,7 @@ export class AuthController {
   public async googleAuth(): Promise<void> {}
 
   @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
-  @ApiOkResponse({ type: AuthResponseDto })
+  @ApiOkResponse({ type: UserResponseDto })
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Callback endpoint for Google authentication' })
@@ -138,7 +139,7 @@ export class AuthController {
     @Ip() ip: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AuthResponseDto> {
+  ): Promise<UserResponseDto> {
     return this.authService.googleLogin(ip, req, res);
   }
 

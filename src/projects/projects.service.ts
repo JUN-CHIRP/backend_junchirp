@@ -302,17 +302,13 @@ export class ProjectsService {
         const project = await prisma.project.delete({
           where: { id },
           include: {
-            roles: {
-              include: {
-                user: true,
-              },
-            },
+            roles: true,
           },
         });
 
-        const usersIds = project.roles
-          .filter((role) => role.user)
-          .map((user) => user.id);
+        const usersIds: string[] = project.roles
+          .map((role) => role.userId)
+          .filter((userId) => userId !== null);
 
         if (usersIds.length) {
           await prisma.user.updateMany({
