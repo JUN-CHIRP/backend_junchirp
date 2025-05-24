@@ -16,7 +16,7 @@ export class CsrfService {
           : '_csrf',
       cookieOptions: {
         secure: true,
-        httpOnly: true,
+        httpOnly: false,
         sameSite: 'none',
       },
     });
