@@ -36,7 +36,6 @@ import { Auth } from './decorators/auth.decorator';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
 import { Discord } from './decorators/discord.decorator';
-import { User } from './decorators/user.decorator';
 import { UserResponseDto } from '../users/dto/user.response-dto';
 
 @ApiTags('Authorization')
@@ -143,19 +142,15 @@ export class AuthController {
     return this.authService.googleLogin(ip, req, res);
   }
 
-  @User()
+  @Discord()
   @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
   @ApiResponse({ status: HttpStatus.FOUND })
   @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @HttpCode(HttpStatus.FOUND)
   @Get('discord')
-  public async redirectToDiscord(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    return this.authService.redirectToDiscord(req, res);
-  }
+  // eslint-disable-next-line
+  public async redirectToDiscord(): Promise<void> {}
 
   @Discord()
   @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })

@@ -416,19 +416,6 @@ export class AuthService {
     return user;
   }
 
-  public async redirectToDiscord(req: Request, res: Response): Promise<void> {
-    const currentUserId = (req.user as UserResponseDto).id;
-    const state = uuidV4();
-
-    await this.redisService.set(state, currentUserId, 300);
-
-    const redirectUrl = `https://discord.com/oauth2/authorize?client_id=${this.configService.get<string>('DISCORD_CLIENT_ID') as string}&permissions=0&response_type=code&redirect_uri=${encodeURIComponent(
-      this.configService.get<string>('DISCORD_REDIRECT_URI') as string,
-    )}&integration_type=0&scope=bot+guilds.join&state=${state}`;
-
-    res.redirect(redirectUrl);
-  }
-
   public async handleDiscordCallback(
     req: Request,
     state: string,
