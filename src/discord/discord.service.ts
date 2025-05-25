@@ -3,7 +3,13 @@ import {
   InternalServerErrorException,
   OnModuleInit,
 } from '@nestjs/common';
-import { Client, GatewayIntentBits, Guild, ChannelType } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  Guild,
+  ChannelType,
+  PermissionResolvable,
+} from 'discord.js';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 
@@ -40,38 +46,50 @@ export class DiscordService implements OnModuleInit {
   public async createProjectChannel(
     projectName: string,
   ): Promise<{ channelId: string; adminRoleId: string; memberRoleId: string }> {
-    const adminRole = await this.guild.roles.create({
-      name: `${projectName}_admin`,
-      permissions: [
-        'ViewChannel',
-        'SendMessages',
-        'ManageMessages',
-        'MentionEveryone',
-        'AddReactions',
-        'EmbedLinks',
-        'AttachFiles',
-        'UseExternalEmojis',
-        'ReadMessageHistory',
-        'ManageThreads',
-        'SendMessagesInThreads',
-        'UseApplicationCommands',
-      ],
-    });
+    const adminPermissions: PermissionResolvable[] = [
+      'ViewChannel',
+      'SendMessages',
+      'ManageMessages',
+      'MentionEveryone',
+      'AddReactions',
+      'EmbedLinks',
+      'AttachFiles',
+      'UseExternalEmojis',
+      'ReadMessageHistory',
+      'ManageThreads',
+      'SendMessagesInThreads',
+      'UseApplicationCommands',
+    ];
 
-    const memberRole = await this.guild.roles.create({
-      name: `${projectName}_member`,
-      permissions: [
-        'ViewChannel',
-        'SendMessages',
-        'AddReactions',
-        'EmbedLinks',
-        'AttachFiles',
-        'UseExternalEmojis',
-        'ReadMessageHistory',
-        'SendMessagesInThreads',
-        'UseApplicationCommands',
-      ],
-    });
+    const memberPermissions: PermissionResolvable[] = [
+      'ViewChannel',
+      'SendMessages',
+      'AddReactions',
+      'EmbedLinks',
+      'AttachFiles',
+      'UseExternalEmojis',
+      'ReadMessageHistory',
+      'SendMessagesInThreads',
+      'UseApplicationCommands',
+    ];
+
+    const botPermissions: PermissionResolvable[] = [
+      'ViewChannel',
+      'ManageRoles',
+      'ManageChannels',
+      'CreateInstantInvite',
+    ];
+
+    const [adminRole, memberRole] = await Promise.all([
+      this.guild.roles.create({
+        name: `${projectName}_admin`,
+        permissions: adminPermissions,
+      }),
+      this.guild.roles.create({
+        name: `${projectName}_member`,
+        permissions: memberPermissions,
+      }),
+    ]);
 
     const botRole = this.guild.roles.cache.find(
       (role) => role.name === 'JunChirp',
@@ -81,7 +99,7 @@ export class DiscordService implements OnModuleInit {
     }
 
     const channel = await this.guild.channels.create({
-      name: projectName.toLowerCase().replace(/\s+/g, '-'),
+      name: projectName,
       type: ChannelType.GuildText,
       permissionOverwrites: [
         {
@@ -90,18 +108,15 @@ export class DiscordService implements OnModuleInit {
         },
         {
           id: adminRole.id,
+          allow: adminPermissions,
         },
         {
           id: memberRole.id,
+          allow: memberPermissions,
         },
         {
           id: botRole.id,
-          allow: [
-            'ViewChannel',
-            'ManageRoles',
-            'ManageChannels',
-            'CreateInstantInvite',
-          ],
+          allow: botPermissions,
         },
       ],
     });

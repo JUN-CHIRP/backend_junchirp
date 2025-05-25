@@ -19,7 +19,6 @@ import { TooManyRequestsException } from '../shared/exceptions/too-many-requests
 import { RedisService } from '../redis/redis.service';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { LoggerService } from '../logger/logger.service';
-import { v4 as uuidV4 } from 'uuid';
 import { DiscordService } from '../discord/discord.service';
 
 @Injectable()
@@ -336,7 +335,7 @@ export class AuthService {
   ): Promise<MessageResponseDto> {
     const accessToken = req.cookies['accessToken'];
     const user = req.user as UserResponseDto;
-    console.log(accessToken);
+
     if (!accessToken) {
       await this.loggerService.log(
         ip,
