@@ -423,7 +423,7 @@ export class AuthService {
     await this.redisService.set(state, currentUserId, 300);
 
     const redirectUrl = `https://discord.com/oauth2/authorize?client_id=${this.configService.get<string>('DISCORD_CLIENT_ID') as string}&permissions=0&response_type=code&redirect_uri=${encodeURIComponent(
-      this.configService.get<string>('DISCORD_CALLBACK_URL') as string,
+      this.configService.get<string>('DISCORD_REDIRECT_URI') as string,
     )}&integration_type=0&scope=bot+guilds.join&state=${state}`;
 
     res.redirect(redirectUrl);

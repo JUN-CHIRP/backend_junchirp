@@ -79,6 +79,7 @@ export class BoardsService {
         where: { id },
         include: {
           columns: {
+            orderBy: { columnIndex: 'asc' },
             include: {
               tasks: {
                 include: {
