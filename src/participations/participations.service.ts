@@ -206,6 +206,12 @@ export class ParticipationsService {
           },
         });
 
+        if (invite.projectRole.userId !== null) {
+          throw new ConflictException(
+            'The role is already occupied by another user.',
+          );
+        }
+
         await prisma.projectRole.update({
           where: { id: invite.projectRoleId },
           data: {
@@ -276,6 +282,12 @@ export class ParticipationsService {
             user: true,
           },
         });
+
+        if (request.projectRole.userId !== null) {
+          throw new ConflictException(
+            'The role is already occupied by another user.',
+          );
+        }
 
         await prisma.projectRole.update({
           where: { id: request.projectRoleId },

@@ -31,7 +31,7 @@ import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.res
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { User } from '../auth/decorators/user.decorator';
 
-@User('discord')
+@User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @Controller('participations')
 export class ParticipationsController {
@@ -62,6 +62,7 @@ export class ParticipationsController {
     return this.participationsService.createInvite(createInviteDto);
   }
 
+  @User('discord')
   @ApiOperation({ summary: 'Create request (user)' })
   @ApiCreatedResponse({ type: ProjectParticipationResponseDto })
   @ApiNotFoundResponse({ description: 'Role not found' })
@@ -89,6 +90,7 @@ export class ParticipationsController {
     return this.participationsService.createRequest(createRequestDto, user.id);
   }
 
+  @User('discord')
   @ApiOperation({ summary: 'Accept invite (user)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
@@ -116,8 +118,7 @@ export class ParticipationsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
   @ApiForbiddenResponse({
-    description:
-      'Access denied: email not confirmed / Access denied: discord not confirmed',
+    description: 'Access denied: email not confirmed',
   })
   @ApiHeader({
     name: 'x-csrf-token',

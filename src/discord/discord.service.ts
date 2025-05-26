@@ -73,12 +73,7 @@ export class DiscordService implements OnModuleInit {
       'UseApplicationCommands',
     ];
 
-    const botPermissions: PermissionResolvable[] = [
-      'ViewChannel',
-      'ManageRoles',
-      'ManageChannels',
-      'CreateInstantInvite',
-    ];
+    const botPermissions: PermissionResolvable[] = ['Administrator'];
 
     const [adminRole, memberRole] = await Promise.all([
       this.guild.roles.create({
