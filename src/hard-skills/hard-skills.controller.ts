@@ -35,7 +35,7 @@ import { User } from '../auth/decorators/user.decorator';
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @ApiForbiddenResponse({
-  description: 'Access denied: email not confirmed',
+  description: 'Access denied: email not confirmed / Invalid CSRF token',
 })
 @Controller('hard-skills')
 export class HardSkillsController {

@@ -18,7 +18,6 @@ import { ProjectRolesService } from '../project-roles/project-roles.service';
 import { ParticipationsService } from '../participations/participations.service';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { DiscordService } from '../discord/discord.service';
-import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -253,7 +252,7 @@ export class ProjectsService {
 
   public async updateProject(
     id: string,
-    dto: UpdateProjectDto | UpdateProjectStatusDto,
+    dto: UpdateProjectDto,
   ): Promise<ProjectResponseDto> {
     try {
       const updatedProject = await this.prisma.project.update({
@@ -296,17 +295,33 @@ export class ProjectsService {
     }
   }
 
-  public async deleteProject(id: string): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (prisma) => {
-        const project = await prisma.project.delete({
+  public async closeProject(id: string): Promise<ProjectResponseDto> {
+    return this.prisma.$transaction(async (prisma) => {
+      try {
+        const closedProject = await prisma.project.update({
           where: { id },
+          data: { status: 'done' },
           include: {
-            roles: true,
+            category: true,
+            roles: {
+              include: {
+                roleType: true,
+                user: {
+                  include: {
+                    educations: {
+                      include: { specialization: true },
+                    },
+                  },
+                },
+              },
+            },
+            documents: true,
+            owner: true,
+            boards: true,
           },
         });
 
-        const usersIds: string[] = project.roles
+        const usersIds: string[] = closedProject.roles
           .map((role) => role.userId)
           .filter((userId) => userId !== null);
 
@@ -321,6 +336,46 @@ export class ProjectsService {
           });
         }
 
+        return ProjectMapper.toFullResponse(closedProject);
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project or user in team not found');
+        }
+        throw error;
+      }
+    });
+  }
+
+  public async deleteProject(id: string): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        const project = await prisma.project.delete({
+          where: { id },
+          include: {
+            roles: true,
+          },
+        });
+
+        if (project.status === ProjectStatus.done) {
+          const usersIds: string[] = project.roles
+            .map((role) => role.userId)
+            .filter((userId) => userId !== null);
+
+          if (usersIds.length) {
+            await prisma.user.updateMany({
+              where: {
+                id: { in: usersIds },
+              },
+              data: {
+                activeProjectsCount: { decrement: 1 },
+              },
+            });
+          }
+        }
+
         await this.cloudinaryService.deleteProjectFolder(id);
         await this.discordService.deleteProjectChannel(
           project.discordChannelId,
@@ -333,7 +388,7 @@ export class ProjectsService {
         error instanceof PrismaClientKnownRequestError &&
         error.code === 'P2025'
       ) {
-        throw new NotFoundException('Project not found');
+        throw new NotFoundException('Project or user in team not found');
       }
       throw error;
     }

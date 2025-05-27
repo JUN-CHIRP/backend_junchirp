@@ -34,7 +34,7 @@ import { User } from '../auth/decorators/user.decorator';
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @ApiForbiddenResponse({
   description:
-    'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+    'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
 })
 @Controller('documents')
 export class DocumentsController {

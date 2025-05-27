@@ -49,6 +49,7 @@ export class AuthController {
   @ApiTooManyRequestsResponse({
     description: 'Too many failed attempts. Please try again later',
   })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -69,6 +70,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Registration' })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiConflictResponse({ description: 'User with this email already exists' })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -87,7 +89,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh token' })
   @ApiNoContentResponse()
   @ApiUnauthorizedResponse({ description: 'Invalid or expired refresh token' })
-  @HttpCode(HttpStatus.OK)
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -106,6 +108,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiUnauthorizedResponse({ description: 'Token is invalid' })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

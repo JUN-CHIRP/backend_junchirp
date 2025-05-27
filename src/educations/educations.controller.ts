@@ -36,15 +36,15 @@ import { User } from '../auth/decorators/user.decorator';
 
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiForbiddenResponse({
-  description: 'Access denied: email not confirmed',
-})
 @Controller('educations')
 export class EducationsController {
   public constructor(private educationsService: EducationsService) {}
 
   @ApiOperation({ summary: 'Get list of institution names' })
   @ApiOkResponse({ type: [String] })
+  @ApiForbiddenResponse({
+    description: 'Access denied: email not confirmed',
+  })
   @Get('autocomplete')
   public async getInstitutionsAutocomplete(
     @Query('institution') query: string,
@@ -59,6 +59,9 @@ export class EducationsController {
       'You can only add up to 5 educations / Specialization not found',
   })
   @ApiConflictResponse({ description: 'Education is already in list' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: email not confirmed / Invalid CSRF token',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -84,6 +87,9 @@ export class EducationsController {
     description: 'CSRF token for the request',
     required: true,
   })
+  @ApiForbiddenResponse({
+    description: 'Access denied: email not confirmed / Invalid CSRF token',
+  })
   @Put(':id')
   public async updateEducation(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -95,6 +101,9 @@ export class EducationsController {
   @ApiOperation({ summary: 'Delete education' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Education not found' })
+  @ApiForbiddenResponse({
+    description: 'Access denied: email not confirmed / Invalid CSRF token',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

@@ -8,7 +8,12 @@ import {
 } from '@nestjs/common';
 import { SupportService } from './support.service';
 import { CreateSupportDto } from './dto/create-support.dto';
-import { ApiHeader, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiForbiddenResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { MessageResponseDto } from '../users/dto/message.response-dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
 
@@ -18,6 +23,7 @@ export class SupportController {
 
   @ApiOperation({ summary: 'Create support request' })
   @ApiOkResponse({ type: MessageResponseDto })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

@@ -49,7 +49,7 @@ export class BoardsController {
   @ApiConflictResponse({ description: 'Board with this name already exists' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -86,7 +86,7 @@ export class BoardsController {
   @ApiConflictResponse({ description: 'Board with this name already exists' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -107,7 +107,7 @@ export class BoardsController {
   @ApiNotFoundResponse({ description: 'Board not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -134,7 +134,7 @@ export class BoardsController {
   })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',

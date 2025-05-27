@@ -1,7 +1,7 @@
 import {
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  MethodNotAllowedException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -78,7 +78,9 @@ export class ProjectRolesService {
     });
 
     if (role?.roleType.roleName.toLowerCase() === 'project owner') {
-      throw new ForbiddenException('You cannot delete the project owner role');
+      throw new MethodNotAllowedException(
+        'You cannot delete the project owner role',
+      );
     }
 
     try {
@@ -96,16 +98,26 @@ export class ProjectRolesService {
     }
   }
 
-  public async removeUserFromProject(
+  private async handleUserRemovalFromProject(
     roleId: string,
     userId: string,
-  ): Promise<ProjectRoleWithUserResponseDto> {
+    returnUpdated: true,
+  ): Promise<ProjectRoleWithUserResponseDto>;
+
+  private async handleUserRemovalFromProject(
+    roleId: string,
+    userId: string,
+    returnUpdated: false,
+  ): Promise<void>;
+
+  private async handleUserRemovalFromProject(
+    roleId: string,
+    userId: string,
+    returnUpdated: boolean,
+  ): Promise<ProjectRoleWithUserResponseDto | void> {
     return this.prisma.$transaction(async (prisma) => {
       const role = await prisma.projectRole.findFirst({
-        where: {
-          id: roleId,
-          userId,
-        },
+        where: { id: roleId, userId },
         include: {
           user: true,
           roleType: true,
@@ -118,18 +130,16 @@ export class ProjectRolesService {
       }
 
       if (role.project.ownerId === userId) {
-        throw new ForbiddenException('You cannot remove the project owner');
+        throw new MethodNotAllowedException(
+          'You cannot delete the project owner',
+        );
       }
 
       const user = await prisma.user.update({
         where: { id: userId },
         data: {
-          projectRoles: {
-            disconnect: { id: role.id },
-          },
-          activeProjectsCount: {
-            decrement: 1,
-          },
+          projectRoles: { disconnect: { id: role.id } },
+          activeProjectsCount: { decrement: 1 },
         },
       });
 
@@ -140,31 +150,32 @@ export class ProjectRolesService {
         );
       }
 
-      try {
-        const updatedRole = await prisma.projectRole.findUniqueOrThrow({
-          where: { id: role.id },
-          include: {
-            roleType: true,
-            user: {
-              include: {
-                educations: {
-                  include: { specialization: true },
-                },
-              },
+      const updatedRole = await prisma.projectRole.findUniqueOrThrow({
+        where: { id: role.id },
+        include: {
+          roleType: true,
+          user: {
+            include: {
+              educations: { include: { specialization: true } },
             },
           },
-        });
+        },
+      });
 
+      if (returnUpdated) {
         return ProjectRoleMapper.toUserResponse(updatedRole);
-      } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === 'P2025'
-        ) {
-          throw new NotFoundException('Role not found');
-        }
-        throw error;
       }
     });
+  }
+
+  public removeUserFromProject(
+    roleId: string,
+    userId: string,
+  ): Promise<ProjectRoleWithUserResponseDto> {
+    return this.handleUserRemovalFromProject(roleId, userId, true);
+  }
+
+  public exitFromProject(roleId: string, userId: string): Promise<void> {
+    return this.handleUserRemovalFromProject(roleId, userId, false);
   }
 }

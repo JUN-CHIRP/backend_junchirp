@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { doubleCsrf, DoubleCsrfUtilities } from 'csrf-csrf';
 import { NextFunction, Request, Response } from 'express';
+import { EBadCsrfTokenException } from '../shared/exceptions/e-bad-csrf-token.exception';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CsrfService {
   private readonly csrf: DoubleCsrfUtilities;
 
-  public constructor() {
+  public constructor(configService: ConfigService) {
     this.csrf = doubleCsrf({
       getSecret: () => process.env.CSRF_SECRET ?? 'default_secret',
       getTokenFromRequest: (req) => req.headers['x-csrf-token'],
@@ -18,6 +20,7 @@ export class CsrfService {
         secure: true,
         httpOnly: false,
         sameSite: 'none',
+        maxAge: configService.get<number>('EXPIRE_TIME_CSRF_TOKEN'),
       },
     });
   }
@@ -27,7 +30,14 @@ export class CsrfService {
     res: Response,
     next: NextFunction,
   ): void {
-    return this.csrf.doubleCsrfProtection(req, res, next);
+    this.csrf.doubleCsrfProtection(req, res, (err) => {
+      if (err?.code === 'EBADCSRFTOKEN') {
+        const exception = new EBadCsrfTokenException();
+        return res.status(HttpStatus.FORBIDDEN).json(exception.getResponse());
+      }
+
+      return next(err);
+    });
   }
 
   public generateToken(req: Request, res: Response): void {

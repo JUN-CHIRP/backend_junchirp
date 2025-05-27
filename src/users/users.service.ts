@@ -559,6 +559,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.UserWhereInput = {
+      isVerified: true,
       ...(specializationIds?.length
         ? {
             educations: {
