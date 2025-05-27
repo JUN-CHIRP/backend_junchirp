@@ -117,7 +117,10 @@ export class ProjectRolesService {
   ): Promise<ProjectRoleWithUserResponseDto | void> {
     return this.prisma.$transaction(async (prisma) => {
       const role = await prisma.projectRole.findFirst({
-        where: { id: roleId, userId },
+        where: {
+          id: roleId,
+          userId,
+        },
         include: {
           user: true,
           roleType: true,
@@ -130,16 +133,26 @@ export class ProjectRolesService {
       }
 
       if (role.project.ownerId === userId) {
-        throw new MethodNotAllowedException(
-          'You cannot delete the project owner',
-        );
+        if (returnUpdated) {
+          throw new MethodNotAllowedException(
+            'You cannot delete the project owner',
+          );
+        } else {
+          throw new MethodNotAllowedException(
+            'You cannot exit from the project',
+          );
+        }
       }
 
       const user = await prisma.user.update({
         where: { id: userId },
         data: {
-          projectRoles: { disconnect: { id: role.id } },
-          activeProjectsCount: { decrement: 1 },
+          projectRoles: {
+            disconnect: { id: role.id },
+          },
+          activeProjectsCount: {
+            decrement: 1,
+          },
         },
       });
 
@@ -150,20 +163,32 @@ export class ProjectRolesService {
         );
       }
 
-      const updatedRole = await prisma.projectRole.findUniqueOrThrow({
-        where: { id: role.id },
-        include: {
-          roleType: true,
-          user: {
-            include: {
-              educations: { include: { specialization: true } },
+      try {
+        const updatedRole = await prisma.projectRole.findUniqueOrThrow({
+          where: { id: role.id },
+          include: {
+            roleType: true,
+            user: {
+              include: {
+                educations: {
+                  include: { specialization: true },
+                },
+              },
             },
           },
-        },
-      });
+        });
 
-      if (returnUpdated) {
-        return ProjectRoleMapper.toUserResponse(updatedRole);
+        if (returnUpdated) {
+          return ProjectRoleMapper.toUserResponse(updatedRole);
+        }
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Role not found');
+        }
+        throw error;
       }
     });
   }

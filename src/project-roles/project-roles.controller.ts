@@ -125,7 +125,7 @@ export class ProjectRolesController {
 
   @Member('params', 'roleId', 'projectRole')
   @ApiOperation({ summary: 'User exit from the project' })
-  @ApiOkResponse({ type: ProjectRoleWithUserResponseDto })
+  @ApiNoContentResponse()
   @ApiNotFoundResponse({
     description: 'User is not assigned to this role / Role not found',
   })
@@ -134,13 +134,14 @@ export class ProjectRolesController {
       'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiMethodNotAllowedResponse({
-    description: 'You cannot delete the project owner',
+    description: 'You cannot exit from the project',
   })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':roleId/users/me')
   public async exitFromProject(
     @Param('roleId', ParseUUIDv4Pipe) projectId: string,
