@@ -57,20 +57,62 @@ export class UsersService {
     private loggerService: LoggerService,
   ) {}
 
-  public async createUser(createUserDto: CreateUserDto): Promise<void> {
-    const role = await this.rolesService.findOrCreateRole('user');
+  public async createUser(
+    createUserDto: CreateUserDto,
+    ip: string,
+  ): Promise<UserResponseDto> {
+    return this.prisma.$transaction(async (prisma) => {
+      const role = await this.rolesService.findOrCreateRole('user', prisma);
 
-    await this.prisma.user.create({
-      data: {
-        firstName: createUserDto.firstName,
-        lastName: createUserDto.lastName,
-        email: createUserDto.email,
-        password: createUserDto.password,
-        avatarUrl: this.cloudinaryService.getUrl('avatars/avatar_beta'),
-        role: {
-          connect: { id: role.id },
-        },
-      },
+      try {
+        const user = await prisma.user.create({
+          data: {
+            firstName: createUserDto.firstName,
+            lastName: createUserDto.lastName,
+            email: createUserDto.email,
+            password: createUserDto.password,
+            avatarUrl: this.cloudinaryService.getUrl('avatars/avatar_beta'),
+            role: {
+              connect: { id: role.id },
+            },
+          },
+          include: {
+            role: true,
+            educations: {
+              include: {
+                specialization: true,
+              },
+            },
+            socials: true,
+            softSkills: true,
+            hardSkills: true,
+          },
+        });
+
+        return UserMapper.toFullResponse(user, false);
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          await this.loggerService.log(
+            ip,
+            createUserDto.email,
+            'registration',
+            'User with this email already exists',
+          );
+          throw new ConflictException('User with this email already exists');
+        }
+
+        await this.loggerService.log(
+          ip,
+          createUserDto.email,
+          'registration',
+          'Something went wrong. Please try again later',
+        );
+
+        throw error;
+      }
     });
   }
 
@@ -257,7 +299,6 @@ export class UsersService {
           confirmEmailDto.email,
           'confirmation email',
           'email verified successfully',
-          prisma,
         );
       } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -266,7 +307,6 @@ export class UsersService {
             confirmEmailDto.email,
             'confirmation email',
             'Invalid or expired verification token',
-            prisma,
           );
           throw new BadRequestException(
             'Invalid or expired verification token',

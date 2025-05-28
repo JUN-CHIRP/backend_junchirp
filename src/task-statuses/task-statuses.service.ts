@@ -81,24 +81,9 @@ export class TaskStatusesService {
         data: {
           ...updateTaskStatusDto,
         },
-        include: {
-          tasks: {
-            include: {
-              assignee: {
-                include: {
-                  educations: {
-                    include: {
-                      specialization: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
       });
 
-      return TaskStatusMapper.toExpandResponse(status);
+      return TaskStatusMapper.toBaseResponse(status);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         switch (error.code) {

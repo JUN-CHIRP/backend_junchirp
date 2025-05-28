@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, PrismaClient } from '@prisma/client';
-import { DefaultArgs } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class LoggerService {
@@ -12,12 +10,8 @@ export class LoggerService {
     email: string,
     eventType: string,
     details: string,
-    prisma: Omit<
-      PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
-      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
-    > = this.prisma,
   ): Promise<void> {
-    await prisma.logEvent.create({
+    await this.prisma.logEvent.create({
       data: { ip, email, eventType, details },
     });
   }
