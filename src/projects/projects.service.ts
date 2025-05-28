@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  MethodNotAllowedException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -350,48 +351,58 @@ export class ProjectsService {
   }
 
   public async deleteProject(id: string): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (prisma) => {
-        const project = await prisma.project.delete({
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.status === ProjectStatus.done) {
+      throw new MethodNotAllowedException('Cannot delete a completed project');
+    }
+
+    await this.prisma.$transaction(async (prisma) => {
+      try {
+        const deletedProject = await prisma.project.delete({
           where: { id },
           include: {
             roles: true,
           },
         });
 
-        if (project.status === ProjectStatus.done) {
-          const usersIds: string[] = project.roles
-            .map((role) => role.userId)
-            .filter((userId) => userId !== null);
+        const usersIds: string[] = deletedProject.roles
+          .map((role) => role.userId)
+          .filter((userId) => userId !== null);
 
-          if (usersIds.length) {
-            await prisma.user.updateMany({
-              where: {
-                id: { in: usersIds },
-              },
-              data: {
-                activeProjectsCount: { decrement: 1 },
-              },
-            });
-          }
+        if (usersIds.length) {
+          await prisma.user.updateMany({
+            where: {
+              id: { in: usersIds },
+            },
+            data: {
+              activeProjectsCount: { decrement: 1 },
+            },
+          });
         }
 
         await this.cloudinaryService.deleteProjectFolder(id);
         await this.discordService.deleteProjectChannel(
-          project.discordChannelId,
-          project.discordAdminRoleId,
-          project.discordMemberRoleId,
+          deletedProject.discordChannelId,
+          deletedProject.discordAdminRoleId,
+          deletedProject.discordMemberRoleId,
         );
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Project or user in team not found');
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project or user in team not found');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
   public async updateProjectLogo(

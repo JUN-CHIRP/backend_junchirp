@@ -82,6 +82,7 @@ export class EducationsController {
   @ApiOkResponse({ type: EducationResponseDto })
   @ApiNotFoundResponse({ description: 'Education not found' })
   @ApiConflictResponse({ description: 'Education is already in list' })
+  @ApiBadRequestResponse({ description: 'Specialization not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

@@ -26,6 +26,7 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
+  ApiMethodNotAllowedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -163,6 +164,9 @@ export class ProjectsController {
   @ApiForbiddenResponse({
     description:
       'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'Cannot delete a completed project',
   })
   @ApiHeader({
     name: 'x-csrf-token',

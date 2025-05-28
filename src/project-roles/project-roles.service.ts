@@ -58,16 +58,13 @@ export class ProjectRolesService {
 
       return ProjectRoleMapper.toBaseResponse(role);
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2025':
-            throw new NotFoundException('Project or role type not found');
-          default:
-            throw new InternalServerErrorException('Database error');
-        }
-      } else {
-        throw error;
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Project or role type not found');
       }
+      throw error;
     }
   }
 
@@ -83,19 +80,31 @@ export class ProjectRolesService {
       );
     }
 
-    try {
-      await this.prisma.projectRole.delete({
-        where: { id },
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Project role not found');
+    await this.prisma.$transaction(async (prisma) => {
+      try {
+        const projectRole = await prisma.projectRole.delete({
+          where: { id },
+        });
+        if (projectRole.userId) {
+          await prisma.project.update({
+            where: { id: projectRole.projectId },
+            data: {
+              participantsCount: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project role not found');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
   private async handleUserRemovalFromProject(
@@ -174,6 +183,15 @@ export class ProjectRolesService {
                   include: { specialization: true },
                 },
               },
+            },
+          },
+        });
+
+        await prisma.project.update({
+          where: { id: role.projectId },
+          data: {
+            participantsCount: {
+              decrement: 1,
             },
           },
         });

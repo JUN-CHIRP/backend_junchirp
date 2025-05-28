@@ -11,21 +11,19 @@ import { TaskStatusResponseDto } from './dto/task-status.response-dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { TaskStatusMapper } from '../shared/mappers/task-status.mapper';
+import { BoardsService } from '../boards/boards.service';
 
 @Injectable()
 export class TaskStatusesService {
-  public constructor(private prisma: PrismaService) {}
+  public constructor(
+    private prisma: PrismaService,
+    private boardsService: BoardsService,
+  ) {}
 
   public async addTaskStatus(
     createTaskStatusDto: CreateTaskStatusDto,
   ): Promise<TaskStatusResponseDto> {
-    const board = await this.prisma.board.findUnique({
-      where: { id: createTaskStatusDto.boardId },
-    });
-
-    if (!board) {
-      throw new NotFoundException('Board not found');
-    }
+    await this.boardsService.getBoardById(createTaskStatusDto.boardId);
 
     const existingStatuses = await this.prisma.taskStatus.count({
       where: { boardId: createTaskStatusDto.boardId },
@@ -120,8 +118,8 @@ export class TaskStatusesService {
   }
 
   public async deleteTaskStatus(id: string): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (prisma) => {
+    await this.prisma.$transaction(async (prisma) => {
+      try {
         const deletedColumn = await prisma.taskStatus.delete({
           where: { id },
           select: {
@@ -145,15 +143,15 @@ export class TaskStatusesService {
             }),
           ),
         );
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Column not found');
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Column not found');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 }
