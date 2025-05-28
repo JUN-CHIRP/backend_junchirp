@@ -1,6 +1,5 @@
 import {
   Injectable,
-  InternalServerErrorException,
   MethodNotAllowedException,
   NotFoundException,
 } from '@nestjs/common';
