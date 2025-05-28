@@ -34,7 +34,9 @@ import { User } from '../auth/decorators/user.decorator';
 
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+@ApiForbiddenResponse({
+  description: 'Access denied: email not confirmed / Invalid CSRF token',
+})
 @Controller('socials')
 export class SocialsController {
   public constructor(private socialsService: SocialsService) {}

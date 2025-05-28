@@ -54,6 +54,7 @@ export class UsersController {
   @ApiTooManyRequestsResponse({
     description: 'You have used up all your attempts. Please try again later.',
   })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -77,6 +78,7 @@ export class UsersController {
     description: 'Invalid or expired verification token',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -110,6 +112,7 @@ export class UsersController {
   @ApiTooManyRequestsResponse({
     description: 'You have used up all your attempts. Please try again later.',
   })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -130,6 +133,7 @@ export class UsersController {
   @ApiBadRequestResponse({
     description: 'Invalid or expired token',
   })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -153,6 +157,7 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiConflictResponse({ description: 'Email is already in use' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',

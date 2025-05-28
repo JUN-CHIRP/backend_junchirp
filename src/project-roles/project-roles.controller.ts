@@ -7,6 +7,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { ProjectRolesService } from './project-roles.service';
 import { CreateProjectRoleDto } from './dto/create-project-role.dto';
@@ -14,6 +15,7 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
+  ApiMethodNotAllowedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -27,6 +29,9 @@ import { ProjectRoleResponseDto } from './dto/project-role.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { User } from '../auth/decorators/user.decorator';
 import { ProjectRoleWithUserResponseDto } from './dto/project-role-with-user.response-dto';
+import { Member } from '../auth/decorators/member.decorator';
+import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
+import { Request } from 'express';
 
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -54,7 +59,7 @@ export class ProjectRolesController {
   })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -73,10 +78,11 @@ export class ProjectRolesController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Project role not found' })
   @ApiForbiddenResponse({
-    description: `Access denied: you are not the project owner /
-                  Access denied: email not confirmed /
-                  Access denied: discord not confirmed /
-                  You cannot delete the project owner role`,
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'You cannot delete the project owner role',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -98,10 +104,11 @@ export class ProjectRolesController {
     description: 'User is not assigned to this role / Role not found',
   })
   @ApiForbiddenResponse({
-    description: `Access denied: you are not the project owner / 
-                  Access denied: email not confirmed / 
-                  Access denied: discord not confirmed / 
-                  You cannot remove the project owner`,
+    description:
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'You cannot delete the project owner',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -114,5 +121,34 @@ export class ProjectRolesController {
     @Param('userId', ParseUUIDv4Pipe) userId: string,
   ): Promise<ProjectRoleWithUserResponseDto> {
     return this.projectRolesService.removeUserFromProject(projectId, userId);
+  }
+
+  @Member('params', 'roleId', 'projectRole')
+  @ApiOperation({ summary: 'User exit from the project' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({
+    description: 'User is not assigned to this role / Role not found',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'You cannot exit from the project',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':roleId/users/me')
+  public async exitFromProject(
+    @Param('roleId', ParseUUIDv4Pipe) projectId: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.projectRolesService.exitFromProject(projectId, user.id);
   }
 }

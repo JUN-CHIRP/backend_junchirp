@@ -32,10 +32,6 @@ import { User } from '../auth/decorators/user.decorator';
 
 @User('discord')
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiForbiddenResponse({
-  description:
-    'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
-})
 @Controller('tasks')
 export class TasksController {
   public constructor(private tasksService: TasksService) {}
@@ -45,6 +41,10 @@ export class TasksController {
   @ApiCreatedResponse({ type: TaskWithStatusResponseDto })
   @ApiNotFoundResponse({
     description: 'Task status not found',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -63,6 +63,10 @@ export class TasksController {
   @ApiOperation({ summary: 'Get task by id' })
   @ApiOkResponse({ type: TaskWithStatusResponseDto })
   @ApiNotFoundResponse({ description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed',
+  })
   @Get(':id')
   public async getTaskById(
     @Param('id', ParseUUIDv4Pipe) id: string,
@@ -74,6 +78,10 @@ export class TasksController {
   @ApiOperation({ summary: 'Update task' })
   @ApiOkResponse({ type: TaskWithStatusResponseDto })
   @ApiNotFoundResponse({ description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -91,6 +99,10 @@ export class TasksController {
   @ApiOperation({ summary: 'Delete task' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -109,6 +121,10 @@ export class TasksController {
   @ApiOkResponse({ type: TaskWithStatusResponseDto })
   @ApiNotFoundResponse({
     description: 'Task or status not found',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',

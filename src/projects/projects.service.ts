@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  MethodNotAllowedException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -18,7 +19,6 @@ import { ProjectRolesService } from '../project-roles/project-roles.service';
 import { ParticipationsService } from '../participations/participations.service';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { DiscordService } from '../discord/discord.service';
-import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -253,7 +253,7 @@ export class ProjectsService {
 
   public async updateProject(
     id: string,
-    dto: UpdateProjectDto | UpdateProjectStatusDto,
+    dto: UpdateProjectDto,
   ): Promise<ProjectResponseDto> {
     try {
       const updatedProject = await this.prisma.project.update({
@@ -296,17 +296,83 @@ export class ProjectsService {
     }
   }
 
+  public async closeProject(id: string): Promise<ProjectResponseDto> {
+    return this.prisma.$transaction(async (prisma) => {
+      try {
+        const closedProject = await prisma.project.update({
+          where: { id },
+          data: { status: 'done' },
+          include: {
+            category: true,
+            roles: {
+              include: {
+                roleType: true,
+                user: {
+                  include: {
+                    educations: {
+                      include: { specialization: true },
+                    },
+                  },
+                },
+              },
+            },
+            documents: true,
+            owner: true,
+            boards: true,
+          },
+        });
+
+        const usersIds: string[] = closedProject.roles
+          .map((role) => role.userId)
+          .filter((userId) => userId !== null);
+
+        if (usersIds.length) {
+          await prisma.user.updateMany({
+            where: {
+              id: { in: usersIds },
+            },
+            data: {
+              activeProjectsCount: { decrement: 1 },
+            },
+          });
+        }
+
+        return ProjectMapper.toFullResponse(closedProject);
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project or user in team not found');
+        }
+        throw error;
+      }
+    });
+  }
+
   public async deleteProject(id: string): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (prisma) => {
-        const project = await prisma.project.delete({
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.status === ProjectStatus.done) {
+      throw new MethodNotAllowedException('Cannot delete a completed project');
+    }
+
+    await this.prisma.$transaction(async (prisma) => {
+      try {
+        const deletedProject = await prisma.project.delete({
           where: { id },
           include: {
             roles: true,
           },
         });
 
-        const usersIds: string[] = project.roles
+        const usersIds: string[] = deletedProject.roles
           .map((role) => role.userId)
           .filter((userId) => userId !== null);
 
@@ -323,20 +389,20 @@ export class ProjectsService {
 
         await this.cloudinaryService.deleteProjectFolder(id);
         await this.discordService.deleteProjectChannel(
-          project.discordChannelId,
-          project.discordAdminRoleId,
-          project.discordMemberRoleId,
+          deletedProject.discordChannelId,
+          deletedProject.discordAdminRoleId,
+          deletedProject.discordMemberRoleId,
         );
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Project not found');
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project or user in team not found');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
   public async updateProjectLogo(

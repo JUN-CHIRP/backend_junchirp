@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -191,43 +186,14 @@ export class AuthService {
     ip: string,
     res: Response,
   ): Promise<UserResponseDto> {
-    const candidate = await this.usersService.getUserByEmail(
-      createUserDto.email,
-      false,
-    );
-
-    if (candidate) {
-      await this.loggerService.log(
-        ip,
-        createUserDto.email,
-        'registration',
-        'User with this email already exists',
-      );
-      throw new ConflictException('User with this email already exists');
-    }
-
     const hashPassword = await bcrypt.hash(createUserDto.password, 10);
-    await this.usersService.createUser({
-      ...createUserDto,
-      password: hashPassword,
-    });
-
-    const user = await this.usersService.getUserByEmail(
-      createUserDto.email,
-      false,
+    const user = await this.usersService.createUser(
+      {
+        ...createUserDto,
+        password: hashPassword,
+      },
+      ip,
     );
-
-    if (!user) {
-      await this.loggerService.log(
-        ip,
-        createUserDto.email,
-        'registration',
-        'Something went wrong. Please try again later',
-      );
-      throw new InternalServerErrorException(
-        'Something went wrong. Please try again later',
-      );
-    }
 
     await this.loggerService.log(
       ip,

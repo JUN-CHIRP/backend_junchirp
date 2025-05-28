@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   HttpCode,
   HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -25,6 +26,7 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
+  ApiMethodNotAllowedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -44,7 +46,6 @@ import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe'
 import { Member } from '../auth/decorators/member.decorator';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { User } from '../auth/decorators/user.decorator';
-import { UpdateProjectStatusDto } from './dto/update-project-status.dto';
 
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -82,7 +83,7 @@ export class ProjectsController {
   })
   @ApiForbiddenResponse({
     description:
-      'Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -105,7 +106,7 @@ export class ProjectsController {
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiBadRequestResponse({ description: 'Project category ID not found' })
   @ApiHeader({
@@ -122,24 +123,23 @@ export class ProjectsController {
   }
 
   @Owner()
-  @ApiOperation({ summary: 'Update project status' })
+  @ApiOperation({ summary: 'Close project' })
   @ApiCreatedResponse({ type: ProjectResponseDto })
-  @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiNotFoundResponse({ description: 'Project or user in team not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @Put(':id/status')
-  public async updateProjectStatus(
+  @Patch(':id/close')
+  public async closeProject(
     @Param('id', ParseUUIDv4Pipe) id: string,
-    @Body(ValidationPipe) updateProjectStatusDto: UpdateProjectStatusDto,
   ): Promise<ProjectResponseDto> {
-    return this.projectsService.updateProject(id, updateProjectStatusDto);
+    return this.projectsService.closeProject(id);
   }
 
   @Member()
@@ -160,10 +160,13 @@ export class ProjectsController {
   @Owner()
   @ApiOperation({ summary: 'Delete project' })
   @ApiNoContentResponse()
-  @ApiNotFoundResponse({ description: 'Project not found' })
+  @ApiNotFoundResponse({ description: 'Project or user in team not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'Cannot delete a completed project',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -186,7 +189,7 @@ export class ProjectsController {
   @ApiConsumes('multipart/form-data')
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -218,7 +221,7 @@ export class ProjectsController {
   @ApiNotFoundResponse({ description: 'Project not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',

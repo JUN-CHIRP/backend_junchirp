@@ -47,7 +47,7 @@ export class ParticipationsController {
   })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -72,7 +72,7 @@ export class ParticipationsController {
   })
   @ApiForbiddenResponse({
     description:
-      'Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -94,9 +94,12 @@ export class ParticipationsController {
   @ApiOperation({ summary: 'Accept invite (user)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
+  @ApiConflictResponse({
+    description: 'The role is already occupied by another user',
+  })
   @ApiForbiddenResponse({
     description:
-      'Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -118,7 +121,7 @@ export class ParticipationsController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Invite not found' })
   @ApiForbiddenResponse({
-    description: 'Access denied: email not confirmed',
+    description: 'Access denied: email not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -140,9 +143,12 @@ export class ParticipationsController {
   @ApiOperation({ summary: 'Accept request (owner)' })
   @ApiNoContentResponse()
   @ApiNotFoundResponse({ description: 'Request not found' })
+  @ApiConflictResponse({
+    description: 'The role is already occupied by another user',
+  })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -163,7 +169,7 @@ export class ParticipationsController {
   @ApiNotFoundResponse({ description: 'Request not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -183,7 +189,7 @@ export class ParticipationsController {
   @ApiNotFoundResponse({ description: 'Request not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -207,7 +213,7 @@ export class ParticipationsController {
   @ApiNotFoundResponse({ description: 'Invite not found' })
   @ApiForbiddenResponse({
     description:
-      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed',
+      'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
   @ApiHeader({
     name: 'x-csrf-token',

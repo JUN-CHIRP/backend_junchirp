@@ -123,6 +123,8 @@ export class EducationsService {
               throw new NotFoundException('Education not found');
             case 'P2002':
               throw new ConflictException('Education is already in list');
+            case 'P2003':
+              throw new BadRequestException('Specialization not found');
             default:
               throw new InternalServerErrorException('Database error');
           }

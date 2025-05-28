@@ -208,7 +208,7 @@ export class ParticipationsService {
 
         if (invite.projectRole.userId !== null) {
           throw new ConflictException(
-            'The role is already occupied by another user.',
+            'The role is already occupied by another user',
           );
         }
 
@@ -285,7 +285,7 @@ export class ParticipationsService {
 
         if (request.projectRole.userId !== null) {
           throw new ConflictException(
-            'The role is already occupied by another user.',
+            'The role is already occupied by another user',
           );
         }
 

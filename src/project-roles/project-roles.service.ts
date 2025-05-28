@@ -1,7 +1,6 @@
 import {
-  ForbiddenException,
   Injectable,
-  InternalServerErrorException,
+  MethodNotAllowedException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -58,16 +57,13 @@ export class ProjectRolesService {
 
       return ProjectRoleMapper.toBaseResponse(role);
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2025':
-            throw new NotFoundException('Project or role type not found');
-          default:
-            throw new InternalServerErrorException('Database error');
-        }
-      } else {
-        throw error;
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Project or role type not found');
       }
+      throw error;
     }
   }
 
@@ -78,28 +74,55 @@ export class ProjectRolesService {
     });
 
     if (role?.roleType.roleName.toLowerCase() === 'project owner') {
-      throw new ForbiddenException('You cannot delete the project owner role');
+      throw new MethodNotAllowedException(
+        'You cannot delete the project owner role',
+      );
     }
 
-    try {
-      await this.prisma.projectRole.delete({
-        where: { id },
-      });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Project role not found');
+    await this.prisma.$transaction(async (prisma) => {
+      try {
+        const projectRole = await prisma.projectRole.delete({
+          where: { id },
+        });
+        if (projectRole.userId) {
+          await prisma.project.update({
+            where: { id: projectRole.projectId },
+            data: {
+              participantsCount: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        ) {
+          throw new NotFoundException('Project role not found');
+        }
+        throw error;
       }
-      throw error;
-    }
+    });
   }
 
-  public async removeUserFromProject(
+  private async handleUserRemovalFromProject(
     roleId: string,
     userId: string,
-  ): Promise<ProjectRoleWithUserResponseDto> {
+    returnUpdated: true,
+  ): Promise<ProjectRoleWithUserResponseDto>;
+
+  private async handleUserRemovalFromProject(
+    roleId: string,
+    userId: string,
+    returnUpdated: false,
+  ): Promise<void>;
+
+  private async handleUserRemovalFromProject(
+    roleId: string,
+    userId: string,
+    returnUpdated: boolean,
+  ): Promise<ProjectRoleWithUserResponseDto | void> {
     return this.prisma.$transaction(async (prisma) => {
       const role = await prisma.projectRole.findFirst({
         where: {
@@ -118,7 +141,15 @@ export class ProjectRolesService {
       }
 
       if (role.project.ownerId === userId) {
-        throw new ForbiddenException('You cannot remove the project owner');
+        if (returnUpdated) {
+          throw new MethodNotAllowedException(
+            'You cannot delete the project owner',
+          );
+        } else {
+          throw new MethodNotAllowedException(
+            'You cannot exit from the project',
+          );
+        }
       }
 
       const user = await prisma.user.update({
@@ -155,7 +186,18 @@ export class ProjectRolesService {
           },
         });
 
-        return ProjectRoleMapper.toUserResponse(updatedRole);
+        await prisma.project.update({
+          where: { id: role.projectId },
+          data: {
+            participantsCount: {
+              decrement: 1,
+            },
+          },
+        });
+
+        if (returnUpdated) {
+          return ProjectRoleMapper.toUserResponse(updatedRole);
+        }
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&
@@ -166,5 +208,16 @@ export class ProjectRolesService {
         throw error;
       }
     });
+  }
+
+  public removeUserFromProject(
+    roleId: string,
+    userId: string,
+  ): Promise<ProjectRoleWithUserResponseDto> {
+    return this.handleUserRemovalFromProject(roleId, userId, true);
+  }
+
+  public exitFromProject(roleId: string, userId: string): Promise<void> {
+    return this.handleUserRemovalFromProject(roleId, userId, false);
   }
 }
