@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   MethodNotAllowedException,
@@ -19,6 +21,7 @@ import { ProjectRolesService } from '../project-roles/project-roles.service';
 import { ParticipationsService } from '../participations/participations.service';
 import { UserParticipationResponseDto } from '../participations/dto/user-participation.response-dto';
 import { DiscordService } from '../discord/discord.service';
+import { UsersService } from '../users/users.service';
 
 interface GetProjectsOptionsInterface {
   userId: string;
@@ -38,6 +41,8 @@ export class ProjectsService {
     private projectRolesService: ProjectRolesService,
     private participationsService: ParticipationsService,
     private discordService: DiscordService,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
   ) {}
 
   public async getCategories(): Promise<ProjectCategoryResponseDto[]> {
@@ -112,12 +117,9 @@ export class ProjectsService {
     userId: string,
     createProjectDto: CreateProjectDto,
   ): Promise<ProjectResponseDto> {
-    const activeProjects = await this.getProjects({
-      userId,
-      status: ProjectStatus.active,
-    });
+    const user = await this.usersService.getUserById(userId);
 
-    if (activeProjects.total >= 2) {
+    if (user.activeProjectsCount >= 2) {
       throw new BadRequestException(
         'You have reached the limit of active projects',
       );

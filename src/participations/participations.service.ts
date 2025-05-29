@@ -1,5 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -15,6 +18,7 @@ import { ProjectParticipationMapper } from '../shared/mappers/project-participat
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { DiscordService } from '../discord/discord.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ParticipationsService {
@@ -23,6 +27,8 @@ export class ParticipationsService {
     private mailService: MailService,
     private configService: ConfigService,
     private discordService: DiscordService,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
   ) {}
 
   public async createInvite(
@@ -192,6 +198,14 @@ export class ParticipationsService {
   }
 
   public async acceptInvite(id: string, userId: string): Promise<void> {
+    const user = await this.usersService.getUserById(userId);
+
+    if (user.activeProjectsCount >= 2) {
+      throw new BadRequestException(
+        'User cannot have more than 2 active projects',
+      );
+    }
+
     await this.prisma.$transaction(async (prisma) => {
       try {
         const invite = await prisma.participationInvite.findUniqueOrThrow({
@@ -225,6 +239,15 @@ export class ParticipationsService {
           where: { id: invite.projectRole.projectId },
           data: {
             participantsCount: {
+              increment: 1,
+            },
+          },
+        });
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            activeProjectsCount: {
               increment: 1,
             },
           },
@@ -268,7 +291,15 @@ export class ParticipationsService {
     }
   }
 
-  public async acceptRequest(id: string): Promise<void> {
+  public async acceptRequest(id: string, userId: string): Promise<void> {
+    const user = await this.usersService.getUserById(userId);
+
+    if (user.activeProjectsCount >= 2) {
+      throw new BadRequestException(
+        'User cannot have more than 2 active projects',
+      );
+    }
+
     await this.prisma.$transaction(async (prisma) => {
       try {
         const request = await prisma.participationRequest.findUniqueOrThrow({
@@ -302,6 +333,15 @@ export class ParticipationsService {
           where: { id: request.projectRole.projectId },
           data: {
             participantsCount: {
+              increment: 1,
+            },
+          },
+        });
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            activeProjectsCount: {
               increment: 1,
             },
           },
