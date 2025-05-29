@@ -14,6 +14,7 @@ import { ParticipationsService } from './participations.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { Owner } from '../auth/decorators/owner.decorator';
 import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -101,6 +102,9 @@ export class ParticipationsController {
     description:
       'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
+  @ApiBadRequestResponse({
+    description: 'User cannot have more than 2 active projects',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -150,6 +154,9 @@ export class ParticipationsController {
     description:
       'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
   })
+  @ApiBadRequestResponse({
+    description: 'User cannot have more than 2 active projects',
+  })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
@@ -158,9 +165,12 @@ export class ParticipationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Put('request/:id/accept')
   public async acceptRequest(
+    @Req() req: Request,
     @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    return this.participationsService.acceptRequest(id);
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.participationsService.acceptRequest(id, user.id);
   }
 
   @Owner('params', 'id', 'participationRequest')

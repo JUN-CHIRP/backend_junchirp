@@ -24,7 +24,7 @@ export class CreateSupportDto {
   })
   @IsString({ message: 'Must be a string' })
   @Length(10, 1000, { message: 'Must be between 10 and 1000 characters' })
-  @Matches(/^[a-zA-Zа-яА-ЯґҐіІїЇєЄ'’ .,;:!?()-]{10,1000}$/, {
+  @Matches(/^[0-9a-zA-Zа-яА-ЯґҐіІїЇєЄ'’ .,;:!?()-]{10,1000}$/, {
     message: 'Invalid text format',
   })
   @IsNotEmpty({ message: 'Request description is required' })
