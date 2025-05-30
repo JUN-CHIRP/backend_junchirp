@@ -100,6 +100,14 @@ export class MemberGuard implements CanActivate {
             },
           },
         })),
+
+      projectRole: async () =>
+        !!(await this.prisma.projectRole.findFirst({
+          where: {
+            id: resourceId,
+            userId: user.id,
+          },
+        })),
     };
 
     const check = checkMembershipMap[model];
@@ -128,6 +136,7 @@ export class MemberGuard implements CanActivate {
       board: () => this.prisma.board.findUnique({ where: { id } }),
       task: () => this.prisma.task.findUnique({ where: { id } }),
       taskStatus: () => this.prisma.taskStatus.findUnique({ where: { id } }),
+      projectRole: () => this.prisma.projectRole.findUnique({ where: { id } }),
     };
 
     const finder = findMap[model];
