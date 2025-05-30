@@ -97,6 +97,35 @@ export class ProjectRolesController {
     return this.projectRolesService.deleteProjectRole(id);
   }
 
+  @Member('params', 'roleId', 'projectRole')
+  @ApiOperation({ summary: 'User exit from the project' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({
+    description: 'User is not assigned to this role / Role not found',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiMethodNotAllowedResponse({
+    description: 'You cannot exit from the project',
+  })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':roleId/users/me')
+  public async exitFromProject(
+    @Param('roleId', ParseUUIDv4Pipe) roleId: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    const user: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.projectRolesService.exitFromProject(roleId, user.id);
+  }
+
   @Owner('params', 'roleId', 'projectRole')
   @ApiOperation({ summary: 'Remove user from project team' })
   @ApiOkResponse({ type: ProjectRoleWithUserResponseDto })
@@ -121,34 +150,5 @@ export class ProjectRolesController {
     @Param('userId', ParseUUIDv4Pipe) userId: string,
   ): Promise<ProjectRoleWithUserResponseDto> {
     return this.projectRolesService.removeUserFromProject(projectId, userId);
-  }
-
-  @Member('params', 'roleId', 'projectRole')
-  @ApiOperation({ summary: 'User exit from the project' })
-  @ApiNoContentResponse()
-  @ApiNotFoundResponse({
-    description: 'User is not assigned to this role / Role not found',
-  })
-  @ApiForbiddenResponse({
-    description:
-      'Access denied: you are not a participant of this project / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
-  })
-  @ApiMethodNotAllowedResponse({
-    description: 'You cannot exit from the project',
-  })
-  @ApiHeader({
-    name: 'x-csrf-token',
-    description: 'CSRF token for the request',
-    required: true,
-  })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete(':roleId/users/me')
-  public async exitFromProject(
-    @Param('roleId', ParseUUIDv4Pipe) projectId: string,
-    @Req() req: Request,
-  ): Promise<void> {
-    const user: UserWithPasswordResponseDto =
-      req.user as UserWithPasswordResponseDto;
-    return this.projectRolesService.exitFromProject(projectId, user.id);
   }
 }
