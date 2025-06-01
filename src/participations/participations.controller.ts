@@ -165,12 +165,9 @@ export class ParticipationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Put('request/:id/accept')
   public async acceptRequest(
-    @Req() req: Request,
     @Param('id', ParseUUIDv4Pipe) id: string,
   ): Promise<void> {
-    const user: UserWithPasswordResponseDto =
-      req.user as UserWithPasswordResponseDto;
-    return this.participationsService.acceptRequest(id, user.id);
+    return this.participationsService.acceptRequest(id);
   }
 
   @Owner('params', 'id', 'participationRequest')
