@@ -198,14 +198,6 @@ export class ParticipationsService {
   }
 
   public async acceptInvite(id: string, userId: string): Promise<void> {
-    const user = await this.usersService.getUserById(userId);
-
-    if (user.activeProjectsCount >= 2) {
-      throw new BadRequestException(
-        'User cannot have more than 2 active projects',
-      );
-    }
-
     await this.prisma.$transaction(async (prisma) => {
       try {
         const invite = await prisma.participationInvite.findUniqueOrThrow({
@@ -219,6 +211,12 @@ export class ParticipationsService {
             user: true,
           },
         });
+
+        if (invite.user.activeProjectsCount >= 2) {
+          throw new BadRequestException(
+            'User cannot have more than 2 active projects',
+          );
+        }
 
         if (invite.projectRole.userId !== null) {
           throw new ConflictException(
@@ -291,15 +289,7 @@ export class ParticipationsService {
     }
   }
 
-  public async acceptRequest(id: string, userId: string): Promise<void> {
-    const user = await this.usersService.getUserById(userId);
-
-    if (user.activeProjectsCount >= 2) {
-      throw new BadRequestException(
-        'User cannot have more than 2 active projects',
-      );
-    }
-
+  public async acceptRequest(id: string): Promise<void> {
     await this.prisma.$transaction(async (prisma) => {
       try {
         const request = await prisma.participationRequest.findUniqueOrThrow({
@@ -317,6 +307,12 @@ export class ParticipationsService {
         if (request.projectRole.userId !== null) {
           throw new ConflictException(
             'The role is already occupied by another user',
+          );
+        }
+
+        if (request.user.activeProjectsCount >= 2) {
+          throw new BadRequestException(
+            'User cannot have more than 2 active projects',
           );
         }
 
@@ -339,7 +335,7 @@ export class ParticipationsService {
         });
 
         await prisma.user.update({
-          where: { id: userId },
+          where: { id: request.userId },
           data: {
             activeProjectsCount: {
               increment: 1,
