@@ -1,8 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  forwardRef,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -18,7 +16,6 @@ import { ProjectParticipationMapper } from '../shared/mappers/project-participat
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { DiscordService } from '../discord/discord.service';
-import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ParticipationsService {
@@ -27,8 +24,6 @@ export class ParticipationsService {
     private mailService: MailService,
     private configService: ConfigService,
     private discordService: DiscordService,
-    @Inject(forwardRef(() => UsersService))
-    private usersService: UsersService,
   ) {}
 
   public async createInvite(
