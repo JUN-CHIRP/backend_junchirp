@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -35,6 +36,9 @@ import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { ParticipationsService } from '../participations/participations.service';
 import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
 import { LoggerService } from '../logger/logger.service';
+import { Request, Response } from 'express';
+import { AuthService } from '../auth/auth.service';
+import { EmailAvailableResponseDto } from './dto/email-available.response-dto';
 
 interface GetUsersOptionsInterface {
   activeProjectsCount: number;
@@ -55,6 +59,7 @@ export class UsersService {
     private projectsService: ProjectsService,
     private participationsService: ParticipationsService,
     private loggerService: LoggerService,
+    private authService: AuthService,
   ) {}
 
   public async createUser(
@@ -254,7 +259,9 @@ export class UsersService {
   public async confirmEmail(
     ip: string,
     confirmEmailDto: ConfirmEmailDto,
-  ): Promise<UserResponseDto> {
+    req: Request,
+    res: Response,
+  ): Promise<MessageResponseDto> {
     const user = await this.getUserByEmail(confirmEmailDto.email, false);
 
     if (!user) {
@@ -312,16 +319,23 @@ export class UsersService {
             'Invalid or expired verification token',
           );
         }
+        throw error;
       }
     });
 
-    const updatedUser = await this.getUserByEmail(confirmEmailDto.email, false);
+    const accessToken = req.cookies['accessToken'];
+    const refreshToken = req.cookies['refreshToken'];
 
-    if (!updatedUser) {
-      throw new NotFoundException('User with this email not found');
+    try {
+      await this.authService.clearTokens(accessToken, refreshToken, res);
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException(`Token is invalid: ${error}`);
+      }
+      throw error;
     }
 
-    return updatedUser;
+    return { message: 'Email verified successfully' };
   }
 
   public async sendPasswordResetUrl(
@@ -682,5 +696,12 @@ export class UsersService {
       }
       throw error;
     }
+  }
+
+  public async checkEmailAvailable(
+    email: string,
+  ): Promise<EmailAvailableResponseDto> {
+    const exists = await this.prisma.user.findUnique({ where: { email } });
+    return { isAvailable: !exists };
   }
 }

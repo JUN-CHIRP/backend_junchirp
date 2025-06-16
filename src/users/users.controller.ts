@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UsePipes,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -30,7 +31,7 @@ import { EmailDto } from './dto/email.dto';
 import { UserResponseDto } from './dto/user.response-dto';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { ValidationPipe } from '../shared/pipes/validation/validation.pipe';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserWithPasswordResponseDto } from './dto/user-with-password.response-dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,6 +42,7 @@ import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { UsersFilterDto } from './dto/users-filter.dto';
 import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
 import { User } from '../auth/decorators/user.decorator';
+import { EmailAvailableResponseDto } from './dto/email-available.response-dto';
 
 @Controller('users')
 export class UsersController {
@@ -72,8 +74,7 @@ export class UsersController {
 
   @Auth()
   @ApiOperation({ summary: 'Confirm email' })
-  @ApiOkResponse({ type: UserResponseDto })
-  @ApiNotFoundResponse({ description: 'User with this email not found' })
+  @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({
     description: 'Invalid or expired verification token',
   })
@@ -90,8 +91,10 @@ export class UsersController {
   public async confirmEmail(
     @Ip() ip: string,
     @Body() confirmEmailDto: ConfirmEmailDto,
-  ): Promise<UserResponseDto> {
-    return this.usersService.confirmEmail(ip, confirmEmailDto);
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<MessageResponseDto> {
+    return this.usersService.confirmEmail(ip, confirmEmailDto, req, res);
   }
 
   @Auth()
@@ -210,7 +213,12 @@ export class UsersController {
     @Param('id', ParseUUIDv4Pipe) id: string,
     @Query(ValidationPipe) query: UserProjectsFilterDto,
   ): Promise<ProjectsListResponseDto> {
-    return this.usersService.getUserProjects(id, query.page, query.limit);
+    return this.usersService.getUserProjects(
+      id,
+      query.page,
+      query.limit,
+      query.status,
+    );
   }
 
   @User()
@@ -271,5 +279,13 @@ export class UsersController {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.usersService.getRequests(user.id);
+  }
+
+  @Get('check-email')
+  @ApiOkResponse({ type: EmailAvailableResponseDto })
+  public async checkEmailAvailable(
+    @Query('email') email: string,
+  ): Promise<EmailAvailableResponseDto> {
+    return this.usersService.checkEmailAvailable(email);
   }
 }
