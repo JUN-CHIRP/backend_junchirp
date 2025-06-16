@@ -31,6 +31,7 @@ import { Request } from 'express';
 import { UserWithPasswordResponseDto } from '../users/dto/user-with-password.response-dto';
 import { ParseUUIDv4Pipe } from '../shared/pipes/parse-UUIDv4/parse-UUIDv4.pipe';
 import { User } from '../auth/decorators/user.decorator';
+import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
 
 @User()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -49,6 +50,9 @@ export class ParticipationsController {
   @ApiForbiddenResponse({
     description:
       'Access denied: you are not the project owner / Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiBadRequestResponse({
+    description: 'User cannot have more than 2 active projects',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -74,6 +78,9 @@ export class ParticipationsController {
   @ApiForbiddenResponse({
     description:
       'Access denied: email not confirmed / Access denied: discord not confirmed / Invalid CSRF token',
+  })
+  @ApiBadRequestResponse({
+    description: 'User cannot have more than 2 active projects',
   })
   @ApiHeader({
     name: 'x-csrf-token',
@@ -115,7 +122,7 @@ export class ParticipationsController {
   public async acceptInvite(
     @Req() req: Request,
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<void> {
+  ): Promise<UserCardResponseDto> {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.participationsService.acceptInvite(id, user.id);

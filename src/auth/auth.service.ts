@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -25,6 +30,7 @@ export class AuthService {
   private ACCESS_TOKEN_NAME = 'accessToken';
 
   public constructor(
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
     private mailService: MailService,
     private configService: ConfigService,
@@ -294,12 +300,38 @@ export class AuthService {
     this.addAccessTokenToResponse(res, newAccessToken);
   }
 
+  public async clearTokens(
+    accessToken: string,
+    refreshToken: string,
+    res: Response,
+  ): Promise<void> {
+    const accessExp = (this.jwtService.decode(accessToken) as { exp: number })
+      .exp;
+    let expiresIn = accessExp - Math.floor(Date.now() / 1000);
+
+    if (expiresIn > 0) {
+      await this.redisService.addToBlacklist(accessToken, expiresIn);
+    }
+
+    const refreshExp = (this.jwtService.decode(refreshToken) as { exp: number })
+      .exp;
+    expiresIn = refreshExp - Math.floor(Date.now() / 1000);
+
+    if (expiresIn > 0) {
+      await this.redisService.addToBlacklist(refreshToken, expiresIn);
+    }
+
+    res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+    res.clearCookie('accessToken', { httpOnly: true, secure: true });
+  }
+
   public async logout(
     ip: string,
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
     const accessToken = req.cookies['accessToken'];
+    const refreshToken = req.cookies['refreshToken'];
     const user = req.user as UserResponseDto;
 
     if (!accessToken) {
@@ -313,15 +345,7 @@ export class AuthService {
     }
 
     try {
-      const { exp } = this.jwtService.decode(accessToken) as { exp: number };
-      const expiresIn = exp - Math.floor(Date.now() / 1000);
-
-      if (expiresIn > 0) {
-        await this.redisService.addToBlacklist(accessToken, expiresIn);
-      }
-
-      res.clearCookie('refreshToken', { httpOnly: true, secure: true });
-      res.clearCookie('accessToken', { httpOnly: true, secure: true });
+      await this.clearTokens(accessToken, refreshToken, res);
 
       await this.loggerService.log(
         ip,

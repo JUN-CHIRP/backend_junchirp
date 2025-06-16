@@ -38,5 +38,6 @@ import { DiscordModule } from '../discord/discord.module';
     GoogleStrategy,
     DiscordStrategy,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

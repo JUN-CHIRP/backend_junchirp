@@ -1,6 +1,6 @@
 import {
   BadRequestException,
-  ConflictException,
+  ConflictException, forwardRef, Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -16,6 +16,9 @@ import { ProjectParticipationMapper } from '../shared/mappers/project-participat
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { DiscordService } from '../discord/discord.service';
+import { UserCardResponseDto } from '../users/dto/user-card.response-dto';
+import { UserMapper } from '../shared/mappers/user.mapper';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ParticipationsService {
@@ -24,11 +27,21 @@ export class ParticipationsService {
     private mailService: MailService,
     private configService: ConfigService,
     private discordService: DiscordService,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
   ) {}
 
   public async createInvite(
     createInviteDto: CreateInviteDto,
   ): Promise<UserParticipationResponseDto> {
+    const user = await this.usersService.getUserById(createInviteDto.userId);
+
+    if (user.activeProjectsCount === 2) {
+      throw new BadRequestException(
+        'User cannot have more than 2 active projects',
+      );
+    }
+
     return this.prisma.$transaction(async (prisma) => {
       const [existingParticipation, existingRequest] = await Promise.all([
         prisma.projectRole.findFirst({
@@ -109,6 +122,14 @@ export class ParticipationsService {
     createRequestDto: CreateRequestDto,
     userId: string,
   ): Promise<ProjectParticipationResponseDto> {
+    const user = await this.usersService.getUserById(userId);
+
+    if (user.activeProjectsCount === 2) {
+      throw new BadRequestException(
+        'User cannot have more than 2 active projects',
+      );
+    }
+
     return this.prisma.$transaction(async (prisma) => {
       const [existingParticipation, existingInvite] = await Promise.all([
         prisma.projectRole.findFirst({
@@ -192,8 +213,11 @@ export class ParticipationsService {
     });
   }
 
-  public async acceptInvite(id: string, userId: string): Promise<void> {
-    await this.prisma.$transaction(async (prisma) => {
+  public async acceptInvite(
+    id: string,
+    userId: string,
+  ): Promise<UserCardResponseDto> {
+    return this.prisma.$transaction(async (prisma) => {
       try {
         const invite = await prisma.participationInvite.findUniqueOrThrow({
           where: { id, userId },
@@ -237,11 +261,18 @@ export class ParticipationsService {
           },
         });
 
-        await prisma.user.update({
+        const user = await prisma.user.update({
           where: { id: userId },
           data: {
             activeProjectsCount: {
               increment: 1,
+            },
+          },
+          include: {
+            educations: {
+              include: {
+                specialization: true,
+              },
             },
           },
         });
@@ -256,6 +287,8 @@ export class ParticipationsService {
             invite.projectRole.project.discordMemberRoleId,
           );
         }
+
+        return UserMapper.toCardResponse(user);
       } catch (error) {
         if (
           error instanceof PrismaClientKnownRequestError &&

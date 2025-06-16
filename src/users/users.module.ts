@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
@@ -9,6 +9,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { ParticipationsModule } from '../participations/participations.module';
 import { LoggerModule } from '../logger/logger.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LoggerModule } from '../logger/logger.module';
     ProjectsModule,
     ParticipationsModule,
     LoggerModule,
+    forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],
   providers: [UsersService],
