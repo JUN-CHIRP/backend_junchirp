@@ -109,6 +109,17 @@ export class UsersController {
     return this.usersService.getUserById(user.id);
   }
 
+  @ApiOperation({
+    summary: 'Check email',
+  })
+  @ApiOkResponse({ type: EmailAvailableResponseDto })
+  @Get('check-email')
+  public async checkEmailAvailable(
+    @Query('email') email: string,
+  ): Promise<EmailAvailableResponseDto> {
+    return this.usersService.checkEmailAvailable(email);
+  }
+
   @ApiOperation({ summary: 'Send email to reset your password' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -279,13 +290,5 @@ export class UsersController {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.usersService.getRequests(user.id);
-  }
-
-  @Get('check-email')
-  @ApiOkResponse({ type: EmailAvailableResponseDto })
-  public async checkEmailAvailable(
-    @Query('email') email: string,
-  ): Promise<EmailAvailableResponseDto> {
-    return this.usersService.checkEmailAvailable(email);
   }
 }
