@@ -13,7 +13,10 @@ export class CsrfService {
     this.csrf = doubleCsrf({
       getSecret: () => process.env.CSRF_SECRET ?? 'default_secret',
       getTokenFromRequest: (req) => req.headers['x-csrf-token'],
-      cookieName: '_csrf',
+      cookieName:
+        process.env.NODE_ENV === 'production'
+          ? '__Host-prod.x-csrf-token'
+          : '_csrf',
       cookieOptions: {
         secure: true,
         httpOnly: false,
