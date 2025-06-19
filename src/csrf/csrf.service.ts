@@ -19,7 +19,7 @@ export class CsrfService {
           : '_csrf',
       cookieOptions: {
         secure: true,
-        httpOnly: false,
+        httpOnly: true,
         sameSite: 'none',
         maxAge: configService.get<number>('EXPIRE_TIME_CSRF_TOKEN'),
       },
