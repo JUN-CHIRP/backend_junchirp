@@ -133,16 +133,18 @@ export class AuthController {
   public async googleAuth(): Promise<void> {}
 
   @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiResponse({ status: HttpStatus.FOUND })
+  @HttpCode(HttpStatus.FOUND)
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Callback endpoint for Google authentication' })
   public async googleRedirect(
     @Ip() ip: string,
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<UserResponseDto> {
-    return this.authService.googleLogin(ip, req, res);
+    @Res() res: Response,
+    @Query('returnUrl') returnUrl: string,
+  ): Promise<void> {
+    return this.authService.handleGoogleCallback(ip, req, res, returnUrl);
   }
 
   @Discord()
