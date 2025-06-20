@@ -424,4 +424,47 @@ export class AuthService {
     await this.redisService.del(state);
     return this.usersService.linkDiscord(userId, discordId);
   }
+
+  public async handleGoogleCallback(
+    ip: string,
+    req: Request,
+    res: Response,
+    returnUrl: string,
+  ): Promise<void> {
+    const frontendBaseUrl =
+      this.configService.get<string>('BASE_FRONTEND_URL') ??
+      'https://localhost:3000';
+    const getSafeReturnUrl = (url: string | undefined): string => {
+      try {
+        const decoded = decodeURIComponent(url ?? '');
+        return decoded.startsWith('/') ? decoded : '/';
+      } catch {
+        return '/';
+      }
+    };
+
+    const safeReturnUrl = getSafeReturnUrl(returnUrl);
+
+    try {
+      const user = await this.googleLogin(ip, req, res);
+
+      let redirectUrl: string;
+
+      if (user.isVerified) {
+        redirectUrl = `${frontendBaseUrl}/profile`;
+      } else if (safeReturnUrl.startsWith('/auth/login')) {
+        redirectUrl = `${frontendBaseUrl}/confirm-email?type=login`;
+      } else if (safeReturnUrl.startsWith('/auth/registration')) {
+        redirectUrl = `${frontendBaseUrl}/confirm-email?type=registration`;
+      } else {
+        redirectUrl = `${frontendBaseUrl}`;
+      }
+
+      return res.redirect(redirectUrl);
+    } catch {
+      const errorParam = encodeURIComponent('google_auth_failed');
+      const redirectWithError = `${frontendBaseUrl}${safeReturnUrl}?error=${errorParam}`;
+      return res.redirect(redirectWithError);
+    }
+  }
 }
