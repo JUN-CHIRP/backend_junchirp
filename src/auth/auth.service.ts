@@ -215,7 +215,7 @@ export class AuthService {
       ip,
       createUserDto.email,
     );
-    const url = `${this.configService.get('BASE_FRONTEND_URL')}?token=${record.token}`;
+    const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
 
     this.mailService
       .sendVerificationMail(createUserDto.email, url)
