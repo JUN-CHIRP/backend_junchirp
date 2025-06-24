@@ -301,9 +301,9 @@ export class AuthService {
   }
 
   public async clearTokens(
-    accessToken?: string,
-    refreshToken?: string,
-    res?: Response,
+    accessToken: string | undefined,
+    refreshToken: string | undefined,
+    res: Response,
   ): Promise<void> {
     try {
       if (accessToken) {
@@ -333,10 +333,8 @@ export class AuthService {
         }
       }
 
-      if (res) {
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true });
-        res.clearCookie('accessToken', { httpOnly: true, secure: true });
-      }
+      res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+      res.clearCookie('accessToken', { httpOnly: true, secure: true });
     } catch {
       return;
     }
