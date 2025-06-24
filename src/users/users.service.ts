@@ -4,7 +4,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -204,7 +203,7 @@ export class UsersService {
       );
     }
 
-    const data = { id: user.id };
+    const data = { id: user.id, email: user.email };
     const createdAt = new Date();
     const token = this.jwtService.sign(data, {
       expiresIn: this.configService.get('EXPIRE_TIME_VERIFY_EMAIL_TOKEN'),
@@ -262,56 +261,49 @@ export class UsersService {
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
-    const user = await this.getUserByEmail(confirmEmailDto.email, false);
+    try {
+      const payload = this.jwtService.verify(confirmEmailDto.token);
 
-    if (!user) {
-      await this.loggerService.log(
-        ip,
-        confirmEmailDto.email,
-        'confirmation email',
-        'User with this email not found',
-      );
-      throw new NotFoundException('User with this email not found');
-    }
+      await this.prisma.$transaction(async (prisma) => {
+        try {
+          const userId = payload.id;
 
-    const verificationToken = await this.prisma.verificationToken.findUnique({
-      where: { userId: user.id, token: confirmEmailDto.token },
-    });
-
-    if (
-      !verificationToken ||
-      verificationToken.token !== confirmEmailDto.token
-    ) {
-      await this.loggerService.log(
-        ip,
-        confirmEmailDto.email,
-        'confirmation email',
-        'Invalid or expired verification token',
-      );
-      throw new BadRequestException('Invalid or expired verification token');
-    }
-
-    await this.prisma.$transaction(async (prisma) => {
-      try {
-        const payload = this.jwtService.verify(verificationToken.token);
-        const userId = payload.id;
-
-        await prisma.verificationToken.delete({ where: { userId } });
-        await prisma.user.update({
-          where: { id: userId },
-          data: { isVerified: true },
-        });
-        await this.loggerService.log(
-          ip,
-          confirmEmailDto.email,
-          'confirmation email',
-          'email verified successfully',
-        );
-      } catch (error) {
-        if (error.name === 'TokenExpiredError') {
+          await prisma.verificationToken.delete({
+            where: { userId, token: confirmEmailDto.token },
+          });
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isVerified: true },
+          });
           await this.loggerService.log(
             ip,
-            confirmEmailDto.email,
+            payload.email,
+            'confirmation email',
+            'email verified successfully',
+          );
+        } catch (error) {
+          if (
+            error instanceof PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+          ) {
+            throw new BadRequestException(
+              'Invalid or expired verification token',
+            );
+          }
+          throw error;
+        }
+      });
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        const decoded = this.jwtService.decode(confirmEmailDto.token) as {
+          id?: string;
+          email?: string;
+        } | null;
+
+        if (!decoded?.id) {
+          await this.loggerService.log(
+            ip,
+            '',
             'confirmation email',
             'Invalid or expired verification token',
           );
@@ -319,21 +311,24 @@ export class UsersService {
             'Invalid or expired verification token',
           );
         }
-        throw error;
+
+        const user = await this.getUserById(decoded.id).catch(() => null);
+        if (user) {
+          throw new BadRequestException(
+            'Invalid or expired verification token',
+          );
+        }
+
+        throw new NotFoundException('User not found');
       }
-    });
+
+      throw new BadRequestException('Invalid or expired verification token');
+    }
 
     const accessToken = req.cookies['accessToken'];
     const refreshToken = req.cookies['refreshToken'];
 
-    try {
-      await this.authService.clearTokens(accessToken, refreshToken, res);
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new UnauthorizedException(`Token is invalid: ${error}`);
-      }
-      throw error;
-    }
+    await this.authService.clearTokens(accessToken, refreshToken, res);
 
     return { message: 'Email verified successfully' };
   }

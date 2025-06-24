@@ -72,13 +72,12 @@ export class UsersController {
     return this.usersService.sendVerificationUrl(ip, body.email);
   }
 
-  @Auth()
   @ApiOperation({ summary: 'Confirm email' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({
     description: 'Invalid or expired verification token',
   })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'User not found' })
   @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
   @ApiHeader({
     name: 'x-csrf-token',
