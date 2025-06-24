@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Req, Res } from '@nestjs/common';
 import { CsrfService } from './csrf.service';
 import { Request, Response } from 'express';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';

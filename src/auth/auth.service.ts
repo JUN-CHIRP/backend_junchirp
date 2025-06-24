@@ -301,28 +301,43 @@ export class AuthService {
   }
 
   public async clearTokens(
-    accessToken: string,
-    refreshToken: string,
+    accessToken: string | undefined,
+    refreshToken: string | undefined,
     res: Response,
   ): Promise<void> {
-    const accessExp = (this.jwtService.decode(accessToken) as { exp: number })
-      .exp;
-    let expiresIn = accessExp - Math.floor(Date.now() / 1000);
+    try {
+      if (accessToken) {
+        const accessPayload = this.jwtService.decode(accessToken) as {
+          exp?: number;
+        } | null;
+        const accessExp = accessPayload?.exp;
+        const now = Math.floor(Date.now() / 1000);
 
-    if (expiresIn > 0) {
-      await this.redisService.addToBlacklist(accessToken, expiresIn);
+        if (accessExp && accessExp > now) {
+          await this.redisService.addToBlacklist(accessToken, accessExp - now);
+        }
+      }
+
+      if (refreshToken) {
+        const refreshPayload = this.jwtService.decode(refreshToken) as {
+          exp?: number;
+        } | null;
+        const refreshExp = refreshPayload?.exp;
+        const now = Math.floor(Date.now() / 1000);
+
+        if (refreshExp && refreshExp > now) {
+          await this.redisService.addToBlacklist(
+            refreshToken,
+            refreshExp - now,
+          );
+        }
+      }
+
+      res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+      res.clearCookie('accessToken', { httpOnly: true, secure: true });
+    } catch {
+      return;
     }
-
-    const refreshExp = (this.jwtService.decode(refreshToken) as { exp: number })
-      .exp;
-    expiresIn = refreshExp - Math.floor(Date.now() / 1000);
-
-    if (expiresIn > 0) {
-      await this.redisService.addToBlacklist(refreshToken, expiresIn);
-    }
-
-    res.clearCookie('refreshToken', { httpOnly: true, secure: true });
-    res.clearCookie('accessToken', { httpOnly: true, secure: true });
   }
 
   public async logout(
@@ -333,16 +348,6 @@ export class AuthService {
     const accessToken = req.cookies['accessToken'];
     const refreshToken = req.cookies['refreshToken'];
     const user = req.user as UserResponseDto;
-
-    if (!accessToken) {
-      await this.loggerService.log(
-        ip,
-        user.email,
-        'logout',
-        'Token is missing',
-      );
-      throw new UnauthorizedException('Token is missing');
-    }
 
     try {
       await this.clearTokens(accessToken, refreshToken, res);
