@@ -267,7 +267,23 @@ export class UsersService {
     });
 
     if (!token) {
-      throw new BadRequestException('Invalid or expired verification token');
+      try {
+        const payload = this.jwtService.verify(confirmEmailDto.token);
+        await this.loggerService.log(
+          ip,
+          payload.email,
+          'confirmation email',
+          'Invalid or expired verification token',
+        );
+      } catch {
+        await this.loggerService.log(
+          ip,
+          '',
+          'confirmation email',
+          'Invalid or expired verification token',
+        );
+        throw new BadRequestException('Invalid or expired verification token');
+      }
     }
 
     try {
@@ -295,6 +311,12 @@ export class UsersService {
             error instanceof PrismaClientKnownRequestError &&
             error.code === 'P2025'
           ) {
+            await this.loggerService.log(
+              ip,
+              payload.email,
+              'confirmation email',
+              'User not found',
+            );
             throw new NotFoundException('User not found');
           }
           throw error;
@@ -331,7 +353,7 @@ export class UsersService {
 
       if (
         error.statusCode === HttpStatus.BAD_REQUEST ||
-        error.code === HttpStatus.NOT_FOUND
+        error.statusCode === HttpStatus.NOT_FOUND
       ) {
         throw error;
       }
