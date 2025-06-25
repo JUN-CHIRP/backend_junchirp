@@ -286,9 +286,7 @@ export class UsersService {
             error instanceof PrismaClientKnownRequestError &&
             error.code === 'P2025'
           ) {
-            throw new BadRequestException(
-              'Invalid or expired verification token',
-            );
+            throw new NotFoundException('User not found');
           }
           throw error;
         }
