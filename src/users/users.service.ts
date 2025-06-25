@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -262,69 +261,55 @@ export class UsersService {
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
-    const token = await this.prisma.verificationToken.findUnique({
-      where: { token: confirmEmailDto.token },
+    const { token } = confirmEmailDto;
+
+    const verificationToken = await this.prisma.verificationToken.findUnique({
+      where: { token },
     });
 
-    if (!token) {
-      try {
-        const payload = this.jwtService.verify(confirmEmailDto.token);
+    if (!verificationToken) {
+      // Якщо токену немає в БД — пробуємо його декодувати
+      const decoded = this.jwtService.decode(token) as {
+        id?: string;
+        email?: string;
+      } | null;
+
+      if (decoded?.id) {
+        const user = await this.getUserById(decoded.id).catch(() => null);
+        if (!user) {
+          await this.loggerService.log(
+            ip,
+            decoded.email ?? '',
+            'confirmation email',
+            'User not found',
+          );
+          throw new NotFoundException('User not found');
+        }
+
         await this.loggerService.log(
           ip,
-          payload.email,
+          decoded.email ?? '',
           'confirmation email',
           'Invalid or expired verification token',
         );
-      } catch {
+      } else {
         await this.loggerService.log(
           ip,
           '',
           'confirmation email',
           'Invalid or expired verification token',
         );
-        throw new BadRequestException('Invalid or expired verification token');
       }
+
+      throw new BadRequestException('Invalid or expired verification token');
     }
 
+    let payload: { id: string; email: string };
     try {
-      const payload = this.jwtService.verify(confirmEmailDto.token);
-
-      await this.prisma.$transaction(async (prisma) => {
-        try {
-          const userId = payload.id;
-
-          await prisma.verificationToken.delete({
-            where: { userId, token: confirmEmailDto.token },
-          });
-          await prisma.user.update({
-            where: { id: userId },
-            data: { isVerified: true },
-          });
-          await this.loggerService.log(
-            ip,
-            payload.email,
-            'confirmation email',
-            'email verified successfully',
-          );
-        } catch (error) {
-          if (
-            error instanceof PrismaClientKnownRequestError &&
-            error.code === 'P2025'
-          ) {
-            await this.loggerService.log(
-              ip,
-              payload.email,
-              'confirmation email',
-              'User not found',
-            );
-            throw new NotFoundException('User not found');
-          }
-          throw error;
-        }
-      });
+      payload = this.jwtService.verify(token);
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        const decoded = this.jwtService.decode(confirmEmailDto.token) as {
+        const decoded = this.jwtService.decode(token) as {
           id?: string;
           email?: string;
         } | null;
@@ -342,20 +327,70 @@ export class UsersService {
         }
 
         const user = await this.getUserById(decoded.id).catch(() => null);
-        if (user) {
-          throw new BadRequestException(
-            'Invalid or expired verification token',
+        if (!user) {
+          await this.loggerService.log(
+            ip,
+            decoded.email ?? '',
+            'confirmation email',
+            'User not found',
           );
+          throw new NotFoundException('User not found');
         }
 
-        throw new NotFoundException('User not found');
+        await this.loggerService.log(
+          ip,
+          decoded.email ?? '',
+          'confirmation email',
+          'Invalid or expired verification token',
+        );
+        throw new BadRequestException('Invalid or expired verification token');
       }
 
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (!verificationToken.userId) {
+      await this.loggerService.log(
+        ip,
+        payload.email,
+        'confirmation email',
+        'User not found',
+      );
+      throw new NotFoundException('User not found');
+    }
+
+    const userId = verificationToken.userId;
+
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        await prisma.verificationToken.delete({
+          where: { token },
+        });
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: { isVerified: true },
+        });
+
+        await this.loggerService.log(
+          ip,
+          payload.email,
+          'confirmation email',
+          'Email verified successfully',
+        );
+      });
+    } catch (error) {
       if (
-        error.statusCode === HttpStatus.BAD_REQUEST ||
-        error.statusCode === HttpStatus.NOT_FOUND
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
       ) {
-        throw error;
+        await this.loggerService.log(
+          ip,
+          payload.email,
+          'confirmation email',
+          'User not found',
+        );
+        throw new NotFoundException('User not found');
       }
 
       throw new BadRequestException('Invalid or expired verification token');
