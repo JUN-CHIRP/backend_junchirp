@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -261,6 +262,14 @@ export class UsersService {
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
+    const token = await this.prisma.verificationToken.findUnique({
+      where: { token: confirmEmailDto.token },
+    });
+
+    if (!token) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
     try {
       const payload = this.jwtService.verify(confirmEmailDto.token);
 
@@ -318,6 +327,13 @@ export class UsersService {
         }
 
         throw new NotFoundException('User not found');
+      }
+
+      if (
+        error.statusCode === HttpStatus.BAD_REQUEST ||
+        error.code === HttpStatus.NOT_FOUND
+      ) {
+        throw error;
       }
 
       throw new BadRequestException('Invalid or expired verification token');
