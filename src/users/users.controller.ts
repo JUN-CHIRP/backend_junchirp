@@ -55,6 +55,7 @@ export class UsersController {
     description: 'You have used up all your attempts. Please try again later.',
   })
   @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
+  @ApiBadRequestResponse({ description: 'Email is confirmed' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
