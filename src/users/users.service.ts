@@ -268,7 +268,6 @@ export class UsersService {
     });
 
     if (!verificationToken) {
-      // Якщо токену немає в БД — пробуємо його декодувати
       const decoded = this.jwtService.decode(token) as {
         id?: string;
         email?: string;

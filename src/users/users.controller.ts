@@ -48,10 +48,8 @@ import { EmailAvailableResponseDto } from './dto/email-available.response-dto';
 export class UsersController {
   public constructor(private usersService: UsersService) {}
 
-  @Auth()
   @ApiOperation({ summary: 'Send confirmation email' })
   @ApiOkResponse({ type: MessageResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiTooManyRequestsResponse({
     description: 'You have used up all your attempts. Please try again later.',
