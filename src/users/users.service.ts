@@ -187,6 +187,10 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    if (user.isVerified) {
+      throw new BadRequestException('Email is confirmed');
+    }
+
     const count = await this.prisma.verificationAttempt.count({
       where: { userId: user.id },
     });
