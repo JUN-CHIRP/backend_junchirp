@@ -770,7 +770,7 @@ export class UsersService {
   public async checkEmailAvailable(
     email: string,
   ): Promise<EmailAvailableResponseDto> {
-    const exists = await this.prisma.user.findUnique({ where: { email } });
-    return { isAvailable: !exists };
+    const user = await this.getUserByEmail(email, false);
+    return { isAvailable: !user, isConfirmed: !!user?.isVerified };
   }
 }
