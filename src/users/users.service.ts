@@ -37,7 +37,8 @@ import { ProjectParticipationResponseDto } from '../participations/dto/project-p
 import { LoggerService } from '../logger/logger.service';
 import { Request, Response } from 'express';
 import { AuthService } from '../auth/auth.service';
-import { EmailAvailableResponseDto } from './dto/email-available.response-dto';
+import { EmailValidationResponseDto } from './dto/email-validation.response-dto';
+import { TokenValidationResponseDto } from './dto/token-validation.response-dto';
 
 interface GetUsersOptionsInterface {
   activeProjectsCount: number;
@@ -243,7 +244,7 @@ export class UsersService {
     email: string,
   ): Promise<MessageResponseDto> {
     const record = await this.createVerificationUrl(ip, email);
-    const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+    const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}&email=${email}`;
 
     this.mailService.sendVerificationMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
@@ -265,7 +266,7 @@ export class UsersService {
     req: Request,
     res: Response,
   ): Promise<MessageResponseDto> {
-    const { token } = confirmEmailDto;
+    const { token, email } = confirmEmailDto;
 
     const verificationToken = await this.prisma.verificationToken.findUnique({
       where: { token },
@@ -350,6 +351,19 @@ export class UsersService {
       }
 
       throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (payload.email !== email) {
+      await this.loggerService.log(
+        ip,
+        email,
+        'confirmation email',
+        'Email does not match token',
+      );
+      throw new BadRequestException(
+        'Email does not match token',
+        'Validation Error',
+      );
     }
 
     if (!verificationToken.userId) {
@@ -460,7 +474,7 @@ export class UsersService {
       );
     }
 
-    const data = { id: user.id };
+    const data = { id: user.id, email: user.email };
     const createdAt = new Date();
     const token = this.jwtService.sign(data, {
       expiresIn: this.configService.get('EXPIRE_TIME_REFRESH_PASSWORD_TOKEN'),
@@ -499,10 +513,7 @@ export class UsersService {
       where: { token: resetPasswordDto.token },
     });
 
-    if (
-      !resetPasswordToken ||
-      resetPasswordToken.token !== resetPasswordToken.token
-    ) {
+    if (!resetPasswordToken) {
       throw new BadRequestException('Invalid or expired token');
     }
 
@@ -525,10 +536,10 @@ export class UsersService {
         );
       } catch (error) {
         const payload = this.jwtService.verify(resetPasswordToken.token);
-        const userId = payload.id;
+        const email = payload.email;
         await this.loggerService.log(
           ip,
-          userId,
+          email,
           'reset password',
           'Invalid or expired token',
         );
@@ -598,7 +609,7 @@ export class UsersService {
 
     if (!updatedUser.isVerified) {
       const record = await this.createVerificationUrl(ip, updatedUser.email);
-      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}?email=${updatedUser.email}`;
       this.mailService
         .sendVerificationMail(updatedUser.email, url)
         .catch((err) => {
@@ -634,7 +645,7 @@ export class UsersService {
 
       if (user.email !== updatedUser.email) {
         const record = await this.createVerificationUrl(ip, updatedUser.email);
-        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}`;
+        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}&email=${updatedUser.email}`;
 
         this.mailService
           .sendVerificationMail(updatedUser.email, url)
@@ -769,8 +780,50 @@ export class UsersService {
 
   public async checkEmailAvailable(
     email: string,
-  ): Promise<EmailAvailableResponseDto> {
+  ): Promise<EmailValidationResponseDto> {
     const user = await this.getUserByEmail(email, false);
     return { isAvailable: !user, isConfirmed: !!user?.isVerified };
+  }
+
+  public async validateToken(
+    token: string,
+  ): Promise<TokenValidationResponseDto> {
+    try {
+      const resetPasswordToken =
+        await this.prisma.resetPasswordToken.findUnique({
+          where: { token },
+          select: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        });
+      return resetPasswordToken
+        ? {
+            isValid: true,
+            firstName: resetPasswordToken.user.firstName,
+            lastName: resetPasswordToken.user.lastName,
+          }
+        : { isValid: false };
+    } catch {
+      return { isValid: false };
+    }
+  }
+
+  public async cancelResetPassword(token: string): Promise<void> {
+    try {
+      await this.prisma.resetPasswordToken.delete({ where: { token } });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Token not found');
+      }
+      throw error;
+    }
   }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -20,6 +21,7 @@ import {
   ApiConflictResponse,
   ApiForbiddenResponse,
   ApiHeader,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -42,7 +44,8 @@ import { UsersListResponseDto } from './dto/users-list.response-dto';
 import { UsersFilterDto } from './dto/users-filter.dto';
 import { ProjectParticipationResponseDto } from '../participations/dto/project-participation.response-dto';
 import { User } from '../auth/decorators/user.decorator';
-import { EmailAvailableResponseDto } from './dto/email-available.response-dto';
+import { EmailValidationResponseDto } from './dto/email-validation.response-dto';
+import { TokenValidationResponseDto } from './dto/token-validation.response-dto';
 
 @Controller('users')
 export class UsersController {
@@ -74,7 +77,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Confirm email' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({
-    description: 'Invalid or expired verification token',
+    description:
+      'Invalid or expired verification token / Email does not match token',
   })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiForbiddenResponse({ description: 'Invalid CSRF token' })
@@ -107,15 +111,22 @@ export class UsersController {
     return this.usersService.getUserById(user.id);
   }
 
-  @ApiOperation({
-    summary: 'Check email',
-  })
-  @ApiOkResponse({ type: EmailAvailableResponseDto })
+  @ApiOperation({ summary: 'Check email' })
+  @ApiOkResponse({ type: EmailValidationResponseDto })
   @Get('check-email')
   public async checkEmailAvailable(
     @Query('email') email: string,
-  ): Promise<EmailAvailableResponseDto> {
+  ): Promise<EmailValidationResponseDto> {
     return this.usersService.checkEmailAvailable(email);
+  }
+
+  @ApiOperation({ summary: 'Password recovery token verification' })
+  @ApiOkResponse({ type: TokenValidationResponseDto })
+  @Get('validate-password-token')
+  public async validateToken(
+    @Query('token') token: string,
+  ): Promise<TokenValidationResponseDto> {
+    return this.usersService.validateToken(token);
   }
 
   @ApiOperation({ summary: 'Send email to reset your password' })
@@ -288,5 +299,21 @@ export class UsersController {
     const user: UserWithPasswordResponseDto =
       req.user as UserWithPasswordResponseDto;
     return this.usersService.getRequests(user.id);
+  }
+
+  @ApiOperation({ summary: 'Delete password recovery token' })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({ description: 'Token not found' })
+  @ApiHeader({
+    name: 'x-csrf-token',
+    description: 'CSRF token for the request',
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('password-token')
+  public async deletePasswordToken(
+    @Query('token') token: string,
+  ): Promise<void> {
+    return this.usersService.cancelResetPassword(token);
   }
 }

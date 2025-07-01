@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class EmailAvailableResponseDto {
+export class EmailValidationResponseDto {
   @ApiProperty({ example: true, description: 'Email is available' })
   public readonly isAvailable: boolean;
 
