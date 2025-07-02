@@ -456,7 +456,7 @@ export class AuthService {
       let redirectUrl: string;
 
       if (user.isVerified) {
-        redirectUrl = `${frontendBaseUrl}/profile`;
+        redirectUrl = `${frontendBaseUrl}`;
       } else if (safeReturnUrl.startsWith('/auth/login')) {
         redirectUrl = `${frontendBaseUrl}/confirm-email?type=login`;
       } else if (safeReturnUrl.startsWith('/auth/registration')) {
