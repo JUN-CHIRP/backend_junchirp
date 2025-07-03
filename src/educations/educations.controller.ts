@@ -9,8 +9,6 @@ import {
   Query,
   UsePipes,
   Req,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { EducationsService } from './educations.service';
 import { CreateEducationDto } from './dto/create-education.dto';
@@ -21,7 +19,6 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -100,7 +97,7 @@ export class EducationsController {
   }
 
   @ApiOperation({ summary: 'Delete education' })
-  @ApiNoContentResponse()
+  @ApiOkResponse({ type: String })
   @ApiNotFoundResponse({ description: 'Education not found' })
   @ApiForbiddenResponse({
     description: 'Access denied: email not confirmed / Invalid CSRF token',
@@ -110,11 +107,10 @@ export class EducationsController {
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   public async deleteEducation(
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<void> {
+  ): Promise<string> {
     return this.educationsService.deleteEducation(id);
   }
 }

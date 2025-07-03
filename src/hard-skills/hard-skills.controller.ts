@@ -7,8 +7,6 @@ import {
   UsePipes,
   Req,
   Put,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { HardSkillsService } from './hard-skills.service';
 import { CreateHardSkillDto } from './dto/create-hard-skill.dto';
@@ -19,7 +17,6 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -81,18 +78,17 @@ export class HardSkillsController {
   }
 
   @ApiOperation({ summary: 'Delete hard skill' })
-  @ApiNoContentResponse()
+  @ApiOkResponse({ type: String })
   @ApiNotFoundResponse({ description: 'Hard skill not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   public async deleteHardSkill(
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<void> {
+  ): Promise<string> {
     return this.hardSkillsService.deleteHardSkill(id);
   }
 }

@@ -7,8 +7,6 @@ import {
   UsePipes,
   Req,
   Put,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { SoftSkillsService } from './soft-skills.service';
 import { CreateSoftSkillDto } from './dto/create-soft-skill.dto';
@@ -19,7 +17,6 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -81,18 +78,17 @@ export class SoftSkillsController {
   }
 
   @ApiOperation({ summary: 'Delete soft skill' })
-  @ApiNoContentResponse()
+  @ApiOkResponse({ type: String })
   @ApiNotFoundResponse({ description: 'Soft skill not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   public async deleteSoftSkill(
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<void> {
+  ): Promise<string> {
     return this.softSkillsService.deleteSoftSkill(id);
   }
 }

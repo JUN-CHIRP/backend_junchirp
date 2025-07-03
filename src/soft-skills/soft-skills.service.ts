@@ -77,11 +77,12 @@ export class SoftSkillsService {
     }
   }
 
-  public async deleteSoftSkill(id: string): Promise<void> {
+  public async deleteSoftSkill(id: string): Promise<string> {
     try {
       await this.prisma.userSoftSkill.delete({
         where: { id },
       });
+      return id;
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&

@@ -4,11 +4,9 @@ import {
   Body,
   Param,
   Delete,
-  HttpCode,
   UsePipes,
   Req,
   Put,
-  HttpStatus,
 } from '@nestjs/common';
 import { SocialsService } from './socials.service';
 import { CreateSocialDto } from './dto/create-social.dto';
@@ -20,7 +18,6 @@ import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiHeader,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -85,18 +82,17 @@ export class SocialsController {
   }
 
   @ApiOperation({ summary: 'Delete social network profile' })
-  @ApiNoContentResponse()
+  @ApiOkResponse({ type: String })
   @ApiNotFoundResponse({ description: 'Profile not found' })
   @ApiHeader({
     name: 'x-csrf-token',
     description: 'CSRF token for the request',
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   public async deleteSocialNetwork(
     @Param('id', ParseUUIDv4Pipe) id: string,
-  ): Promise<void> {
+  ): Promise<string> {
     return this.socialsService.deleteSocialNetwork(id);
   }
 }
