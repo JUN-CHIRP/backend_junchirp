@@ -135,11 +135,12 @@ export class EducationsService {
     });
   }
 
-  public async deleteEducation(id: string): Promise<void> {
+  public async deleteEducation(id: string): Promise<string> {
     try {
       await this.prisma.education.delete({
         where: { id },
       });
+      return id;
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&

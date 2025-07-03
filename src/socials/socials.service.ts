@@ -80,11 +80,12 @@ export class SocialsService {
     }
   }
 
-  public async deleteSocialNetwork(id: string): Promise<void> {
+  public async deleteSocialNetwork(id: string): Promise<string> {
     try {
       await this.prisma.social.delete({
         where: { id },
       });
+      return id;
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&

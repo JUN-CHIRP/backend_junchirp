@@ -77,11 +77,12 @@ export class HardSkillsService {
     }
   }
 
-  public async deleteHardSkill(id: string): Promise<void> {
+  public async deleteHardSkill(id: string): Promise<string> {
     try {
       await this.prisma.userHardSkill.delete({
         where: { id },
       });
+      return id;
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&
