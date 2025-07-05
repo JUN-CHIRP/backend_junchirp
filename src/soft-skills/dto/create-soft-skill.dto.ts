@@ -12,5 +12,5 @@ export class CreateSoftSkillDto {
     message: 'Skill name is incorrect',
   })
   @IsNotEmpty({ message: 'Skill name is required' })
-  public readonly skillName: string;
+  public readonly softSkillName: string;
 }
