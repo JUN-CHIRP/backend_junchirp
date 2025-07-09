@@ -19,14 +19,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "neon:reset": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate reset",
-    "neon:reset:force": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate reset --force",
-    "neon:generate": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma generate",
-    "neon:migrate:create": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate dev --create-only --name",
-    "neon:migrate:dev": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate dev --name",
-    "neon:migrate:deploy": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma migrate deploy",
-    "neon:db:push": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma db push",
-    "neon:db:pull": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_ruUJ6cn7FfYC@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require\" npx prisma db pull"
+    "neon:reset": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate reset",
+    "neon:reset:force": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate reset --force",
+    "neon:generate": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma generate",
+    "neon:migrate:create": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate dev --create-only --name",
+    "neon:migrate:dev": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate dev --name",
+    "neon:migrate:deploy": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate deploy",
+    "neon:db:push": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma db push",
+    "neon:db:pull": "cross-env DATABASE_URL=\"postgresql://neondb_owner:npg_Tdopnfh4C5aV@ep-aged-band-a91361as-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma db pull"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
