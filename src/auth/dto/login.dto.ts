@@ -3,6 +3,7 @@ import { IsEmail, IsNotEmpty, Length, Matches } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
+    type: String,
     example: 'email@mail.com',
     description: 'Email',
   })
@@ -14,8 +15,11 @@ export class LoginDto {
   public readonly email: string;
 
   @ApiProperty({
+    type: String,
     example: 'q1we5?!ER234',
     description: 'Password',
+    minLength: 6,
+    maxLength: 20,
   })
   @Length(8, 20, { message: 'Must be between 8 and 32 characters' })
   @IsNotEmpty({ message: 'Password is required' })
