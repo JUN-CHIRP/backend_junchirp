@@ -5,7 +5,7 @@ export class HardSkillMapper {
   public static toResponse(skill: UserHardSkill): HardSkillResponseDto {
     return {
       id: skill.id,
-      skillName: skill.skillName,
+      hardSkillName: skill.hardSkillName,
     };
   }
 }

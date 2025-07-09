@@ -11,5 +11,5 @@ export class SoftSkillResponseDto {
     example: 'Teamwork',
     description: 'Soft skill name',
   })
-  public readonly skillName: string;
+  public readonly softSkillName: string;
 }

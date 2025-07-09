@@ -11,22 +11,26 @@ interface SocialNetworkInterface {
   twitter: RegExp;
   instagram: RegExp;
   linkedin: RegExp;
-  youtube: RegExp;
-  tiktok: RegExp;
-  pinterest: RegExp;
-  reddit: RegExp;
+  // youtube: RegExp;
+  // tiktok: RegExp;
+  // pinterest: RegExp;
+  // reddit: RegExp;
+  discord: RegExp;
+  telegram: RegExp;
 }
 
 const socialNetworks: SocialNetworkInterface = {
-  facebook: /^https:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9(.?)]+$/,
-  twitter: /^https:\/\/(www\.)?twitter\.com\/[a-zA-Z0-9_]+$/,
-  instagram: /^https:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_]+$/,
-  linkedin: /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+$/,
-  youtube:
-    /^https:\/\/(www\.)?youtube\.com\/(channel\/|user\/|c\/)[a-zA-Z0-9_-]+$/,
-  tiktok: /^https:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_]+$/,
-  pinterest: /^https:\/\/(www\.)?pinterest\.com\/[a-zA-Z0-9_]+$/,
-  reddit: /^https:\/\/(www\.)?reddit\.com\/u\/[a-zA-Z0-9_]+$/,
+  facebook: /^https:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9(.?)]+$/i,
+  twitter: /^https:\/\/(www\.)?twitter\.com\/[a-zA-Z0-9_]+$/i,
+  instagram: /^https:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_]+$/i,
+  linkedin: /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+$/i,
+  // youtube:
+  //   /^https:\/\/(www\.)?youtube\.com\/(channel\/|user\/|c\/)[a-zA-Z0-9_-]+$/,
+  // tiktok: /^https:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_]+$/,
+  // pinterest: /^https:\/\/(www\.)?pinterest\.com\/[a-zA-Z0-9_]+$/,
+  // reddit: /^https:\/\/(www\.)?reddit\.com\/u\/[a-zA-Z0-9_]+$/,
+  discord: /^https:\/\/(www\.)?discord\.com\/users\/\d+\/?$/i,
+  telegram: /^https:\/\/t\.me\/[a-zA-Z0-9_]+\/?$/i,
 };
 
 @ValidatorConstraint({ name: 'isValidSocialNetworkUrl', async: false })
