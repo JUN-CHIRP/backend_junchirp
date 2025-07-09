@@ -5,7 +5,7 @@ export class SoftSkillMapper {
   public static toResponse(skill: UserSoftSkill): SoftSkillResponseDto {
     return {
       id: skill.id,
-      softSkillName: skill.softSkillName,
+      skillName: skill.skillName,
     };
   }
 }

@@ -11,5 +11,5 @@ export class HardSkillResponseDto {
     example: 'TypeScript',
     description: 'Hard skill name',
   })
-  public readonly hardSkillName: string;
+  public readonly skillName: string;
 }

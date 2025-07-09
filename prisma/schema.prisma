@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -251,21 +250,21 @@ model LoginAttempt {
 
 model UserHardSkill {
   id        String @id @default(dbgenerated("gen_random_uuid()"))
-  hardSkillName String @map("skill_name")
+  skillName String @map("skill_name")
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String @map("user_id")
 
-  @@unique([userId, hardSkillName])
+  @@unique([userId, skillName])
   @@map("user_hard_skills")
 }
 
 model UserSoftSkill {
   id        String @id @default(dbgenerated("gen_random_uuid()"))
-  softSkillName String @map("skill_name")
+  skillName String @map("skill_name")
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String @map("user_id")
 
-  @@unique([userId, softSkillName])
+  @@unique([userId, skillName])
   @@map("user_soft_skills")
 }
 
