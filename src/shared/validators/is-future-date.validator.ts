@@ -6,7 +6,7 @@ import {
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'IsFutureDate', async: false })
-export class IsFutureDateConstraint implements ValidatorConstraintInterface {
+export class IsFutureDateValidator implements ValidatorConstraintInterface {
   public validate(value: unknown): boolean {
     if (!(value instanceof Date)) {
       return false;
@@ -27,7 +27,7 @@ export function IsFutureDate(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsFutureDateConstraint,
+      validator: IsFutureDateValidator,
     });
   };
 }
