@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'AtLeastOneField', async: false })
-export class AtLeastOneFieldConstraint implements ValidatorConstraintInterface {
+export class AtLeastOneFieldValidator implements ValidatorConstraintInterface {
   public validate(_: unknown, args: ValidationArguments): boolean {
     const object = args.object as Record<string, unknown>;
     const [fields] = args.constraints as [string[]];
@@ -33,7 +33,7 @@ export function AtLeastOneField(
       propertyName: propertyName,
       options: validationOptions,
       constraints: [fields],
-      validator: AtLeastOneFieldConstraint,
+      validator: AtLeastOneFieldValidator,
     });
   };
 }

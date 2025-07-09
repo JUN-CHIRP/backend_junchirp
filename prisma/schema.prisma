@@ -249,22 +249,22 @@ model LoginAttempt {
 }
 
 model UserHardSkill {
-  id        String @id @default(dbgenerated("gen_random_uuid()"))
-  skillName String @map("skill_name")
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String @map("user_id")
+  id            String @id @default(dbgenerated("gen_random_uuid()"))
+  hardSkillName String @map("skill_name")
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String @map("user_id")
 
-  @@unique([userId, skillName])
+  @@unique([userId, hardSkillName])
   @@map("user_hard_skills")
 }
 
 model UserSoftSkill {
   id        String @id @default(dbgenerated("gen_random_uuid()"))
-  skillName String @map("skill_name")
+  softSkillName String @map("skill_name")
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String @map("user_id")
 
-  @@unique([userId, skillName])
+  @@unique([userId, softSkillName])
   @@map("user_soft_skills")
 }
 
