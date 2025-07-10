@@ -244,7 +244,11 @@ export class UsersService {
     email: string,
   ): Promise<MessageResponseDto> {
     const record = await this.createVerificationUrl(ip, email);
-    const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}&email=${email}`;
+    const params = new URLSearchParams({
+      token: record.token,
+      email: email,
+    });
+    const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?${params.toString()}`;
 
     this.mailService.sendVerificationMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
@@ -426,7 +430,10 @@ export class UsersService {
     email: string,
   ): Promise<MessageResponseDto> {
     const record = await this.createPasswordResetUrl(ip, email);
-    const url = `${this.configService.get('BASE_FRONTEND_URL')}/reset-password?token=${record.token}`;
+    const params = new URLSearchParams({
+      token: record.token,
+    });
+    const url = `${this.configService.get('BASE_FRONTEND_URL')}/reset-password?token=${params.toString()}`;
 
     this.mailService.sendResetPasswordMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
@@ -609,7 +616,12 @@ export class UsersService {
 
     if (!updatedUser.isVerified) {
       const record = await this.createVerificationUrl(ip, updatedUser.email);
-      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}?email=${updatedUser.email}`;
+      const params = new URLSearchParams({
+        token: record.token,
+        email: updatedUser.email,
+      });
+      const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?${params.toString()}`;
+
       this.mailService
         .sendVerificationMail(updatedUser.email, url)
         .catch((err) => {
@@ -645,7 +657,11 @@ export class UsersService {
 
       if (user.email !== updatedUser.email) {
         const record = await this.createVerificationUrl(ip, updatedUser.email);
-        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?token=${record.token}&email=${updatedUser.email}`;
+        const params = new URLSearchParams({
+          token: record.token,
+          email: updatedUser.email,
+        });
+        const url = `${this.configService.get('BASE_FRONTEND_URL')}/verify-email?${params.toString()}`;
 
         this.mailService
           .sendVerificationMail(updatedUser.email, url)
