@@ -412,22 +412,45 @@ export class AuthService {
 
   public async handleDiscordCallback(
     req: Request,
+    res: Response,
     state: string,
-  ): Promise<UserResponseDto> {
-    const userId = await this.redisService.get(state);
+    returnUrl?: string,
+  ): Promise<void> {
+    const frontendBaseUrl =
+      this.configService.get<string>('BASE_FRONTEND_URL') ?? 'https://localhost:3000';
 
-    if (!userId) {
-      throw new UnauthorizedException('Invalid or expired state');
-    }
-
-    const { discordId, accessToken } = req.user as {
-      discordId: string;
-      accessToken: string;
+    const getSafeReturnUrl = (url: string | undefined): string => {
+      try {
+        const decoded = decodeURIComponent(url ?? '');
+        return decoded.startsWith('/') ? decoded : '/';
+      } catch {
+        return '/';
+      }
     };
 
-    await this.discordService.addToGuild(discordId, accessToken);
-    await this.redisService.del(state);
-    return this.usersService.linkDiscord(userId, discordId);
+    const safeReturnUrl = getSafeReturnUrl(returnUrl);
+    const redirectBase = `${frontendBaseUrl}${safeReturnUrl}`;
+    const redirectWithError = `${redirectBase}?error=discord_auth_failed`;
+
+    try {
+      const userId = await this.redisService.get(state);
+      if (!userId) {
+        return res.redirect(redirectWithError);
+      }
+
+      const { discordId, accessToken } = req.user as {
+        discordId: string;
+        accessToken: string;
+      };
+
+      await this.discordService.addToGuild(discordId, accessToken);
+      await this.usersService.linkDiscord(userId, discordId);
+      await this.redisService.del(state);
+
+      return res.redirect(redirectBase);
+    } catch {
+      return res.redirect(redirectWithError);
+    }
   }
 
   public async handleGoogleCallback(
