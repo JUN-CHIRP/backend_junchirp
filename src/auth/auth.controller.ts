@@ -166,8 +166,8 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
     @Query('state') state: string,
-    @Query('returnUrl') returnUrl?: string,
+    @Query('returnUrl') _returnUrl: string,
   ): Promise<void> {
-    return this.authService.handleDiscordCallback(req, res, state, returnUrl);
+    return this.authService.handleDiscordCallback(req, res, state);
   }
 }
