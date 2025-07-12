@@ -417,7 +417,8 @@ export class AuthService {
     returnUrl?: string,
   ): Promise<void> {
     const frontendBaseUrl =
-      this.configService.get<string>('BASE_FRONTEND_URL') ?? 'https://localhost:3000';
+      this.configService.get<string>('BASE_FRONTEND_URL') ??
+      'https://localhost:3000';
 
     const getSafeReturnUrl = (url: string | undefined): string => {
       try {

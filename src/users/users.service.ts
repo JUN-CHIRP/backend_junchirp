@@ -761,10 +761,7 @@ export class UsersService {
     return this.participationsService.getRequestsWithProjects(userId);
   }
 
-  public async linkDiscord(
-    id: string,
-    discordId: string,
-  ): Promise<void> {
+  public async linkDiscord(id: string, discordId: string): Promise<void> {
     try {
       await this.prisma.user.update({
         where: { id },
