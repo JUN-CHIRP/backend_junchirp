@@ -761,12 +761,9 @@ export class UsersService {
     return this.participationsService.getRequestsWithProjects(userId);
   }
 
-  public async linkDiscord(
-    id: string,
-    discordId: string,
-  ): Promise<UserResponseDto> {
+  public async linkDiscord(id: string, discordId: string): Promise<void> {
     try {
-      const updatedUser = await this.prisma.user.update({
+      await this.prisma.user.update({
         where: { id },
         data: { discordId },
         include: {
@@ -781,8 +778,6 @@ export class UsersService {
           hardSkills: true,
         },
       });
-
-      return UserMapper.toFullResponse(updatedUser, false);
     } catch (error) {
       if (
         error instanceof PrismaClientKnownRequestError &&

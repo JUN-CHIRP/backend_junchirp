@@ -412,22 +412,38 @@ export class AuthService {
 
   public async handleDiscordCallback(
     req: Request,
+    res: Response,
     state: string,
-  ): Promise<UserResponseDto> {
-    const userId = await this.redisService.get(state);
+  ): Promise<void> {
+    const frontendBaseUrl =
+      this.configService.get<string>('BASE_FRONTEND_URL') ??
+      'https://localhost:3000';
 
-    if (!userId) {
-      throw new UnauthorizedException('Invalid or expired state');
+    const fallbackRedirect = `${frontendBaseUrl}/?error=discord_auth_failed`;
+
+    try {
+      const data = await this.redisService.get(state);
+      if (!data) {
+        return res.redirect(fallbackRedirect);
+      }
+
+      const { userId, returnUrl } = JSON.parse(data);
+      const safeReturnUrl = this.getSafeReturnUrl(returnUrl);
+      const redirectBase = `${frontendBaseUrl}${safeReturnUrl}`;
+
+      const { discordId, accessToken } = req.user as {
+        discordId: string;
+        accessToken: string;
+      };
+
+      await this.discordService.addToGuild(discordId, accessToken);
+      await this.usersService.linkDiscord(userId, discordId);
+      await this.redisService.del(state);
+
+      return res.redirect(redirectBase);
+    } catch {
+      return res.redirect(fallbackRedirect);
     }
-
-    const { discordId, accessToken } = req.user as {
-      discordId: string;
-      accessToken: string;
-    };
-
-    await this.discordService.addToGuild(discordId, accessToken);
-    await this.redisService.del(state);
-    return this.usersService.linkDiscord(userId, discordId);
   }
 
   public async handleGoogleCallback(
@@ -439,16 +455,8 @@ export class AuthService {
     const frontendBaseUrl =
       this.configService.get<string>('BASE_FRONTEND_URL') ??
       'https://localhost:3000';
-    const getSafeReturnUrl = (url: string | undefined): string => {
-      try {
-        const decoded = decodeURIComponent(url ?? '');
-        return decoded.startsWith('/') ? decoded : '/';
-      } catch {
-        return '/';
-      }
-    };
 
-    const safeReturnUrl = getSafeReturnUrl(returnUrl);
+    const safeReturnUrl = this.getSafeReturnUrl(returnUrl);
 
     try {
       const user = await this.googleLogin(ip, req, res);
@@ -470,6 +478,15 @@ export class AuthService {
       const errorParam = encodeURIComponent('google_auth_failed');
       const redirectWithError = `${frontendBaseUrl}${safeReturnUrl}?error=${errorParam}`;
       return res.redirect(redirectWithError);
+    }
+  }
+
+  private getSafeReturnUrl(url: string | undefined): string {
+    try {
+      const decoded = decodeURIComponent(url ?? '');
+      return decoded.startsWith('/') ? decoded : '/';
+    } catch {
+      return '/';
     }
   }
 }

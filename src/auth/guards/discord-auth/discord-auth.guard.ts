@@ -14,8 +14,13 @@ export class DiscordAuthGuard extends AuthGuard('discord') {
 
     const user = request.user;
     const state = uuidV4();
+    const returnUrl = request.query.returnUrl ?? '/';
 
-    await this.redisService.set(state, user.id, 300);
+    await this.redisService.set(
+      state,
+      JSON.stringify({ userId: user.id, returnUrl }),
+      300,
+    );
 
     request.state = state;
 

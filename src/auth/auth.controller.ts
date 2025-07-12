@@ -159,12 +159,15 @@ export class AuthController {
 
   @Discord()
   @ApiOperation({ summary: 'Initiate Discord OAuth2 login' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiResponse({ status: HttpStatus.FOUND })
+  @HttpCode(HttpStatus.FOUND)
   @Get('discord/callback')
   public async handleDiscordCallback(
     @Req() req: Request,
+    @Res() res: Response,
     @Query('state') state: string,
-  ): Promise<UserResponseDto> {
-    return this.authService.handleDiscordCallback(req, state);
+    @Query('returnUrl') _returnUrl: string,
+  ): Promise<void> {
+    return this.authService.handleDiscordCallback(req, res, state);
   }
 }
