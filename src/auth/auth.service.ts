@@ -337,8 +337,16 @@ export class AuthService {
         }
       }
 
-      res.clearCookie('refreshToken', { httpOnly: true, secure: true });
-      res.clearCookie('accessToken', { httpOnly: true, secure: true });
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+      });
+      res.clearCookie('accessToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+      });
     } catch {
       return;
     }
