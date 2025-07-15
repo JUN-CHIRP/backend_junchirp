@@ -433,7 +433,7 @@ export class UsersService {
     const params = new URLSearchParams({
       token: record.token,
     });
-    const url = `${this.configService.get('BASE_FRONTEND_URL')}/reset-password?token=${params.toString()}`;
+    const url = `${this.configService.get('BASE_FRONTEND_URL')}/reset-password?${params.toString()}`;
 
     this.mailService.sendResetPasswordMail(email, url).catch((err) => {
       console.error('Error sending verification url:', err);
