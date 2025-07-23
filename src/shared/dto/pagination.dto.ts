@@ -23,6 +23,6 @@ export class PaginationDto {
   })
   @IsOptional()
   @IsInt({ message: 'Must be an integer number' })
-  @Min(10, { message: 'Minimum allowable value is 10' })
-  public readonly limit?: number = 20;
+  @Min(5, { message: 'Minimum allowable value is 5' })
+  public readonly limit?: number = 5;
 }
