@@ -462,17 +462,27 @@ export class AuthService {
     ip: string,
     req: Request,
     res: Response,
-    returnUrl: string,
+    state: string,
   ): Promise<void> {
     const frontendBaseUrl =
       this.configService.get<string>('BASE_FRONTEND_URL') ??
       'https://localhost:3000';
 
-    const safeReturnUrl = this.getSafeReturnUrl(returnUrl);
+    const redirectWithError = (returnUrl: string): void => {
+      const safeUrl = this.getSafeReturnUrl(returnUrl);
+      const finalUrl = `${frontendBaseUrl}${safeUrl}?error=google_auth_failed`;
+      return res.redirect(finalUrl);
+    };
 
     try {
-      const user = await this.googleLogin(ip, req, res);
+      const data = await this.redisService.get(state);
+      if (!data) {
+        return redirectWithError('/');
+      }
 
+      const { returnUrl } = JSON.parse(data);
+      const safeReturnUrl = this.getSafeReturnUrl(returnUrl);
+      const user = await this.googleLogin(ip, req, res);
       let redirectUrl: string;
 
       if (user.isVerified) {
@@ -485,11 +495,18 @@ export class AuthService {
         redirectUrl = `${frontendBaseUrl}`;
       }
 
+      await this.redisService.del(state);
+
       return res.redirect(redirectUrl);
     } catch {
-      const errorParam = encodeURIComponent('google_auth_failed');
-      const redirectWithError = `${frontendBaseUrl}${safeReturnUrl}?error=${errorParam}`;
-      return res.redirect(redirectWithError);
+      try {
+        const fallback = await this.redisService.get(state);
+        const parsed = fallback ? JSON.parse(fallback) : {};
+        const returnUrl = parsed?.returnUrl ?? '/';
+        return redirectWithError(returnUrl);
+      } catch {
+        return redirectWithError('/');
+      }
     }
   }
 

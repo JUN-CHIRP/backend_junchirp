@@ -142,9 +142,10 @@ export class AuthController {
     @Ip() ip: string,
     @Req() req: Request,
     @Res() res: Response,
-    @Query('returnUrl') returnUrl: string,
+    @Query('state') state: string,
+    @Query('returnUrl') _returnUrl: string,
   ): Promise<void> {
-    return this.authService.handleGoogleCallback(ip, req, res, returnUrl);
+    return this.authService.handleGoogleCallback(ip, req, res, state);
   }
 
   @Discord()
