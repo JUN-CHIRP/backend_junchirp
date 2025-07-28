@@ -39,6 +39,7 @@ async function bootstrap(): Promise<void> {
       'https://localhost:4200',
       'https://localhost:3000',
       'https://frontend-junchirp-123.vercel.app',
+      'https://frontend-junchirp-6s99.onrender.com',
     ],
     credentials: true,
   });
