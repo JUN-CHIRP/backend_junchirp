@@ -20,7 +20,7 @@ export class CsrfService {
       cookieOptions: {
         secure: true,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: configService.get<number>('EXPIRE_TIME_CSRF_TOKEN'),
       },
     });

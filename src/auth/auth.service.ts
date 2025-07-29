@@ -269,7 +269,7 @@ export class AuthService {
       httpOnly: true,
       expires: expiresIn,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
     });
   }
 
@@ -281,7 +281,7 @@ export class AuthService {
       httpOnly: true,
       expires: expiresIn,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
     });
   }
 
@@ -340,12 +340,12 @@ export class AuthService {
       res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
       res.clearCookie('accessToken', {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
     } catch {
       return;
