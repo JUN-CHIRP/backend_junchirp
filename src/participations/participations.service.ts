@@ -474,19 +474,9 @@ export class ParticipationsService {
 
   public async getRequestsWithProjects(
     userId: string,
-    ownerId?: string,
   ): Promise<ProjectParticipationResponseDto[]> {
     const requests = await this.prisma.participationRequest.findMany({
-      where: {
-        userId,
-        ...(ownerId && {
-          projectRole: {
-            project: {
-              ownerId,
-            },
-          },
-        }),
-      },
+      where: { userId },
       include: {
         projectRole: {
           include: {

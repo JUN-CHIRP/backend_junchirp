@@ -270,7 +270,6 @@ export class AuthService {
       expires: expiresIn,
       secure: true,
       sameSite: 'none',
-      domain: '.onrender.com',
     });
   }
 
@@ -283,7 +282,6 @@ export class AuthService {
       expires: expiresIn,
       secure: true,
       sameSite: 'none',
-      domain: '.onrender.com',
     });
   }
 
@@ -343,13 +341,11 @@ export class AuthService {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        domain: '.onrender.com',
       });
       res.clearCookie('accessToken', {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        domain: '.onrender.com',
       });
     } catch {
       return;
