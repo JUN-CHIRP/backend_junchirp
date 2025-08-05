@@ -316,4 +316,21 @@ export class UsersController {
   ): Promise<void> {
     return this.usersService.cancelResetPassword(token);
   }
+
+  @User()
+  @ApiOperation({
+    summary: `Get requests by user id in current user's projects`,
+  })
+  @ApiOkResponse({ type: [ProjectParticipationResponseDto] })
+  @ApiForbiddenResponse({ description: 'Access denied: email not confirmed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @Get(':id/requests')
+  public async getRequestsByUserId(
+    @Param('id', ParseUUIDv4Pipe) id: string,
+    @Req() req: Request,
+  ): Promise<ProjectParticipationResponseDto[]> {
+    const owner: UserWithPasswordResponseDto =
+      req.user as UserWithPasswordResponseDto;
+    return this.usersService.getRequests(id, owner.id);
+  }
 }
