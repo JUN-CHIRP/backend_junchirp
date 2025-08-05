@@ -757,8 +757,9 @@ export class UsersService {
 
   public async getRequests(
     userId: string,
+    ownerId?: string,
   ): Promise<ProjectParticipationResponseDto[]> {
-    return this.participationsService.getRequestsWithProjects(userId);
+    return this.participationsService.getRequestsWithProjects(userId, ownerId);
   }
 
   public async linkDiscord(id: string, discordId: string): Promise<void> {
